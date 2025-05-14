@@ -1,0 +1,81 @@
+1. Introduction & Goals
+
+Product Name: VereinsKnete
+
+Purpose: "VereinsKnete" solves the problem of freelance service providers (initially focusing on sports instructors) struggling with the time-consuming, error-prone, and manual process of tracking billable hours across different clients (e.g., sports clubs, individual students) and generating accurate monthly invoices with varying hourly rates.
+
+MVP Goals:
+
+Enable users to quickly and accurately record their billable sessions (date, start/end time, client).
+
+Allow users to generate a basic, correct invoice for a specific client at the end of the month, significantly reducing manual effort and errors.
+
+Achieve a high task completion rate for the core journey (logging sessions to invoice generation).
+
+Significantly reduce the time required to create an invoice compared to manual methods.
+
+2. Target Audience
+
+Primary users for the MVP are newly self-employed sports instructors who have recently registered their business and are looking for a simple, straightforward way to manage invoicing for their clients (such as sports clubs). They are likely to be overwhelmed by manual invoicing and basic bookkeeping. While the initial focus is on this group, the use of generic "Client" terminology allows the app to be potentially useful for other freelancers (e.g., tutors) with similar hourly billing needs.
+
+3. User Stories
+
+Primary User Story: "As a self-employed service provider (e.g., sports instructor), I want to record my session details (date, start/end time, client) immediately after each session, so that I can easily generate an accurate invoice at the end of the month without having to laboriously look up my times."
+
+4. Features & Requirements
+
+Core Features (Must-Have for MVP):
+
+User Profile/Master Data Management: Allow the user to enter and save their personal details (name, address, tax ID, bank details) required for invoices.
+
+Client Management: Enable the user to add, view, and edit details for clients (name, address, contact person, default hourly rate for that client if applicable).
+
+Session Logging: Allow the user to log individual billable sessions, including date, start time, end time (or duration), and associate them with a specific client.
+
+Invoice Generation: Enable the user to select a client and a date range (e.g., a specific month) to generate an invoice. The invoice will list all logged sessions for that client within that period, calculate the total amount due (based on hours and the client's rate), and include the user's and client's details.
+
+Basic Invoice Viewing/Downloading (PDF): Allow the user to view the generated invoice and download it as a simple PDF document.
+
+UI/UX Concept:
+
+A clean, modern, and highly intuitive web interface.
+
+Simple Navigation: Clear sidebar or top navigation for "My Details," "Clients," "Log Session / Sessions List," "Generate Invoice / Invoices."
+
+Form-Based Data Entry: Clear, well-labeled forms for all inputs (personal details, client info, session logs) with appropriate input types (e.g., date pickers).
+
+Action-Oriented Buttons: Prominent and clearly labeled buttons for primary actions (e.g., "Save," "Add New," "Generate Invoice").
+
+Tabular Data Display: Simple, scannable tables for lists of sessions, clients, and invoices.
+
+Invoice Preview Area: A clean display of the generated invoice before downloading.
+
+The design will prioritize usability for users who are not highly tech-savvy.
+
+5. Out of Scope for MVP
+
+User Accounts & Authentication (single-user, local application).
+
+Cloud Sync/Backup.
+
+Advanced Financial Calculations/Reporting (e.g., detailed tax calculations, profit/loss).
+
+Direct Emailing of Invoices from the app.
+
+Multiple User Profiles/Businesses within one instance.
+
+Highly Customizable Invoice Templates (a standard, clean format will be used).
+
+Integrations with other software (e.g., calendars, accounting tools).
+
+Mobile-specific native apps (iOS/Android) – will be a web app accessible via mobile browser.
+
+Client-type specific fields or logic (beyond basic contact/rate info).
+
+6. Success Metrics
+
+Task Completion Rate for Core Journey: Percentage of users (initially the primary tester) successfully completing the entire flow from logging a session to generating and downloading an invoice without errors or significant assistance. (Target: >95%)
+
+Time to Create an Invoice: Time taken to generate an invoice once all sessions for a period are logged. (Target: < 5 minutes, significantly less than manual).
+
+Qualitative Feedback on Usability & Clarity: Direct feedback from the primary tester (and potentially other early users) on ease of use, clarity of information, and confidence in the generated invoice's accuracy.

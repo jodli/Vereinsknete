@@ -1,0 +1,137 @@
+1. System Overview
+
+High-level description: "VereinsKnete" is a single-user web application designed to run locally. It consists of a React frontend for user interaction and a Rust (Actix-web) backend that handles business logic, data storage operations with a local SQLite database, and invoice generation for various clients.
+
+Platform: Web application (accessed via a web browser).
+
+2. Tech Stack
+
+Frontend:
+
+Language: JavaScript/TypeScript
+
+Framework/Library: React
+
+Styling: Tailwind CSS
+
+Backend/Core Logic:
+
+Language: Rust
+
+Web Framework: Actix-web
+
+ORM: Diesel
+
+Database: SQLite
+
+AI Model/API: Not applicable for this MVP.
+
+Other Key Tools/Libraries (Potential):
+
+Rust:
+
+chrono for date/time handling.
+
+PDF Generation: Consider libraries like genpdf, printpdf, or lopdf.
+
+serde for serialization/deserialization.
+
+Deployment: Docker for containerization.
+
+3. Architecture & Data Flow
+
+Key Components:
+
+React Frontend (UI): Handles user interactions, form submissions, and displays data.
+
+Actix-web Backend (API Server): Exposes RESTful API endpoints for the frontend. Handles requests, business logic, and interacts with the Database Service.
+
+Business Logic Services (Rust modules): Encapsulate logic for session management, client management, user profile, and invoice generation.
+
+Database Service (Rust module using Diesel): Manages all CRUD operations with the SQLite database.
+
+PDF Generation Service (Rust module): Takes invoice data and generates a PDF document.
+
+Data Flow Diagram/Description:
+
+User interacts with the React UI (e.g., fills a form to log a session).
+
+React frontend sends an HTTP request (e.g., POST) to the Actix-web backend API.
+
+Actix-web routes the request to the appropriate handler.
+
+The handler calls relevant business logic services.
+
+Business logic services interact with the Database Service (Diesel) to persist or retrieve data from SQLite (e.g., client details, session logs).
+
+For invoice generation, the Invoice Generation Service is called, which fetches necessary data and uses a PDF library to create the PDF.
+
+The backend sends an HTTP response (e.g., JSON data or a PDF file stream) back to the frontend.
+
+React frontend updates the UI or triggers a file download.
+
+4. Feature Implementation Notes
+
+User Profile/Master Data Management:
+
+Frontend: React form for input.
+
+Backend: API endpoint to save/retrieve user details. Store in a dedicated table in SQLite.
+
+Client Management:
+
+Frontend: Forms for adding/editing clients, list display.
+
+Backend: CRUD API endpoints for clients. Store in a clients table. Consider a field for default hourly rate.
+
+Session Logging:
+
+Frontend: Form with date picker, time inputs, client selection (dropdown populated from clients).
+
+Backend: API to save session details. Store in a sessions table, linking to clients (foreign key). Use chrono for robust date/time handling.
+
+Invoice Generation:
+
+Frontend: Interface to select client and date range.
+
+Backend: API endpoint that:
+
+Fetches user profile data.
+
+Fetches client data.
+
+Fetches all relevant sessions from the sessions table for the selected client and date range.
+
+Calculates total hours and amount due.
+
+Passes data to the PDF Generation Service.
+
+Basic Invoice Viewing/Downloading (PDF):
+
+Backend: PDF Generation Service will use a chosen Rust PDF library to construct the PDF. The API endpoint will return the PDF as a file stream or application/pdf content type.
+
+Frontend: Trigger download of the received PDF.
+
+5. Error Handling
+
+Approach: Display clear, user-friendly error messages directly in the frontend interface.
+
+Backend: Actix-web handlers will use Rust's Result type to manage errors. Errors from database operations or business logic will be caught and mapped to appropriate HTTP status codes and user-friendly JSON error messages.
+
+Frontend: Intercept API error responses and display the message to the user. Avoid showing technical jargon.
+
+6. Data Handling & Security
+
+Storage: User input and generated data (personal details, client information, session logs, invoice data before PDF generation) will be stored in a local SQLite database file on the user's machine. The VereinsKnete.sqlite (or similar) file will reside in a user-accessible location or application data directory.
+
+Privacy: No data is transmitted externally from the user's local system.
+
+Security for MVP: Relies on standard file system security of the user's machine.
+
+Future Considerations: Local database encryption could be added later if needed.
+
+7. Development Timeline
+
+Estimated time for MVP: 3-4 weeks (ambitious, requires focused effort).
+
+Packaging: Aim for a single backend executable. Use Docker for creating a consistent running environment for development and local deployment.
