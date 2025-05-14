@@ -81,7 +81,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
         Box::new(elements::Paragraph::new("End").styled(style::Style::new().bold())),
         Box::new(elements::Paragraph::new("Hours").styled(style::Style::new().bold())),
         Box::new(elements::Paragraph::new("Amount").styled(style::Style::new().bold())),
-    ]);
+    ])?;
 
     // Reset decorator for data rows
     table.set_cell_decorator(elements::FrameCellDecorator::new(false, false, false));
@@ -98,7 +98,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
                 item.duration_hours
             ))),
             Box::new(elements::Paragraph::new(&format!("€{:.2}", item.amount))),
-        ]);
+        ])?;
     }
 
     doc.push(table);
@@ -113,7 +113,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
             "{:.2}",
             invoice.total_hours
         ))),
-    ]);
+    ])?;
 
     totals_table.push_row(vec![
         Box::new(elements::Paragraph::new("Total Amount:").styled(style::Style::new().bold())),
@@ -121,7 +121,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
             elements::Paragraph::new(&format!("€{:.2}", invoice.total_amount))
                 .styled(style::Style::new().bold()),
         ),
-    ]);
+    ])?;
 
     doc.push(totals_table);
     doc.push(elements::Break::new(1.0));

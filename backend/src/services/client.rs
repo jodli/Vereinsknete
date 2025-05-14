@@ -24,12 +24,19 @@ pub fn get_client_by_id(pool: &DbPool, client_id: i32) -> Result<Option<Client>,
 
 pub fn create_client(pool: &DbPool, new_client: NewClient) -> Result<Client, diesel::result::Error> {
     use crate::schema::clients;
+    use crate::schema::clients::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
 
     diesel::insert_into(clients::table)
         .values(&new_client)
-        .returning(Client::as_returning())
+        .execute(&mut conn)?;
+
+    // SQLite doesn't support returning clause, so we'll fetch the inserted client by id
+    clients
+        .order(id.desc())
+        .limit(1)
+        .select(Client::as_select())
         .get_result(&mut conn)
 }
 
@@ -40,7 +47,12 @@ pub fn update_client(pool: &DbPool, client_id: i32, update_client: UpdateClient)
 
     diesel::update(clients.filter(id.eq(client_id)))
         .set(&update_client)
-        .returning(Client::as_returning())
+        .execute(&mut conn)?;
+
+    // Fetch the updated record
+    clients
+        .filter(id.eq(client_id))
+        .select(Client::as_select())
         .get_result(&mut conn)
 }
 

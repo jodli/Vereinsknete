@@ -1,27 +1,42 @@
-use diesel::prelude::*;
-use chrono::NaiveTime;
-use crate::DbPool;
-use crate::models::session::{Session, NewSession, NewSessionRequest, SessionFilterParams, SessionWithDuration};
 use crate::models::client::Client;
+use crate::models::session::{
+    NewSession, NewSessionRequest, Session, SessionFilterParams, SessionWithDuration,
+};
+use crate::DbPool;
+use chrono::NaiveTime;
+use diesel::prelude::*;
 
-pub fn create_session(pool: &DbPool, session_req: NewSessionRequest) -> Result<Session, diesel::result::Error> {
+pub fn create_session(
+    pool: &DbPool,
+    session_req: NewSessionRequest,
+) -> Result<Session, diesel::result::Error> {
     use crate::schema::sessions;
+    use crate::schema::sessions::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
     let new_session = NewSession::from(session_req);
 
     diesel::insert_into(sessions::table)
         .values(&new_session)
-        .returning(Session::as_returning())
+        .execute(&mut conn)?;
+
+    // SQLite doesn't support returning clause, so we'll fetch the inserted session by id
+    sessions
+        .order(id.desc())
+        .limit(1)
+        .select(Session::as_select())
         .get_result(&mut conn)
 }
 
-pub fn get_all_sessions(pool: &DbPool, filter: Option<SessionFilterParams>) -> Result<Vec<SessionWithDuration>, diesel::result::Error> {
+pub fn get_all_sessions(
+    pool: &DbPool,
+    filter: Option<SessionFilterParams>,
+) -> Result<Vec<SessionWithDuration>, diesel::result::Error> {
+    use crate::schema::clients::dsl::clients;
     use crate::schema::sessions::dsl::*;
-    use crate::schema::clients;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
-    let mut query = sessions.inner_join(clients::table).into_boxed();
+    let mut query = sessions.into_boxed();
 
     if let Some(filter_params) = filter {
         if let Some(client_filter) = filter_params.client_id {
@@ -37,8 +52,19 @@ pub fn get_all_sessions(pool: &DbPool, filter: Option<SessionFilterParams>) -> R
         }
     }
 
-    let results: Vec<(Session, Client)> = query
-        .load::<(Session, Client)>(&mut conn)?;
+    // First get all sessions
+    let session_results: Vec<Session> = query.select(Session::as_select()).load(&mut conn)?;
+
+    // Now build the results with clients
+    let mut results = Vec::new();
+    for session in session_results {
+        let client = clients
+            .find(session.client_id)
+            .select(Client::as_select())
+            .first(&mut conn)?;
+
+        results.push((session, client));
+    }
 
     let sessions_with_duration = results
         .into_iter()
@@ -65,12 +91,14 @@ pub fn get_all_sessions(pool: &DbPool, filter: Option<SessionFilterParams>) -> R
     Ok(sessions_with_duration)
 }
 
-pub fn get_sessions_by_client(pool: &DbPool, client_id: i32) -> Result<Vec<Session>, diesel::result::Error> {
-    use crate::schema::sessions::dsl::*;
-
+pub fn get_sessions_by_client(
+    pool: &DbPool,
+    client_id: i32,
+) -> Result<Vec<Session>, diesel::result::Error> {
     let mut conn = pool.get().expect("Failed to get DB connection");
-    sessions
-        .filter(client_id.eq(client_id))
+
+    crate::schema::sessions::dsl::sessions
+        .filter(crate::schema::sessions::client_id.eq(client_id))
         .select(Session::as_select())
         .load(&mut conn)
 }
