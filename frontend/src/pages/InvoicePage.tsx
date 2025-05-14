@@ -41,12 +41,16 @@ const InvoicePage: React.FC = () => {
     setFormData(prev => ({ ...prev, client_id: e.target.value }));
   };
 
-  const handleStartDateChange = (date: Date) => {
-    setFormData(prev => ({ ...prev, start_date: date }));
+  const handleStartDateChange = (date: Date | null) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, start_date: date }));
+    }
   };
 
-  const handleEndDateChange = (date: Date) => {
-    setFormData(prev => ({ ...prev, end_date: date }));
+  const handleEndDateChange = (date: Date | null) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, end_date: date }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -135,7 +135,7 @@ const SessionsPage: React.FC = () => {
             </label>
             <DatePicker
               selected={startDate}
-              onChange={(date: Date) => setStartDate(date)}
+              onChange={(date: Date | null) => setStartDate(date)}
               className="w-full p-2 border border-gray-300 rounded-md"
               dateFormat="yyyy-MM-dd"
               isClearable
@@ -149,12 +149,12 @@ const SessionsPage: React.FC = () => {
             </label>
             <DatePicker
               selected={endDate}
-              onChange={(date: Date) => setEndDate(date)}
+              onChange={(date: Date | null) => setEndDate(date)}
               className="w-full p-2 border border-gray-300 rounded-md"
               dateFormat="yyyy-MM-dd"
               isClearable
               placeholderText="Select end date"
-              minDate={startDate}
+              minDate={startDate || undefined}
             />
           </div>
         </div>

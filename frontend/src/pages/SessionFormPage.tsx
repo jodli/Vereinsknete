@@ -47,8 +47,10 @@ const SessionFormPage: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (date: Date) => {
-    setFormData(prev => ({ ...prev, date }));
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, date }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

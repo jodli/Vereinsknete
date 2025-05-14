@@ -39,6 +39,7 @@ export const Button: React.FC<ButtonProps> = ({
 
 interface InputProps {
     id: string;
+    name?: string;
     label: string;
     type?: string;
     value?: string | number;
@@ -52,6 +53,7 @@ interface InputProps {
 
 export const Input: React.FC<InputProps> = ({
     id,
+    name,
     label,
     type = 'text',
     value,
@@ -69,6 +71,7 @@ export const Input: React.FC<InputProps> = ({
             </label>
             <input
                 id={id}
+                name={name}
                 type={type}
                 value={value}
                 onChange={onChange}
@@ -83,46 +86,50 @@ export const Input: React.FC<InputProps> = ({
 };
 
 interface TextareaProps {
-    id: string;
-    label: string;
-    value?: string;
-    onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    placeholder?: string;
-    required?: boolean;
-    rows?: number;
-    className?: string;
+  id: string;
+  name?: string;
+  label: string;
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder?: string;
+  required?: boolean;
+  rows?: number;
+  className?: string;
 }
 
 export const Textarea: React.FC<TextareaProps> = ({
-    id,
-    label,
-    value,
-    onChange,
-    placeholder,
-    required = false,
-    rows = 3,
-    className = '',
+  id,
+  name,
+  label,
+  value,
+  onChange,
+  placeholder,
+  required = false,
+  rows = 3,
+  className = '',
 }) => {
-    return (
-        <div className={`mb-4 ${className}`}>
-            <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
-                {label}{required && <span className="text-red-500">*</span>}
-            </label>
-            <textarea
-                id={id}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                required={required}
-                rows={rows}
-                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-        </div>
-    );
+  return (
+    <div className={`mb-4 ${className}`}>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1">
+        {label}{required && <span className="text-red-500">*</span>}
+      </label>
+      <textarea
+        id={id}
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        rows={rows}
+        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      />
+    </div>
+  );
 };
 
 interface SelectProps {
     id: string;
+    name?: string;
     label: string;
     value?: string | number;
     onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -134,6 +141,7 @@ interface SelectProps {
 
 export const Select: React.FC<SelectProps> = ({
     id,
+    name,
     label,
     value,
     onChange,
@@ -149,6 +157,7 @@ export const Select: React.FC<SelectProps> = ({
             </label>
             <select
                 id={id}
+                name={name}
                 value={value}
                 onChange={onChange}
                 required={required}
