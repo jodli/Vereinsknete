@@ -1,18 +1,17 @@
-use actix_web::{web, get, post, put, delete, HttpResponse, Error};
-use crate::DbPool;
+use crate::errors::AppError;
 use crate::models::client::{NewClient, UpdateClient};
 use crate::services::client as client_service;
+use crate::DbPool;
+use actix_web::{delete, get, post, put, web, Error, HttpResponse};
 
 #[get("/clients")]
 async fn get_clients(pool: web::Data<DbPool>) -> Result<HttpResponse, Error> {
-    let clients = web::block(move || {
-        client_service::get_all_clients(&pool)
-    })
-    .await?
-    .map_err(|e| {
-        eprintln!("Error getting clients: {:?}", e);
-        HttpResponse::InternalServerError().finish()
-    })?;
+    let clients = web::block(move || client_service::get_all_clients(&pool))
+        .await?
+        .map_err(|e| {
+            eprintln!("Error getting clients: {:?}", e);
+            AppError::Database(e)
+        })?;
 
     Ok(HttpResponse::Ok().json(clients))
 }
@@ -22,18 +21,17 @@ async fn get_client(
     pool: web::Data<DbPool>,
     client_id: web::Path<i32>,
 ) -> Result<HttpResponse, Error> {
-    let client = web::block(move || {
-        client_service::get_client_by_id(&pool, client_id.into_inner())
-    })
-    .await?
-    .map_err(|e| {
-        eprintln!("Error getting client: {:?}", e);
-        HttpResponse::InternalServerError().finish()
-    })?;
+    let client =
+        web::block(move || client_service::get_client_by_id(&pool, client_id.into_inner()))
+            .await?
+            .map_err(|e| {
+                eprintln!("Error getting client: {:?}", e);
+                AppError::Database(e)
+            })?;
 
     match client {
         Some(client) => Ok(HttpResponse::Ok().json(client)),
-        None => Ok(HttpResponse::NotFound().json("Client not found"))
+        None => Ok(HttpResponse::NotFound().json("Client not found")),
     }
 }
 
@@ -42,14 +40,12 @@ async fn create_client(
     pool: web::Data<DbPool>,
     client_data: web::Json<NewClient>,
 ) -> Result<HttpResponse, Error> {
-    let client = web::block(move || {
-        client_service::create_client(&pool, client_data.into_inner())
-    })
-    .await?
-    .map_err(|e| {
-        eprintln!("Error creating client: {:?}", e);
-        HttpResponse::InternalServerError().finish()
-    })?;
+    let client = web::block(move || client_service::create_client(&pool, client_data.into_inner()))
+        .await?
+        .map_err(|e| {
+            eprintln!("Error creating client: {:?}", e);
+            AppError::Database(e)
+        })?;
 
     Ok(HttpResponse::Created().json(client))
 }
@@ -66,7 +62,7 @@ async fn update_client(
     .await?
     .map_err(|e| {
         eprintln!("Error updating client: {:?}", e);
-        HttpResponse::InternalServerError().finish()
+        AppError::Database(e)
     })?;
 
     Ok(HttpResponse::Ok().json(client))
@@ -77,14 +73,12 @@ async fn delete_client(
     pool: web::Data<DbPool>,
     client_id: web::Path<i32>,
 ) -> Result<HttpResponse, Error> {
-    let deleted = web::block(move || {
-        client_service::delete_client(&pool, client_id.into_inner())
-    })
-    .await?
-    .map_err(|e| {
-        eprintln!("Error deleting client: {:?}", e);
-        HttpResponse::InternalServerError().finish()
-    })?;
+    let deleted = web::block(move || client_service::delete_client(&pool, client_id.into_inner()))
+        .await?
+        .map_err(|e| {
+            eprintln!("Error deleting client: {:?}", e);
+            AppError::Database(e)
+        })?;
 
     if deleted > 0 {
         Ok(HttpResponse::NoContent().finish())
@@ -95,8 +89,8 @@ async fn delete_client(
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(get_clients)
-       .service(get_client)
-       .service(create_client)
-       .service(update_client)
-       .service(delete_client);
+        .service(get_client)
+        .service(create_client)
+        .service(update_client)
+        .service(delete_client);
 }

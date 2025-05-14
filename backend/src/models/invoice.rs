@@ -1,4 +1,4 @@
-use crate::models::{client::Client, session::Session, user_profile::UserProfile};
+use crate::models::{client::Client, user_profile::UserProfile};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
@@ -15,8 +15,8 @@ pub struct InvoiceSessionItem {
     pub date: String,
     pub start_time: String,
     pub end_time: String,
-    pub duration_hours: f64,
-    pub amount: f64,
+    pub duration_hours: f32,
+    pub amount: f32,
 }
 
 #[derive(Debug, Serialize)]
@@ -26,6 +26,6 @@ pub struct InvoiceResponse {
     pub user_profile: UserProfile,
     pub client: Client,
     pub sessions: Vec<InvoiceSessionItem>,
-    pub total_hours: f64,
-    pub total_amount: f64,
+    pub total_hours: f32,
+    pub total_amount: f32,
 }

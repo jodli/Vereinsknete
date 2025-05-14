@@ -5,6 +5,7 @@ use diesel::sqlite::SqliteConnection;
 use dotenvy::dotenv;
 use std::env;
 
+mod errors;
 mod handlers;
 mod models;
 mod schema;

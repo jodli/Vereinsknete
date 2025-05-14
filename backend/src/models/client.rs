@@ -9,7 +9,7 @@ pub struct Client {
     pub name: String,
     pub address: String,
     pub contact_person: Option<String>,
-    pub default_hourly_rate: f64,
+    pub default_hourly_rate: f32,
 }
 
 #[derive(Debug, Deserialize, Insertable)]
@@ -18,7 +18,7 @@ pub struct NewClient {
     pub name: String,
     pub address: String,
     pub contact_person: Option<String>,
-    pub default_hourly_rate: f64,
+    pub default_hourly_rate: f32,
 }
 
 #[derive(Debug, Deserialize, AsChangeset)]
@@ -27,5 +27,5 @@ pub struct UpdateClient {
     pub name: Option<String>,
     pub address: Option<String>,
     pub contact_person: Option<String>,
-    pub default_hourly_rate: Option<f64>,
+    pub default_hourly_rate: Option<f32>,
 }

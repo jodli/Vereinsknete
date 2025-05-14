@@ -1,9 +1,9 @@
+use crate::models::invoice::{InvoiceRequest, InvoiceResponse, InvoiceSessionItem};
+use crate::services::{client, pdf, user_profile};
+use crate::DbPool;
+use anyhow::{Context, Result};
 use chrono::{NaiveTime, Utc};
 use diesel::prelude::*;
-use crate::DbPool;
-use crate::models::invoice::{InvoiceRequest, InvoiceResponse, InvoiceSessionItem};
-use crate::services::{user_profile, client, pdf};
-use anyhow::{Result, Context};
 
 pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Vec<u8>> {
     // Get user profile
@@ -28,7 +28,7 @@ pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Ve
         .context("Failed to get sessions")?;
 
     // Calculate totals and create invoice items
-    let mut total_hours = 0.0;
+    let mut total_hours = 0.0_f32;
     let hourly_rate = client_data.default_hourly_rate;
 
     let invoice_items: Vec<InvoiceSessionItem> = session_data
@@ -40,9 +40,9 @@ pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Ve
             // Calculate duration in hours
             let duration_hours = if end < start {
                 // Handle sessions that go past midnight
-                (end + chrono::Duration::hours(24) - start).num_minutes() as f64 / 60.0
+                (end + chrono::Duration::hours(24) - start).num_minutes() as f32 / 60.0
             } else {
-                (end - start).num_minutes() as f64 / 60.0
+                (end - start).num_minutes() as f32 / 60.0
             };
 
             total_hours += duration_hours;
