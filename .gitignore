@@ -1,5 +1,5 @@
 backend/target
-backend/database.sqlite
+backend/vereinsknete.db
 frontend/node_modules
 frontend/build
 
