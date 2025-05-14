@@ -41,8 +41,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <Link
                                     to={item.href}
                                     className={`flex items-center px-4 py-3 mb-1 rounded-lg transition-colors ${isActive(item.href)
-                                            ? 'bg-blue-100 text-blue-700 font-medium'
-                                            : 'text-gray-600 hover:bg-gray-100'
+                                        ? 'bg-blue-100 text-blue-700 font-medium'
+                                        : 'text-gray-600 hover:bg-gray-100'
                                         }`}
                                 >
                                     <item.icon className="w-5 h-5 mr-3" aria-hidden="true" />
