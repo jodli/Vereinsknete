@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  vereinsknete:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/database.sqlite
+      - RUST_LOG=info
+    restart: unless-stopped
