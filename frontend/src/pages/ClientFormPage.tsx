@@ -8,7 +8,7 @@ import { TrashIcon } from '@heroicons/react/24/outline';
 const ClientFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const isEditing = id !== 'new';
+    const isEditing = id && id !== 'new';
 
     const [formData, setFormData] = useState<ClientFormData>({
         name: '',
@@ -23,10 +23,10 @@ const ClientFormPage: React.FC = () => {
 
     useEffect(() => {
         const fetchClient = async () => {
-            if (!isEditing) return;
+            if (!isEditing || !id) return;
 
             try {
-                const data = await getClient(parseInt(id as string));
+                const data = await getClient(parseInt(id));
                 setFormData({
                     name: data.name,
                     address: data.address,
@@ -67,8 +67,8 @@ const ClientFormPage: React.FC = () => {
         setError('');
 
         try {
-            if (isEditing) {
-                await updateClient(parseInt(id as string), formData);
+            if (isEditing && id) {
+                await updateClient(parseInt(id), formData);
             } else {
                 await createClient(formData);
             }
@@ -89,8 +89,10 @@ const ClientFormPage: React.FC = () => {
         setError('');
 
         try {
-            await deleteClient(parseInt(id as string));
-            navigate('/clients');
+            if (id) {
+                await deleteClient(parseInt(id));
+                navigate('/clients');
+            }
         } catch (error) {
             console.error('Error deleting client:', error);
             setError('Failed to delete client. Please try again.');

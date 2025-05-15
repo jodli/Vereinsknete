@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, Button, Table } from '../components/UI';
 import { getClients } from '../services/api';
 import { Client } from '../types';
@@ -9,6 +9,7 @@ const ClientsPage: React.FC = () => {
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchClients = async () => {
@@ -73,7 +74,7 @@ const ClientsPage: React.FC = () => {
                         columns={columns}
                         data={formattedClients}
                         onRowClick={(row) => {
-                            window.location.href = `/clients/${row.id}`;
+                            navigate(`/clients/${row.id}`);
                         }}
                     />
                 </Card>
