@@ -3,12 +3,15 @@ use anyhow::Result;
 use genpdf::{elements, fonts, style, Element};
 use std::io::Cursor;
 
+const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
+const DEFAULT_FONT_NAME: &str = "LiberationSans";
+
 pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
-    // Load the default font
-    let font_family = fonts::from_files("./fonts", "DejaVuSans", None)?;
+    // Load system font
+    let default_font = fonts::from_files(FONT_DIR, DEFAULT_FONT_NAME, None)?;
 
     // Create a document
-    let mut doc = genpdf::Document::new(font_family);
+    let mut doc = genpdf::Document::new(default_font);
     let mut decorator = genpdf::SimplePageDecorator::new();
     decorator.set_margins(20);
     doc.set_page_decorator(decorator);
@@ -34,7 +37,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.push(from_title);
 
     doc.push(elements::Paragraph::new(&invoice.user_profile.name));
-    doc.push(elements::Paragraph::new(&invoice.user_profile.address));
+
+    // Split address by newline and add each line as separate paragraph
+    for line in invoice.user_profile.address.split('\n') {
+        doc.push(elements::Paragraph::new(line));
+    }
 
     if let Some(tax_id) = &invoice.user_profile.tax_id {
         doc.push(elements::Paragraph::new(&format!("Tax ID: {}", tax_id)));
@@ -54,7 +61,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.push(to_title);
 
     doc.push(elements::Paragraph::new(&invoice.client.name));
-    doc.push(elements::Paragraph::new(&invoice.client.address));
+
+    // Split address by newline and add each line as separate paragraph
+    for line in invoice.client.address.split('\n') {
+        doc.push(elements::Paragraph::new(line));
+    }
 
     if let Some(contact) = &invoice.client.contact_person {
         doc.push(elements::Paragraph::new(&format!("Contact: {}", contact)));
@@ -132,7 +143,10 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.push(payment_title);
 
     if let Some(bank_details) = &invoice.user_profile.bank_details {
-        doc.push(elements::Paragraph::new(bank_details));
+        // Split bank details by newline and add each line as separate paragraph
+        for line in bank_details.split('\n') {
+            doc.push(elements::Paragraph::new(line));
+        }
     } else {
         doc.push(elements::Paragraph::new(
             "Please contact for payment details.",

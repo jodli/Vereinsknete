@@ -30,15 +30,15 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libsqlite3-0 \
     ca-certificates \
+    fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 # Create necessary directories
-RUN mkdir -p /app/fonts /app/pdf_output /app/data
+RUN mkdir -p /app/pdf_output /app/data
 
 # Copy backend binary and necessary files
 COPY --from=backend-builder /app/target/release/vereinsknete /app/
 COPY --from=backend-builder /app/migrations /app/migrations
-COPY backend/fonts/ /app/fonts/
 
 # Copy frontend build
 COPY --from=frontend-builder /app/build /app/public
