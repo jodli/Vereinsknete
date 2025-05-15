@@ -72,6 +72,7 @@ export interface InvoiceRequest {
     client_id: number;
     start_date: string;
     end_date: string;
+    language?: string;
 }
 
 export interface InvoiceSessionItem {

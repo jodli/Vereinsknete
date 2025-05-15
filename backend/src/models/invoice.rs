@@ -7,6 +7,8 @@ pub struct InvoiceRequest {
     pub client_id: i32,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
+    #[serde(default)]
+    pub language: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

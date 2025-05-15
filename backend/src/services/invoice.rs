@@ -16,6 +16,9 @@ pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Ve
         .context("Failed to get client")?
         .context("Client not found")?;
 
+    // Extract language preference
+    let language = invoice_req.language.as_deref();
+
     // Get sessions for the client in the date range
     use crate::schema::sessions::dsl::*;
 
@@ -71,6 +74,6 @@ pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Ve
         total_amount,
     };
 
-    // Generate PDF
-    pdf::generate_invoice_pdf(&invoice).context("Failed to generate PDF")
+    // Generate PDF with language preference
+    pdf::generate_invoice_pdf(&invoice, language).context("Failed to generate PDF")
 }

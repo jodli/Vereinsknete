@@ -11,7 +11,7 @@ const InvoicePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
-    const { translations } = useLanguage();
+    const { translations, language } = useLanguage();
 
     const [formData, setFormData] = useState({
         client_id: '',
@@ -68,6 +68,7 @@ const InvoicePage: React.FC = () => {
                 client_id: parseInt(formData.client_id),
                 start_date: formattedStartDate,
                 end_date: formattedEndDate,
+                language: language,
             });
 
             // Create a URL for the blob and trigger download

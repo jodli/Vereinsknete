@@ -1,4 +1,5 @@
 use crate::models::invoice::InvoiceResponse;
+use crate::i18n::{Language, translate};
 use anyhow::Result;
 use genpdf::{
     elements::{self},
@@ -9,7 +10,13 @@ use std::io::Cursor;
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
 const DEFAULT_FONT_NAME: &str = "LiberationSans";
 
-pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
+pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -> Result<Vec<u8>> {
+    // Determine language from parameter or fall back to default (German)
+    let lang = match language {
+        Some(lang_str) => Language::from_str(lang_str),
+        None => Language::default(),
+    };
+    
     // Load system font
     let default_font = fonts::from_files(FONT_DIR, DEFAULT_FONT_NAME, None)?;
 
@@ -20,18 +27,19 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.set_page_decorator(decorator);
 
     // Set document properties
-    doc.set_title(&format!("Invoice #{}", &invoice.invoice_number));
+    doc.set_title(&format!("{} #{}", translate(lang, "invoice", "invoice"), &invoice.invoice_number));
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.5);
 
     // Add invoice header with larger font and bold styling
-    let header = elements::Paragraph::new(&format!("INVOICE #{}", &invoice.invoice_number))
+    let header = elements::Paragraph::new(&format!("{} #{}", translate(lang, "invoice", "invoice"), &invoice.invoice_number))
         .styled(style::Style::new().bold().with_font_size(22));
     doc.push(header);
 
     // Add date with some space below
-    doc.push(elements::Paragraph::new(&format!(
-        "Date: {}",
+    doc.push(elements::Paragraph::new(format!(
+        "{}: {}",
+        translate(lang, "invoice", "date"),
         &invoice.date
     )));
     doc.push(elements::Break::new(1.5));
@@ -43,7 +51,8 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     // FROM section with clear visual separation
     let mut from_section = elements::LinearLayout::vertical();
     from_section.push(
-        elements::Paragraph::new("FROM:").styled(style::Style::new().bold().with_font_size(14)),
+        elements::Paragraph::new(translate(lang, "invoice", "from"))
+            .styled(style::Style::new().bold().with_font_size(14)),
     );
     from_section.push(elements::Paragraph::new(&invoice.user_profile.name));
 
@@ -53,13 +62,14 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     }
 
     if let Some(tax_id) = &invoice.user_profile.tax_id {
-        from_section.push(elements::Paragraph::new(&format!("Tax ID: {}", tax_id)));
+        from_section.push(elements::Paragraph::new(&format!("{}: {}", translate(lang, "invoice", "tax_id"), tax_id)));
     }
 
     // TO section
     let mut to_section = elements::LinearLayout::vertical();
     to_section.push(
-        elements::Paragraph::new("TO:").styled(style::Style::new().bold().with_font_size(14)),
+        elements::Paragraph::new(translate(lang, "invoice", "to"))
+            .styled(style::Style::new().bold().with_font_size(14)),
     );
     to_section.push(elements::Paragraph::new(&invoice.client.name));
 
@@ -69,7 +79,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     }
 
     if let Some(contact) = &invoice.client.contact_person {
-        to_section.push(elements::Paragraph::new(&format!("Contact: {}", contact)));
+        to_section.push(elements::Paragraph::new(&format!("{}: {}", translate(lang, "invoice", "contact"), contact)));
     }
 
     // Add from and to sections to the columns
@@ -95,32 +105,32 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
 
     table.push_row(vec![
         Box::new(
-            elements::Paragraph::new("Service")
+            elements::Paragraph::new(translate(lang, "invoice", "service"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
         Box::new(
-            elements::Paragraph::new("Date")
+            elements::Paragraph::new(translate(lang, "invoice", "date"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
         Box::new(
-            elements::Paragraph::new("Start")
+            elements::Paragraph::new(translate(lang, "invoice", "start"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
         Box::new(
-            elements::Paragraph::new("End")
+            elements::Paragraph::new(translate(lang, "invoice", "end"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
         Box::new(
-            elements::Paragraph::new("Hours")
+            elements::Paragraph::new(translate(lang, "invoice", "hours"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
         Box::new(
-            elements::Paragraph::new("Amount")
+            elements::Paragraph::new(translate(lang, "invoice", "amount"))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
@@ -156,7 +166,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     // Set total hours row
     totals_table.push_row(vec![
         Box::new(
-            elements::Paragraph::new("Total Hours:")
+            elements::Paragraph::new(format!("{}:", translate(lang, "invoice", "total_hours")))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
@@ -167,7 +177,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
 
     totals_table.push_row(vec![
         Box::new(
-            elements::Paragraph::new("Total Amount:")
+            elements::Paragraph::new(format!("{}:", translate(lang, "invoice", "total_amount")))
                 .styled(style::Style::new().bold())
                 .padded(Margins::all(1)),
         ),
@@ -182,7 +192,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.push(elements::Break::new(1.5));
 
     doc.push(
-        elements::Paragraph::new("Payment Details:")
+        elements::Paragraph::new(&format!("{}:", translate(lang, "invoice", "payment_details")))
             .styled(style::Style::new().bold().with_font_size(14)),
     );
 
@@ -193,7 +203,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
         }
     } else {
         doc.push(elements::Paragraph::new(
-            "Please contact for payment details.",
+            translate(lang, "invoice", "no_payment_details"),
         ));
     }
 

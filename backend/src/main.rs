@@ -7,6 +7,7 @@ use std::env;
 
 mod errors;
 mod handlers;
+mod i18n;
 mod models;
 mod schema;
 mod services;
