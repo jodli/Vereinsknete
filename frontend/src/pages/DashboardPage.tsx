@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Card, Button } from '../components/UI';
 import { getUserProfile, getSessions, getClients } from '../services/api';
 import { ClipboardDocumentIcon, UserCircleIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '../i18n';
 
 const DashboardPage: React.FC = () => {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [sessionCount, setSessionCount] = useState<number>(0);
     const [clientCount, setClientCount] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
+    const { translations } = useLanguage();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -36,29 +38,29 @@ const DashboardPage: React.FC = () => {
 
     const setupSteps = [
         {
-            title: "Complete Your Profile",
-            description: "Add your personal and business details for invoices",
+            title: translations.dashboard.setupSteps.completeProfile.title,
+            description: translations.dashboard.setupSteps.completeProfile.description,
             isComplete: !!userProfile,
             link: "/profile",
             icon: UserCircleIcon,
         },
         {
-            title: "Add Your Clients",
-            description: "Create clients with contact details and hourly rates",
+            title: translations.dashboard.setupSteps.addClient.title,
+            description: translations.dashboard.setupSteps.addClient.description,
             isComplete: clientCount > 0,
             link: "/clients/new",
             icon: UserGroupIcon,
         },
         {
-            title: "Log Your Sessions",
-            description: "Record your billable sessions with date and time",
+            title: translations.dashboard.setupSteps.addSession.title,
+            description: translations.dashboard.setupSteps.addSession.description,
             isComplete: sessionCount > 0,
             link: "/sessions/new",
             icon: CalendarIcon,
         },
         {
-            title: "Generate Your First Invoice",
-            description: "Create a professional PDF invoice for a client",
+            title: translations.dashboard.setupSteps.generateInvoice.title,
+            description: translations.dashboard.setupSteps.generateInvoice.description,
             isComplete: userProfile && clientCount > 0 && sessionCount > 0,
             link: "/invoices",
             icon: ClipboardDocumentIcon,
@@ -68,36 +70,36 @@ const DashboardPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">Loading dashboard...</p>
+                <p className="text-gray-600">{translations.common.loading}</p>
             </div>
         );
     }
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Welcome to VereinsKnete</h1>
+            <h1 className="text-2xl font-bold mb-6">VereinsKnete</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <Card className="flex flex-col items-center p-6 text-center">
                     <UserGroupIcon className="w-12 h-12 text-blue-600 mb-2" />
                     <span className="text-2xl font-bold">{clientCount}</span>
-                    <span className="text-gray-600">Clients</span>
+                    <span className="text-gray-600">{translations.navigation.clients}</span>
                 </Card>
 
                 <Card className="flex flex-col items-center p-6 text-center">
                     <CalendarIcon className="w-12 h-12 text-blue-600 mb-2" />
                     <span className="text-2xl font-bold">{sessionCount}</span>
-                    <span className="text-gray-600">Sessions</span>
+                    <span className="text-gray-600">{translations.navigation.sessions}</span>
                 </Card>
 
                 <Card className="flex flex-col items-center p-6 text-center">
                     <ClipboardDocumentIcon className="w-12 h-12 text-blue-600 mb-2" />
                     <span className="text-2xl font-bold">-</span>
-                    <span className="text-gray-600">Invoices Generated</span>
+                    <span className="text-gray-600">{translations.invoices.title}</span>
                 </Card>
             </div>
 
-            <h2 className="text-xl font-semibold mb-4">Getting Started</h2>
+            <h2 className="text-xl font-semibold mb-4">{translations.dashboard.overview.title}</h2>
             <Card>
                 <ul>
                     {setupSteps.map((step, index) => (
@@ -122,7 +124,7 @@ const DashboardPage: React.FC = () => {
                                         <p className="font-medium">{step.title}</p>
                                         <Link to={step.link}>
                                             <Button variant={step.isComplete ? "secondary" : "primary"} className="text-sm py-1">
-                                                {step.isComplete ? 'Edit' : 'Start'}
+                                                {step.isComplete ? translations.common.edit : translations.common.start}
                                             </Button>
                                         </Link>
                                     </div>

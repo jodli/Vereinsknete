@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Input, Textarea, Button } from '../components/UI';
 import { getUserProfile, updateUserProfile } from '../services/api';
-import { UserProfile, UserProfileFormData } from '../types';
+import { UserProfileFormData } from '../types';
+import { useLanguage } from '../i18n';
 
 const ProfilePage: React.FC = () => {
     const [formData, setFormData] = useState<UserProfileFormData>({
@@ -10,6 +11,7 @@ const ProfilePage: React.FC = () => {
         tax_id: '',
         bank_details: '',
     });
+    const { translations } = useLanguage();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -57,8 +59,7 @@ const ProfilePage: React.FC = () => {
                 bank_details: formData.bank_details || undefined,
             });
 
-            setProfile(updatedProfile);
-            setSuccessMessage('Profile saved successfully!');
+            setSuccessMessage(translations.profile.success.saved);
 
             // Clear success message after 3 seconds
             setTimeout(() => {
@@ -74,19 +75,19 @@ const ProfilePage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">Loading...</p>
+                <p className="text-gray-600">{translations.common.loading}</p>
             </div>
         );
     }
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">My Details</h1>
+            <h1 className="text-2xl font-bold mb-6">{translations.profile.title}</h1>
             <Card>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-6">
                         <p className="text-sm text-gray-600 mb-4">
-                            Your details will be used on invoices. Make sure everything is accurate.
+                            Ihre Daten werden auf Rechnungen verwendet. Stellen Sie sicher, dass alle Angaben korrekt sind.
                         </p>
                         {successMessage && (
                             <div className="mb-4 p-2 bg-green-100 text-green-800 rounded">
@@ -98,7 +99,7 @@ const ProfilePage: React.FC = () => {
                     <Input
                         id="name"
                         name="name"
-                        label="Full Name"
+                        label={translations.profile.labels.name}
                         value={formData.name}
                         onChange={handleChange}
                         required
@@ -107,7 +108,7 @@ const ProfilePage: React.FC = () => {
                     <Textarea
                         id="address"
                         name="address"
-                        label="Address"
+                        label={translations.profile.labels.address}
                         value={formData.address}
                         onChange={handleChange}
                         required
@@ -116,7 +117,7 @@ const ProfilePage: React.FC = () => {
                     <Input
                         id="tax_id"
                         name="tax_id"
-                        label="Tax ID (optional)"
+                        label={`${translations.profile.labels.taxId} (optional)`}
                         value={formData.tax_id}
                         onChange={handleChange}
                     />
@@ -124,15 +125,15 @@ const ProfilePage: React.FC = () => {
                     <Textarea
                         id="bank_details"
                         name="bank_details"
-                        label="Bank Details (optional)"
+                        label={translations.profile.labels.bankDetails}
                         value={formData.bank_details}
                         onChange={handleChange}
-                        placeholder="IBAN, BIC, Bank Name"
+                        placeholder={translations.profile.placeholders.bankDetails}
                     />
 
                     <div className="flex justify-end mt-6">
                         <Button type="submit" disabled={isSaving}>
-                            {isSaving ? 'Saving...' : 'Save Details'}
+                            {isSaving ? `${translations.common.loading}...` : translations.profile.buttons.save}
                         </Button>
                     </div>
                 </form>

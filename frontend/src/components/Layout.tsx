@@ -7,6 +7,7 @@ import {
     CalendarIcon,
     DocumentTextIcon
 } from '@heroicons/react/24/outline';
+import { useLanguage } from '../i18n';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -14,13 +15,14 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
     const location = useLocation();
+    const { translations } = useLanguage();
 
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: HomeIcon },
-        { name: 'My Details', href: '/profile', icon: UserIcon },
-        { name: 'Clients', href: '/clients', icon: UsersIcon },
-        { name: 'Sessions', href: '/sessions', icon: CalendarIcon },
-        { name: 'Invoices', href: '/invoices', icon: DocumentTextIcon },
+        { name: translations.navigation.dashboard, href: '/', icon: HomeIcon },
+        { name: translations.navigation.myDetails, href: '/profile', icon: UserIcon },
+        { name: translations.navigation.clients, href: '/clients', icon: UsersIcon },
+        { name: translations.navigation.sessions, href: '/sessions', icon: CalendarIcon },
+        { name: translations.navigation.invoices, href: '/invoices', icon: DocumentTextIcon },
     ];
 
     const isActive = (path: string) => {
@@ -33,6 +35,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="w-64 bg-white shadow-md">
                 <div className="p-6">
                     <h1 className="text-2xl font-bold text-blue-600">VereinsKnete</h1>
+                    <div className="mt-2">
+                        <LanguageSwitcher />
+                    </div>
                 </div>
                 <nav className="mt-6">
                     <ul>

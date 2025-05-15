@@ -5,9 +5,11 @@ import { getClients, createSession } from '../services/api';
 import { Client } from '../types';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useLanguage } from '../i18n';
 
 const SessionFormPage: React.FC = () => {
     const navigate = useNavigate();
+    const { translations } = useLanguage();
 
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +35,7 @@ const SessionFormPage: React.FC = () => {
                 setError('');
             } catch (error) {
                 console.error('Error fetching clients:', error);
-                setError('Failed to load clients. Please try again later.');
+                setError(translations.common.errors.failedToLoad);
             } finally {
                 setIsLoading(false);
             }
@@ -73,7 +75,7 @@ const SessionFormPage: React.FC = () => {
             navigate('/sessions');
         } catch (error) {
             console.error('Error creating session:', error);
-            setError('Failed to save session. Please try again.');
+            setError(translations.common.errors.failedToSave);
             setIsSaving(false);
         }
     };
@@ -81,14 +83,14 @@ const SessionFormPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">Loading...</p>
+                <p className="text-gray-600">{translations.common.loading}</p>
             </div>
         );
     }
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Log New Session</h1>
+            <h1 className="text-2xl font-bold mb-6">{translations.sessions.addNew}</h1>
 
             <Card>
                 {error && (
@@ -99,9 +101,9 @@ const SessionFormPage: React.FC = () => {
 
                 {clients.length === 0 ? (
                     <div className="text-center py-6">
-                        <p className="text-gray-700 mb-4">You need to create a client first before you can log a session.</p>
+                        <p className="text-gray-700 mb-4">{translations.sessions.form.noClients}</p>
                         <Button onClick={() => navigate('/clients/new')}>
-                            Create Your First Client
+                            {translations.dashboard.setupSteps.addClient.title}
                         </Button>
                     </div>
                 ) : (
@@ -109,7 +111,7 @@ const SessionFormPage: React.FC = () => {
                         <Select
                             id="client_id"
                             name="client_id"
-                            label="Client"
+                            label={translations.sessions.form.labels.client}
                             value={formData.client_id}
                             onChange={handleChange}
                             options={clients.map(client => ({
@@ -122,16 +124,16 @@ const SessionFormPage: React.FC = () => {
                         <Input
                             id="name"
                             name="name"
-                            label="Session Name"
+                            label={translations.sessions.form.labels.description}
                             value={formData.name}
                             onChange={handleChange}
-                            placeholder="e.g. Yoga Class, Training Session"
+                            placeholder={translations.sessions.form.placeholders.description}
                             required
                         />
 
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Date<span className="text-red-500">*</span>
+                                {translations.sessions.form.labels.date}<span className="text-red-500">*</span>
                             </label>
                             <DatePicker
                                 selected={formData.date}
@@ -146,7 +148,7 @@ const SessionFormPage: React.FC = () => {
                             <Input
                                 id="start_time"
                                 name="start_time"
-                                label="Start Time"
+                                label={translations.sessions.form.labels.startTime}
                                 type="time"
                                 value={formData.start_time}
                                 onChange={handleChange}
@@ -156,7 +158,7 @@ const SessionFormPage: React.FC = () => {
                             <Input
                                 id="end_time"
                                 name="end_time"
-                                label="End Time"
+                                label={translations.sessions.form.labels.endTime}
                                 type="time"
                                 value={formData.end_time}
                                 onChange={handleChange}
@@ -170,10 +172,10 @@ const SessionFormPage: React.FC = () => {
                                 onClick={() => navigate('/sessions')}
                                 type="button"
                             >
-                                Cancel
+                                {translations.common.cancel}
                             </Button>
                             <Button type="submit" disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Session'}
+                                {isSaving ? `${translations.common.loading}...` : translations.sessions.form.buttons.save}
                             </Button>
                         </div>
                     </form>

@@ -6,39 +6,21 @@ import { SessionWithDuration, Client } from '../types';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useLanguage } from '../i18n';
 
 const SessionsPage: React.FC = () => {
     const [sessions, setSessions] = useState<SessionWithDuration[]>([]);
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const { translations } = useLanguage();
 
     // Filter states
     const [clientFilter, setClientFilter] = useState<number | ''>('');
     const [startDate, setStartDate] = useState<Date | null>(null);
     const [endDate, setEndDate] = useState<Date | null>(null);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch clients for filter dropdown
-                const clientsData = await getClients();
-                setClients(clientsData);
-
-                // Initial fetch of all sessions
-                await fetchSessions();
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                setError('Failed to load data. Please try again later.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    const fetchSessions = async () => {
+    const fetchSessions = useCallback(async () => {
         setIsLoading(true);
 
         try {
@@ -61,7 +43,7 @@ const SessionsPage: React.FC = () => {
             setError('');
         } catch (error) {
             console.error('Error fetching sessions:', error);
-            setError('Failed to load sessions. Please try again.');
+            setError(translations.common.errors.failedToLoad);
         } finally {
             setIsLoading(false);
         }
@@ -101,11 +83,11 @@ const SessionsPage: React.FC = () => {
     };
 
     const columns = [
-        { key: 'date', label: 'Date' },
-        { key: 'client_name', label: 'Client' },
-        { key: 'name', label: 'Session Name' },
-        { key: 'time', label: 'Time' },
-        { key: 'duration', label: 'Duration' },
+        { key: 'date', label: translations.sessions.columns.date },
+        { key: 'client_name', label: translations.sessions.columns.client },
+        { key: 'name', label: translations.sessions.form.labels.description },
+        { key: 'time', label: translations.sessions.form.labels.startTime },
+        { key: 'duration', label: translations.sessions.columns.duration },
     ];
 
     const formattedSessions = sessions.map((item) => {
@@ -121,9 +103,9 @@ const SessionsPage: React.FC = () => {
                 duration: 'N/A',
             };
         }
-        
+
         const { client_name, duration_minutes } = item;
-        
+
         // Based on the console output, it appears the session data is directly on the item object
         // rather than nested inside a 'session' property
         return {
@@ -139,25 +121,25 @@ const SessionsPage: React.FC = () => {
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Sessions</h1>
+                <h1 className="text-2xl font-bold">{translations.sessions.title}</h1>
                 <Link to="/sessions/new">
                     <Button className="flex items-center">
                         <PlusIcon className="w-5 h-5 mr-1" />
-                        Log New Session
+                        {translations.sessions.addNew}
                     </Button>
                 </Link>
             </div>
 
             <Card className="mb-6">
-                <h2 className="text-lg font-semibold mb-4">Filter Sessions</h2>
+                <h2 className="text-lg font-semibold mb-4">{translations.common.filter}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Select
                         id="client-filter"
-                        label="Client"
+                        label={translations.sessions.columns.client}
                         value={clientFilter}
                         onChange={(e) => setClientFilter(e.target.value as number | '')}
                         options={[
-                            { value: '', label: 'All Clients' },
+                            { value: '', label: `${translations.common.all} ${translations.navigation.clients}` },
                             ...clients.map(client => ({
                                 value: client.id,
                                 label: client.name
@@ -167,7 +149,7 @@ const SessionsPage: React.FC = () => {
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Start Date
+                            {translations.sessions.columns.date} (von)
                         </label>
                         <DatePicker
                             selected={startDate}
@@ -175,13 +157,13 @@ const SessionsPage: React.FC = () => {
                             className="w-full p-2 border border-gray-300 rounded-md"
                             dateFormat="yyyy-MM-dd"
                             isClearable
-                            placeholderText="Select start date"
+                            placeholderText="Startdatum auswählen"
                         />
                     </div>
 
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            End Date
+                            {translations.sessions.columns.date} (bis)
                         </label>
                         <DatePicker
                             selected={endDate}
@@ -189,7 +171,7 @@ const SessionsPage: React.FC = () => {
                             className="w-full p-2 border border-gray-300 rounded-md"
                             dateFormat="yyyy-MM-dd"
                             isClearable
-                            placeholderText="Select end date"
+                            placeholderText="Enddatum auswählen"
                             minDate={startDate || undefined}
                         />
                     </div>
@@ -197,10 +179,10 @@ const SessionsPage: React.FC = () => {
 
                 <div className="flex justify-end space-x-2 mt-2">
                     <Button variant="secondary" onClick={handleClearFilters}>
-                        Clear Filters
+                        Filter zurücksetzen
                     </Button>
                     <Button onClick={handleFilter}>
-                        Apply Filters
+                        Filter anwenden
                     </Button>
                 </div>
             </Card>

@@ -4,11 +4,13 @@ import { Card, Input, Textarea, Button } from '../components/UI';
 import { getClient, createClient, updateClient, deleteClient } from '../services/api';
 import { ClientFormData } from '../types';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import { useLanguage } from '../i18n';
 
 const ClientFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const isEditing = id && id !== 'new';
+    const { translations } = useLanguage();
 
     const [formData, setFormData] = useState<ClientFormData>({
         name: '',
@@ -36,7 +38,7 @@ const ClientFormPage: React.FC = () => {
                 setError('');
             } catch (error) {
                 console.error('Error fetching client:', error);
-                setError('Failed to load client data. Please try again.');
+                setError(translations.common.errors.failedToLoad);
             } finally {
                 setIsLoading(false);
             }
@@ -75,7 +77,7 @@ const ClientFormPage: React.FC = () => {
             navigate('/clients');
         } catch (error) {
             console.error('Error saving client:', error);
-            setError('Failed to save client. Please try again.');
+            setError(translations.common.errors.failedToSave);
             setIsSaving(false);
         }
     };
@@ -95,7 +97,7 @@ const ClientFormPage: React.FC = () => {
             }
         } catch (error) {
             console.error('Error deleting client:', error);
-            setError('Failed to delete client. Please try again.');
+            setError(translations.common.errors.failedToDelete);
             setIsDeleting(false);
         }
     };
@@ -103,7 +105,7 @@ const ClientFormPage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">Loading client data...</p>
+                <p className="text-gray-600">{translations.common.loading}</p>
             </div>
         );
     }
@@ -112,7 +114,7 @@ const ClientFormPage: React.FC = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">
-                    {isEditing ? 'Edit Client' : 'New Client'}
+                    {isEditing ? translations.clients.form.title.edit : translations.clients.form.title.new}
                 </h1>
                 {isEditing && (
                     <Button
@@ -122,7 +124,7 @@ const ClientFormPage: React.FC = () => {
                         className="flex items-center"
                     >
                         <TrashIcon className="w-5 h-5 mr-1" />
-                        {isDeleting ? 'Deleting...' : 'Delete Client'}
+                        {isDeleting ? translations.common.loading : translations.clients.form.buttons.delete}
                     </Button>
                 )}
             </div>
@@ -138,7 +140,7 @@ const ClientFormPage: React.FC = () => {
                     <Input
                         id="name"
                         name="name"
-                        label="Client Name"
+                        label={translations.clients.form.labels.name}
                         value={formData.name}
                         onChange={handleChange}
                         required
@@ -147,7 +149,7 @@ const ClientFormPage: React.FC = () => {
                     <Textarea
                         id="address"
                         name="address"
-                        label="Address"
+                        label={translations.clients.form.labels.address}
                         value={formData.address}
                         onChange={handleChange}
                         required
@@ -156,7 +158,7 @@ const ClientFormPage: React.FC = () => {
                     <Input
                         id="contact_person"
                         name="contact_person"
-                        label="Contact Person (optional)"
+                        label={translations.clients.form.labels.contactPerson}
                         value={formData.contact_person}
                         onChange={handleChange}
                     />
@@ -164,7 +166,7 @@ const ClientFormPage: React.FC = () => {
                     <Input
                         id="default_hourly_rate"
                         name="default_hourly_rate"
-                        label="Default Hourly Rate (€)"
+                        label={translations.clients.form.labels.hourlyRate}
                         type="number"
                         value={formData.default_hourly_rate}
                         onChange={handleChange}
@@ -179,10 +181,10 @@ const ClientFormPage: React.FC = () => {
                             onClick={() => navigate('/clients')}
                             type="button"
                         >
-                            Cancel
+                            {translations.common.cancel}
                         </Button>
                         <Button type="submit" disabled={isSaving}>
-                            {isSaving ? 'Saving...' : 'Save Client'}
+                            {isSaving ? `${translations.common.loading}...` : translations.clients.form.buttons.save}
                         </Button>
                     </div>
                 </form>

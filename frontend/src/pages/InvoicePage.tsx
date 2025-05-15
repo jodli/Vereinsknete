@@ -4,12 +4,14 @@ import { getClients, generateInvoice } from '../services/api';
 import { Client } from '../types';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import { useLanguage } from '../i18n';
 
 const InvoicePage: React.FC = () => {
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [error, setError] = useState('');
+    const { translations } = useLanguage();
 
     const [formData, setFormData] = useState({
         client_id: '',
@@ -28,7 +30,7 @@ const InvoicePage: React.FC = () => {
                 setError('');
             } catch (error) {
                 console.error('Error fetching clients:', error);
-                setError('Failed to load clients. Please try again later.');
+                setError(translations.common.errors.failedToLoad);
             } finally {
                 setIsLoading(false);
             }
@@ -87,7 +89,7 @@ const InvoicePage: React.FC = () => {
             setIsGenerating(false);
         } catch (error) {
             console.error('Error generating invoice:', error);
-            setError('Failed to generate invoice. Please try again.');
+            setError(translations.common.errors.failedToGenerate);
             setIsGenerating(false);
         }
     };
@@ -95,14 +97,14 @@ const InvoicePage: React.FC = () => {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">Loading...</p>
+                <p className="text-gray-600">{translations.common.loading}</p>
             </div>
         );
     }
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">Generate Invoice</h1>
+            <h1 className="text-2xl font-bold mb-6">{translations.invoices.generateNew}</h1>
 
             <Card>
                 {error && (
@@ -113,20 +115,20 @@ const InvoicePage: React.FC = () => {
 
                 {clients.length === 0 ? (
                     <div className="text-center py-6">
-                        <p className="text-gray-700 mb-4">You need to add clients and log sessions before you can generate an invoice.</p>
+                        <p className="text-gray-700 mb-4">{translations.invoices.noClients}</p>
                         <Button onClick={() => window.location.href = '/clients/new'}>
-                            Add Your First Client
+                            {translations.dashboard.setupSteps.addClient.title}
                         </Button>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit}>
                         <p className="text-sm text-gray-600 mb-6">
-                            Select a client and date range to generate an invoice for all sessions within that period.
+                            Wählen Sie einen Klienten und einen Zeitraum, um eine Rechnung für alle Sitzungen in diesem Zeitraum zu erstellen.
                         </p>
 
                         <Select
                             id="client_id"
-                            label="Client"
+                            label={translations.sessions.form.labels.client}
                             value={formData.client_id}
                             onChange={handleClientChange}
                             options={clients.map(client => ({
@@ -139,7 +141,7 @@ const InvoicePage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Start Date<span className="text-red-500">*</span>
+                                    {translations.sessions.columns.date} (von)<span className="text-red-500">*</span>
                                 </label>
                                 <DatePicker
                                     selected={formData.start_date}
@@ -152,7 +154,7 @@ const InvoicePage: React.FC = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    End Date<span className="text-red-500">*</span>
+                                    {translations.sessions.columns.date} (bis)<span className="text-red-500">*</span>
                                 </label>
                                 <DatePicker
                                     selected={formData.end_date}
@@ -167,7 +169,7 @@ const InvoicePage: React.FC = () => {
 
                         <div className="flex justify-end mt-6">
                             <Button type="submit" disabled={isGenerating}>
-                                {isGenerating ? 'Generating...' : 'Generate Invoice'}
+                                {isGenerating ? `${translations.common.loading}...` : translations.invoices.generateNew}
                             </Button>
                         </div>
                     </form>
