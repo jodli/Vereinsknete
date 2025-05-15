@@ -139,7 +139,7 @@ const SessionFormPage: React.FC = () => {
                                 selected={formData.date}
                                 onChange={handleDateChange}
                                 className="w-full p-2 border border-gray-300 rounded-md"
-                                dateFormat="yyyy-MM-dd"
+                                dateFormat="dd.MM.yyyy"
                                 required
                             />
                         </div>

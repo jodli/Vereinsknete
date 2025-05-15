@@ -148,7 +148,7 @@ const InvoicePage: React.FC = () => {
                                     selected={formData.start_date}
                                     onChange={handleStartDateChange}
                                     className="w-full p-2 border border-gray-300 rounded-md"
-                                    dateFormat="yyyy-MM-dd"
+                                    dateFormat="dd.MM.yyyy"
                                     required
                                 />
                             </div>
@@ -161,7 +161,7 @@ const InvoicePage: React.FC = () => {
                                     selected={formData.end_date}
                                     onChange={handleEndDateChange}
                                     className="w-full p-2 border border-gray-300 rounded-md"
-                                    dateFormat="yyyy-MM-dd"
+                                    dateFormat="dd.MM.yyyy"
                                     minDate={formData.start_date}
                                     required
                                 />

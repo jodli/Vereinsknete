@@ -16,7 +16,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
         Some(lang_str) => Language::from_str(lang_str),
         None => Language::default(),
     };
-    
+
     // Load system font
     let default_font = fonts::from_files(FONT_DIR, DEFAULT_FONT_NAME, None)?;
 

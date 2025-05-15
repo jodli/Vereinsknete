@@ -59,25 +59,28 @@ lazy_static! {
     // Map of all translations by category and language
     static ref TRANSLATIONS: HashMap<Language, HashMap<&'static str, &'static TranslationMap>> = {
         let mut map = HashMap::new();
-        
+
         // English translations by category
         let mut en_map = HashMap::new();
         en_map.insert("invoice", &*INVOICE_EN);
         map.insert(Language::English, en_map);
-        
+
         // German translations by category
         let mut de_map = HashMap::new();
         de_map.insert("invoice", &*INVOICE_DE);
         map.insert(Language::German, de_map);
-        
+
         map
     };
 }
 
 // Get translations for a specific language and category
 pub fn get_translations(lang: Language, category: &str) -> &'static TranslationMap {
-    match TRANSLATIONS.get(&lang).and_then(|categories| categories.get(category)) {
-        Some(translations) => *translations,
+    match TRANSLATIONS
+        .get(&lang)
+        .and_then(|categories| categories.get(category))
+    {
+        Some(translations) => translations,
         None => match lang {
             Language::English => &INVOICE_EN,
             Language::German => &INVOICE_DE,

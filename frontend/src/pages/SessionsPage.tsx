@@ -110,7 +110,7 @@ const SessionsPage: React.FC = () => {
         // rather than nested inside a 'session' property
         return {
             id: item.id,
-            date: new Date(item.date).toLocaleDateString(),
+            date: new Date(item.date).toLocaleDateString('de-DE'),
             client_name,
             name: item.name || 'Unnamed session',
             time: `${item.start_time || '??:??'} - ${item.end_time || '??:??'}`,
@@ -155,7 +155,7 @@ const SessionsPage: React.FC = () => {
                             selected={startDate}
                             onChange={(date: Date | null) => setStartDate(date)}
                             className="w-full p-2 border border-gray-300 rounded-md"
-                            dateFormat="yyyy-MM-dd"
+                            dateFormat="dd.MM.yyyy"
                             isClearable
                             placeholderText="Startdatum auswählen"
                         />
@@ -169,7 +169,7 @@ const SessionsPage: React.FC = () => {
                             selected={endDate}
                             onChange={(date: Date | null) => setEndDate(date)}
                             className="w-full p-2 border border-gray-300 rounded-md"
-                            dateFormat="yyyy-MM-dd"
+                            dateFormat="dd.MM.yyyy"
                             isClearable
                             placeholderText="Enddatum auswählen"
                             minDate={startDate || undefined}

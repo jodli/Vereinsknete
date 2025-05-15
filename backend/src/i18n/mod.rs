@@ -33,7 +33,10 @@ pub fn translate(lang: Language, category: &str, key: &str) -> &'static str {
     match get_translations(lang, category).get(key) {
         Some(value) => value,
         None => {
-            eprintln!("Translation missing for key: '{}' in category: '{}'", key, category);
+            eprintln!(
+                "Translation missing for key: '{}' in category: '{}'",
+                key, category
+            );
             KEY_NOT_FOUND
         }
     }
