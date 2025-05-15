@@ -109,14 +109,30 @@ const SessionsPage: React.FC = () => {
     ];
 
     const formattedSessions = sessions.map((item) => {
-        const { session, client_name, duration_minutes } = item;
+        // Handle case where the entire item might be malformed
+        if (!item) {
+            console.warn('Found null or undefined session item');
+            return {
+                id: 'unknown',
+                date: 'N/A',
+                client_name: 'Unknown',
+                name: 'Unknown session',
+                time: 'N/A',
+                duration: 'N/A',
+            };
+        }
+        
+        const { client_name, duration_minutes } = item;
+        
+        // Based on the console output, it appears the session data is directly on the item object
+        // rather than nested inside a 'session' property
         return {
-            id: session.id,
-            date: new Date(session.date).toLocaleDateString(),
+            id: item.id,
+            date: new Date(item.date).toLocaleDateString(),
             client_name,
-            name: session.name,
-            time: `${session.start_time} - ${session.end_time}`,
-            duration: `${Math.floor(duration_minutes / 60)}h ${duration_minutes % 60}m`,
+            name: item.name || 'Unnamed session',
+            time: `${item.start_time || '??:??'} - ${item.end_time || '??:??'}`,
+            duration: duration_minutes ? `${Math.floor(duration_minutes / 60)}h ${duration_minutes % 60}m` : 'N/A',
         };
     });
 

@@ -42,7 +42,13 @@ export interface Session {
 }
 
 export interface SessionWithDuration {
-    session: Session;
+    id: number;
+    client_id: number;
+    name: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    created_at: string;
     client_name: string;
     duration_minutes: number;
 }
