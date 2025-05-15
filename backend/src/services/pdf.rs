@@ -1,6 +1,9 @@
 use crate::models::invoice::InvoiceResponse;
 use anyhow::Result;
-use genpdf::{elements, fonts, style, Element};
+use genpdf::{
+    elements::{self},
+    fonts, style, Element, Margins,
+};
 use std::io::Cursor;
 
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
@@ -21,59 +24,62 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.5);
 
-    // Add invoice header
+    // Add invoice header with larger font and bold styling
     let header = elements::Paragraph::new(&format!("INVOICE #{}", &invoice.invoice_number))
-        .styled(style::Style::new().bold().with_font_size(20));
+        .styled(style::Style::new().bold().with_font_size(22));
     doc.push(header);
 
+    // Add date with some space below
     doc.push(elements::Paragraph::new(&format!(
         "Date: {}",
         &invoice.date
     )));
-    doc.push(elements::Break::new(1.0));
+    doc.push(elements::Break::new(1.5));
 
-    // Add user profile details
-    let from_title = elements::Paragraph::new("FROM:").styled(style::Style::new().bold());
-    doc.push(from_title);
+    // Create a two-column layout for FROM and TO sections
+    let mut address_layout = elements::LinearLayout::vertical();
+    let mut address_columns = elements::TableLayout::new(vec![1, 1]);
 
-    doc.push(elements::Paragraph::new(&invoice.user_profile.name));
+    // FROM section with clear visual separation
+    let mut from_section = elements::LinearLayout::vertical();
+    from_section.push(
+        elements::Paragraph::new("FROM:").styled(style::Style::new().bold().with_font_size(14)),
+    );
+    from_section.push(elements::Paragraph::new(&invoice.user_profile.name));
 
     // Split address by newline and add each line as separate paragraph
     for line in invoice.user_profile.address.split('\n') {
-        doc.push(elements::Paragraph::new(line));
+        from_section.push(elements::Paragraph::new(line));
     }
 
     if let Some(tax_id) = &invoice.user_profile.tax_id {
-        doc.push(elements::Paragraph::new(&format!("Tax ID: {}", tax_id)));
+        from_section.push(elements::Paragraph::new(&format!("Tax ID: {}", tax_id)));
     }
 
-    if let Some(bank_details) = &invoice.user_profile.bank_details {
-        doc.push(elements::Paragraph::new(&format!(
-            "Bank details: {}",
-            bank_details
-        )));
-    }
-
-    doc.push(elements::Break::new(1.0));
-
-    // Add client details
-    let to_title = elements::Paragraph::new("TO:").styled(style::Style::new().bold());
-    doc.push(to_title);
-
-    doc.push(elements::Paragraph::new(&invoice.client.name));
+    // TO section
+    let mut to_section = elements::LinearLayout::vertical();
+    to_section.push(
+        elements::Paragraph::new("TO:").styled(style::Style::new().bold().with_font_size(14)),
+    );
+    to_section.push(elements::Paragraph::new(&invoice.client.name));
 
     // Split address by newline and add each line as separate paragraph
     for line in invoice.client.address.split('\n') {
-        doc.push(elements::Paragraph::new(line));
+        to_section.push(elements::Paragraph::new(line));
     }
 
     if let Some(contact) = &invoice.client.contact_person {
-        doc.push(elements::Paragraph::new(&format!("Contact: {}", contact)));
+        to_section.push(elements::Paragraph::new(&format!("Contact: {}", contact)));
     }
 
-    doc.push(elements::Break::new(1.5));
+    // Add from and to sections to the columns
+    address_columns.push_row(vec![Box::new(from_section), Box::new(to_section)])?;
 
-    // Create table for sessions
+    address_layout.push(address_columns);
+    doc.push(address_layout);
+    doc.push(elements::Break::new(2.0));
+
+    // Create table for sessions with clear borders and padding
     let mut table = elements::TableLayout::new(vec![
         2, // Name
         1, // Date
@@ -83,64 +89,102 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse) -> Result<Vec<u8>> {
         1, // Amount
     ]);
 
-    // Add table header
-    table.set_cell_decorator(elements::FrameCellDecorator::new(false, true, false));
+    // Add table header with background color and borders
+    let header_decorator = elements::FrameCellDecorator::new(true, true, false);
+    table.set_cell_decorator(header_decorator);
+
     table.push_row(vec![
-        Box::new(elements::Paragraph::new("Service").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new("Date").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new("Start").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new("End").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new("Hours").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new("Amount").styled(style::Style::new().bold())),
+        Box::new(
+            elements::Paragraph::new("Service")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new("Date")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new("Start")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new("End")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new("Hours")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new("Amount")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
     ])?;
 
-    // Reset decorator for data rows
-    table.set_cell_decorator(elements::FrameCellDecorator::new(false, false, false));
+    // Set cell decorator with borders for all data rows
+    table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
 
-    // Add session rows
-    for item in &invoice.sessions {
+    // Add session rows with alternating background colors
+    for item in invoice.sessions.iter() {
         table.push_row(vec![
-            Box::new(elements::Paragraph::new(&item.name)),
-            Box::new(elements::Paragraph::new(&item.date)),
-            Box::new(elements::Paragraph::new(&item.start_time)),
-            Box::new(elements::Paragraph::new(&item.end_time)),
-            Box::new(elements::Paragraph::new(&format!(
-                "{:.2}",
-                item.duration_hours
-            ))),
-            Box::new(elements::Paragraph::new(&format!("€{:.2}", item.amount))),
+            Box::new(elements::Paragraph::new(&item.name).padded(Margins::all(1))),
+            Box::new(elements::Paragraph::new(&item.date).padded(Margins::all(1))),
+            Box::new(elements::Paragraph::new(&item.start_time).padded(Margins::all(1))),
+            Box::new(elements::Paragraph::new(&item.end_time).padded(Margins::all(1))),
+            Box::new(
+                elements::Paragraph::new(format!("{:.2}", item.duration_hours))
+                    .padded(Margins::all(1)),
+            ),
+            Box::new(
+                elements::Paragraph::new(format!("€{:.2}", item.amount)).padded(Margins::all(1)),
+            ),
         ])?;
     }
 
     doc.push(table);
     doc.push(elements::Break::new(1.0));
 
-    // Add totals
+    // Add totals in a visually distinct table
     let mut totals_table = elements::TableLayout::new(vec![4, 2]);
+    totals_table.set_cell_decorator(elements::FrameCellDecorator::new(true, true, false));
 
+    // Set total hours row
     totals_table.push_row(vec![
-        Box::new(elements::Paragraph::new("Total Hours:").styled(style::Style::new().bold())),
-        Box::new(elements::Paragraph::new(&format!(
-            "{:.2}",
-            invoice.total_hours
-        ))),
+        Box::new(
+            elements::Paragraph::new("Total Hours:")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new(format!("{:.2}", invoice.total_hours)).padded(Margins::all(1)),
+        ),
     ])?;
 
     totals_table.push_row(vec![
-        Box::new(elements::Paragraph::new("Total Amount:").styled(style::Style::new().bold())),
         Box::new(
-            elements::Paragraph::new(&format!("€{:.2}", invoice.total_amount))
-                .styled(style::Style::new().bold()),
+            elements::Paragraph::new("Total Amount:")
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
+        ),
+        Box::new(
+            elements::Paragraph::new(format!("€{:.2}", invoice.total_amount))
+                .styled(style::Style::new().bold())
+                .padded(Margins::all(1)),
         ),
     ])?;
 
     doc.push(totals_table);
-    doc.push(elements::Break::new(1.0));
+    doc.push(elements::Break::new(1.5));
 
-    // Add payment details
-    let payment_title =
-        elements::Paragraph::new("Payment Details:").styled(style::Style::new().bold());
-    doc.push(payment_title);
+    doc.push(
+        elements::Paragraph::new("Payment Details:")
+            .styled(style::Style::new().bold().with_font_size(14)),
+    );
 
     if let Some(bank_details) = &invoice.user_profile.bank_details {
         // Split bank details by newline and add each line as separate paragraph
