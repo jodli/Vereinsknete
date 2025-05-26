@@ -8,8 +8,9 @@ use crate::DbPool;
 use anyhow::{Context, Result};
 use chrono::{NaiveTime, Utc, Datelike};
 use diesel::prelude::*;
+use std::fs;
 
-pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<(Vec<u8>, i32)> {
+pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<(Vec<u8>, i32, String)> {
     // Get user profile
     let user_profile = user_profile::get_profile(pool)
         .context("Failed to get user profile")?
@@ -127,7 +128,7 @@ pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> 
         .first::<i32>(&mut conn)
         .context("Failed to get invoice ID")?;
 
-    Ok((pdf_bytes, invoice_id))
+    Ok((pdf_bytes, invoice_id, invoice_number_str))
 }
 
 fn get_next_sequence_number(pool: &DbPool, target_year: i32) -> Result<i32> {
@@ -293,6 +294,26 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
 
 // Keep the original function for backward compatibility
 pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Vec<u8>> {
-    let (pdf_bytes, _) = generate_and_save_invoice(pool, invoice_req)?;
+    let (pdf_bytes, _, _) = generate_and_save_invoice(pool, invoice_req)?;
     Ok(pdf_bytes)
+}
+
+pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, String)> {
+    use crate::schema::invoices;
+
+    let mut conn = pool.get().expect("Failed to get DB connection");
+
+    // Get the invoice to find the PDF path and invoice number
+    let invoice = invoices::table
+        .filter(invoices::id.eq(invoice_id))
+        .first::<Invoice>(&mut conn)
+        .optional()
+        .context("Failed to query invoice")?
+        .context("Invoice not found")?;
+
+    // Read the PDF file
+    let pdf_bytes = fs::read(&invoice.pdf_path)
+        .context(format!("Failed to read PDF file: {}", invoice.pdf_path))?;
+
+    Ok((pdf_bytes, invoice.invoice_number))
 }

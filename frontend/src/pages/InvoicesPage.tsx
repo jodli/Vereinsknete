@@ -4,7 +4,8 @@ import {
     getAllInvoices,
     updateInvoiceStatus,
     getClients,
-    generateInvoice
+    generateInvoice,
+    downloadInvoicePdf
 } from '../services/api';
 import { Invoice, Client } from '../types';
 import DatePicker from 'react-datepicker';
@@ -25,6 +26,7 @@ const InvoicesPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null);
+    const [isDownloading, setIsDownloading] = useState<number | null>(null);
     const [error, setError] = useState('');
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const { language } = useLanguage();
@@ -83,9 +85,28 @@ const InvoicesPage: React.FC = () => {
         }
     };
 
-    const handleDownloadPdf = (invoiceId: number) => {
-        // For now, just show a message that this feature will be implemented
-        alert(`PDF download for invoice ${invoiceId} will be implemented soon`);
+    const handleDownloadPdf = async (invoiceId: number, invoiceNumber: string) => {
+        try {
+            setIsDownloading(invoiceId);
+            const pdfBlob = await downloadInvoicePdf(invoiceId);
+
+            // Create download link
+            const url = window.URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice_${invoiceNumber}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            setError('Failed to download PDF');
+        } finally {
+            setIsDownloading(null);
+        }
     };
 
     const handleGenerateInvoice = async (e: React.FormEvent) => {
@@ -110,9 +131,8 @@ const InvoicesPage: React.FC = () => {
             const url = window.URL.createObjectURL(pdfBlob);
             const a = document.createElement('a');
 
-            const dateString = new Date().toISOString().split('T')[0];
             a.href = url;
-            a.download = `invoice_${dateString}.pdf`;
+            a.download = `invoice_${response.invoice_number}.pdf`;
             document.body.appendChild(a);
             a.click();
 
@@ -317,8 +337,9 @@ const InvoicesPage: React.FC = () => {
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-2">
                                                 <button
-                                                    onClick={() => handleDownloadPdf(invoice.id)}
-                                                    className="p-1 text-gray-600 hover:text-blue-600"
+                                                    onClick={() => handleDownloadPdf(invoice.id, invoice.invoice_number)}
+                                                    disabled={isDownloading === invoice.id}
+                                                    className="p-1 text-gray-600 hover:text-blue-600 disabled:opacity-50"
                                                     title="PDF herunterladen"
                                                 >
                                                     <DocumentArrowDownIcon className="w-5 h-5" />

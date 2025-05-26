@@ -220,7 +220,7 @@ export const deleteSession = async (id: number): Promise<void> => {
 };
 
 // Invoice API calls
-export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<{ invoice_id: number, pdf_bytes: string }> => {
+export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<{ invoice_id: number, invoice_number: string, pdf_bytes: string }> => {
     try {
         const response = await fetch(`${API_URL}/invoices/generate`, {
             method: 'POST',
@@ -235,6 +235,19 @@ export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<{
         return await response.json();
     } catch (error) {
         console.error('Error generating invoice:', error);
+        throw error;
+    }
+};
+
+export const downloadInvoicePdf = async (invoiceId: number): Promise<Blob> => {
+    try {
+        const response = await fetch(`${API_URL}/invoices/${invoiceId}/pdf`);
+        if (!response.ok) {
+            throw new Error(`Failed to download invoice PDF: ${response.statusText}`);
+        }
+        return await response.blob();
+    } catch (error) {
+        console.error('Error downloading invoice PDF:', error);
         throw error;
     }
 };

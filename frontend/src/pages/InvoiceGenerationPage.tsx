@@ -77,11 +77,8 @@ const InvoicePage: React.FC = () => {
             const url = window.URL.createObjectURL(pdfBlob);
             const a = document.createElement('a');
 
-            // Format date for filename, e.g., "invoice_2025-0001.pdf"
-            const dateString = new Date().toISOString().split('T')[0];
-
             a.href = url;
-            a.download = `invoice_${dateString}.pdf`;
+            a.download = `invoice_${response.invoice_number}.pdf`;
             document.body.appendChild(a);
             a.click();
 

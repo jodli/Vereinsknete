@@ -10,7 +10,7 @@ async fn generate_invoice(
     pool: web::Data<DbPool>,
     invoice_req: web::Json<InvoiceRequest>,
 ) -> Result<HttpResponse, Error> {
-    let (pdf_bytes, invoice_id) =
+    let (pdf_bytes, invoice_id, invoice_number) =
         web::block(move || invoice_service::generate_and_save_invoice(&pool, invoice_req.into_inner()))
             .await?
             .map_err(|e| {
@@ -26,6 +26,7 @@ async fn generate_invoice(
         ))
         .json(serde_json::json!({
             "invoice_id": invoice_id,
+            "invoice_number": invoice_number,
             "pdf_bytes": base64::engine::general_purpose::STANDARD.encode(&pdf_bytes)
         })))
 }
@@ -79,9 +80,33 @@ async fn get_dashboard_metrics(
     Ok(HttpResponse::Ok().json(metrics))
 }
 
+#[get("/invoices/{id}/pdf")]
+async fn download_invoice_pdf(
+    pool: web::Data<DbPool>,
+    path: web::Path<i32>,
+) -> Result<HttpResponse, Error> {
+    let invoice_id = path.into_inner();
+
+    let (pdf_bytes, invoice_number) = web::block(move || invoice_service::get_invoice_pdf(&pool, invoice_id))
+        .await?
+        .map_err(|e| {
+            eprintln!("Error getting invoice PDF: {:?}", e);
+            AppError::InternalServerError(format!("Error getting invoice PDF: {}", e))
+        })?;
+
+    Ok(HttpResponse::Ok()
+        .content_type("application/pdf")
+        .append_header((
+            "Content-Disposition",
+            format!("attachment; filename=\"invoice_{}.pdf\"", invoice_number),
+        ))
+        .body(pdf_bytes))
+}
+
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(generate_invoice)
         .service(get_invoices)
         .service(update_invoice_status)
-        .service(get_dashboard_metrics);
+        .service(get_dashboard_metrics)
+        .service(download_invoice_pdf);
 }
