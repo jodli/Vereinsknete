@@ -6,9 +6,25 @@ use genpdf::{
     fonts, style, Element, Margins,
 };
 use std::io::Cursor;
+use chrono::NaiveDate;
 
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
 const DEFAULT_FONT_NAME: &str = "LiberationSans";
+
+/// Format a date string based on language preference
+/// Input date string is expected to be in ISO format (YYYY-MM-DD)
+fn format_date_for_language(date_str: &str, language: Language) -> String {
+    // First try ISO format (YYYY-MM-DD) since that's what's being passed in
+    if let Ok(parsed_date) = NaiveDate::parse_from_str(date_str, "%Y-%m-%d") {
+        match language {
+            Language::German => parsed_date.format("%d.%m.%Y").to_string(),
+            _ => parsed_date.format("%Y-%m-%d").to_string(),
+        }
+    } else {
+        // If all parsing fails, return original string
+        date_str.to_string()
+    }
+}
 
 pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -> Result<Vec<u8>> {
     // Determine language from parameter or fall back to default (German)
@@ -40,7 +56,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     doc.push(elements::Paragraph::new(format!(
         "{}: {}",
         translate(lang, "invoice", "date"),
-        &invoice.date
+        format_date_for_language(&invoice.date, lang)
     )));
     doc.push(elements::Break::new(1.5));
 
@@ -143,7 +159,7 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     for item in invoice.sessions.iter() {
         table.push_row(vec![
             Box::new(elements::Paragraph::new(&item.name).padded(Margins::all(1))),
-            Box::new(elements::Paragraph::new(&item.date).padded(Margins::all(1))),
+            Box::new(elements::Paragraph::new(&format_date_for_language(&item.date, lang)).padded(Margins::all(1))),
             Box::new(elements::Paragraph::new(&item.start_time).padded(Margins::all(1))),
             Box::new(elements::Paragraph::new(&item.end_time).padded(Margins::all(1))),
             Box::new(

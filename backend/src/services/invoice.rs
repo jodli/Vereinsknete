@@ -66,7 +66,7 @@ pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Ve
     // Create invoice response
     let invoice = InvoiceResponse {
         invoice_number: format!("{}", Utc::now().format("%Y%m%d%H%M")),
-        date: Utc::now().format("%d.%m.%Y").to_string(),
+        date: Utc::now().format("%Y-%m-%d").to_string(),
         user_profile,
         client: client_data,
         sessions: invoice_items,
