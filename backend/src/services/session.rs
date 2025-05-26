@@ -1,6 +1,6 @@
 use crate::models::client::Client;
 use crate::models::session::{
-    NewSession, NewSessionRequest, Session, SessionFilterParams, SessionWithDuration,
+    NewSession, NewSessionRequest, Session, SessionFilterParams, SessionWithDuration, UpdateSession, UpdateSessionRequest,
 };
 use crate::DbPool;
 use chrono::NaiveTime;
@@ -101,4 +101,52 @@ pub fn get_sessions_by_client(
         .filter(crate::schema::sessions::client_id.eq(client_id))
         .select(Session::as_select())
         .load(&mut conn)
+}
+
+pub fn get_session_by_id(
+    pool: &DbPool,
+    session_id: i32,
+) -> Result<Session, diesel::result::Error> {
+    use crate::schema::sessions::dsl::*;
+
+    let mut conn = pool.get().expect("Failed to get DB connection");
+
+    sessions
+        .find(session_id)
+        .select(Session::as_select())
+        .first(&mut conn)
+}
+
+pub fn update_session(
+    pool: &DbPool,
+    session_id: i32,
+    session_req: UpdateSessionRequest,
+) -> Result<Session, diesel::result::Error> {
+    use crate::schema::sessions::dsl::*;
+
+    let mut conn = pool.get().expect("Failed to get DB connection");
+    let update_session = UpdateSession::from(session_req);
+
+    diesel::update(sessions.find(session_id))
+        .set(&update_session)
+        .execute(&mut conn)?;
+
+    // Fetch the updated session
+    sessions
+        .find(session_id)
+        .select(Session::as_select())
+        .first(&mut conn)
+}
+
+pub fn delete_session(
+    pool: &DbPool,
+    session_id: i32,
+) -> Result<(), diesel::result::Error> {
+    use crate::schema::sessions::dsl::*;
+
+    let mut conn = pool.get().expect("Failed to get DB connection");
+
+    diesel::delete(sessions.find(session_id))
+        .execute(&mut conn)
+        .map(|_| ())
 }

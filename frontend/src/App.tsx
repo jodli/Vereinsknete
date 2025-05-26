@@ -24,6 +24,7 @@ function App() {
             <Route path="/clients/:id" element={<ClientFormPage />} />
             <Route path="/clients/new" element={<ClientFormPage />} />
             <Route path="/sessions" element={<SessionsPage />} />
+            <Route path="/sessions/:id" element={<SessionFormPage />} />
             <Route path="/sessions/new" element={<SessionFormPage />} />
             <Route path="/invoices" element={<InvoicePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

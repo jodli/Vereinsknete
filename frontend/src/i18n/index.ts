@@ -1,3 +1,4 @@
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import en from './en';
 import de from './de';
 
@@ -22,7 +23,6 @@ export const getTranslations = (lang: SupportedLanguage): TranslationsType => {
 };
 
 // Language context
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type LanguageContextType = {
     language: SupportedLanguage;

@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Input, Select, Button } from '../components/UI';
-import { getClients, createSession } from '../services/api';
+import { getClients, createSession, getSession, updateSession, deleteSession } from '../services/api';
 import { Client } from '../types';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useLanguage } from '../i18n';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 const SessionFormPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const isEditing = id && id !== 'new';
     const { translations } = useLanguage();
 
     const [clients, setClients] = useState<Client[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
@@ -25,24 +29,36 @@ const SessionFormPage: React.FC = () => {
     });
 
     useEffect(() => {
-        const fetchClients = async () => {
+        const fetchData = async () => {
             try {
-                const data = await getClients();
-                setClients(data);
-                if (data.length > 0) {
-                    setFormData(prev => ({ ...prev, client_id: data[0].id.toString() }));
+                // Fetch clients for dropdown
+                const clientsData = await getClients();
+                setClients(clientsData);
+
+                // If editing, fetch the session data
+                if (isEditing && id) {
+                    const sessionData = await getSession(parseInt(id));
+                    setFormData({
+                        client_id: sessionData.client_id.toString(),
+                        name: sessionData.name,
+                        date: new Date(sessionData.date.split('.').reverse().join('-')), // Convert DD.MM.YYYY to Date
+                        start_time: sessionData.start_time,
+                        end_time: sessionData.end_time,
+                    });
+                } else if (clientsData.length > 0) {
+                    setFormData(prev => ({ ...prev, client_id: clientsData[0].id.toString() }));
                 }
                 setError('');
             } catch (error) {
-                console.error('Error fetching clients:', error);
+                console.error('Error fetching data:', error);
                 setError(translations.common.errors.failedToLoad);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchClients();
-    }, []);
+        fetchData();
+    }, [id, isEditing, translations.common.errors.failedToLoad]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -64,19 +80,45 @@ const SessionFormPage: React.FC = () => {
             // Format the data for API submission
             const formattedDate = formData.date.toISOString().split('T')[0];
 
-            await createSession({
+            const sessionData = {
                 client_id: parseInt(formData.client_id),
                 name: formData.name,
                 date: formattedDate,
                 start_time: formData.start_time,
                 end_time: formData.end_time,
-            });
+            };
+
+            if (isEditing && id) {
+                await updateSession(parseInt(id), sessionData);
+            } else {
+                await createSession(sessionData);
+            }
 
             navigate('/sessions');
         } catch (error) {
-            console.error('Error creating session:', error);
+            console.error('Error saving session:', error);
             setError(translations.common.errors.failedToSave);
             setIsSaving(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!window.confirm(translations.sessions.form.confirmDelete)) {
+            return;
+        }
+
+        setIsDeleting(true);
+        setError('');
+
+        try {
+            if (id) {
+                await deleteSession(parseInt(id));
+                navigate('/sessions');
+            }
+        } catch (error) {
+            console.error('Error deleting session:', error);
+            setError(translations.common.errors.failedToDelete);
+            setIsDeleting(false);
         }
     };
 
@@ -90,7 +132,22 @@ const SessionFormPage: React.FC = () => {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold mb-6">{translations.sessions.addNew}</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">
+                    {isEditing ? translations.sessions.form.title.edit : translations.sessions.addNew}
+                </h1>
+                {isEditing && (
+                    <Button
+                        variant="danger"
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="flex items-center"
+                    >
+                        <TrashIcon className="w-5 h-5 mr-1" />
+                        {isDeleting ? translations.common.loading : translations.sessions.form.buttons.delete}
+                    </Button>
+                )}
+            </div>
 
             <Card>
                 {error && (

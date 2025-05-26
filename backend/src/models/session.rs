@@ -48,6 +48,37 @@ impl From<NewSessionRequest> for NewSession {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct UpdateSessionRequest {
+    pub client_id: i32,
+    pub name: String,
+    pub date: NaiveDate,
+    pub start_time: NaiveTime,
+    pub end_time: NaiveTime,
+}
+
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = crate::schema::sessions)]
+pub struct UpdateSession {
+    pub client_id: i32,
+    pub name: String,
+    pub date: String,
+    pub start_time: String,
+    pub end_time: String,
+}
+
+impl From<UpdateSessionRequest> for UpdateSession {
+    fn from(req: UpdateSessionRequest) -> Self {
+        UpdateSession {
+            client_id: req.client_id,
+            name: req.name,
+            date: req.date.format("%Y-%m-%d").to_string(),
+            start_time: req.start_time.format("%H:%M").to_string(),
+            end_time: req.end_time.format("%H:%M").to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct SessionWithDuration {
     #[serde(flatten)]

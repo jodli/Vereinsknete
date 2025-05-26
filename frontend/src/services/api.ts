@@ -150,6 +150,19 @@ export const getSessions = async (filters?: SessionFilterParams): Promise<Sessio
     }
 };
 
+export const getSession = async (id: number): Promise<Session> => {
+    try {
+        const response = await fetch(`${API_URL}/sessions/${id}`);
+        if (!response.ok) {
+            throw new Error(`Failed to get session: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Error fetching session ${id}:`, error);
+        throw error;
+    }
+};
+
 export const createSession = async (sessionData: SessionFormData): Promise<Session> => {
     try {
         const response = await fetch(`${API_URL}/sessions`, {
@@ -165,6 +178,39 @@ export const createSession = async (sessionData: SessionFormData): Promise<Sessi
         return await response.json();
     } catch (error) {
         console.error('Error creating session:', error);
+        throw error;
+    }
+};
+
+export const updateSession = async (id: number, sessionData: SessionFormData): Promise<Session> => {
+    try {
+        const response = await fetch(`${API_URL}/sessions/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sessionData),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update session: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Error updating session ${id}:`, error);
+        throw error;
+    }
+};
+
+export const deleteSession = async (id: number): Promise<void> => {
+    try {
+        const response = await fetch(`${API_URL}/sessions/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete session: ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error(`Error deleting session ${id}:`, error);
         throw error;
     }
 };

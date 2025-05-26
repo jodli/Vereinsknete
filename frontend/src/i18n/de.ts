@@ -117,6 +117,7 @@ const deTranslations = {
                 cancel: 'Abbrechen',
                 delete: 'Löschen',
             },
+            confirmDelete: 'Sind Sie sicher, dass Sie diese Sitzung löschen möchten?',
         },
     },
     invoices: {

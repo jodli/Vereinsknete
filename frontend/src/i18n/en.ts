@@ -117,6 +117,7 @@ const enTranslations = {
                 cancel: 'Cancel',
                 delete: 'Delete',
             },
+            confirmDelete: 'Are you sure you want to delete this session?',
         },
     },
     invoices: {

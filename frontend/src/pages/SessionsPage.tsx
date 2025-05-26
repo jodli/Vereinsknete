@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, Button, Table, Select } from '../components/UI';
 import { getSessions, getClients } from '../services/api';
 import { SessionWithDuration, Client } from '../types';
@@ -14,6 +14,7 @@ const SessionsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const { translations } = useLanguage();
+    const navigate = useNavigate();
 
     // Filter states
     const [clientFilter, setClientFilter] = useState<number | ''>('');
@@ -207,6 +208,9 @@ const SessionsPage: React.FC = () => {
                     <Table
                         columns={columns}
                         data={formattedSessions}
+                        onRowClick={(row) => {
+                            navigate(`/sessions/${row.id}`);
+                        }}
                     />
                 </Card>
             )}
