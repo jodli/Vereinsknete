@@ -5,7 +5,8 @@ import {
     updateInvoiceStatus,
     getClients,
     generateInvoice,
-    downloadInvoicePdf
+    downloadInvoicePdf,
+    deleteInvoice
 } from '../services/api';
 import { Invoice, Client } from '../types';
 import DatePicker from 'react-datepicker';
@@ -17,7 +18,8 @@ import {
     CheckCircleIcon,
     ClockIcon,
     PaperAirplaneIcon,
-    XMarkIcon
+    XMarkIcon,
+    TrashIcon
 } from '@heroicons/react/24/outline';
 
 const InvoicesPage: React.FC = () => {
@@ -27,6 +29,7 @@ const InvoicesPage: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState<number | null>(null);
     const [isDownloading, setIsDownloading] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState<number | null>(null);
     const [error, setError] = useState('');
     const [showGenerateForm, setShowGenerateForm] = useState(false);
     const { language } = useLanguage();
@@ -106,6 +109,29 @@ const InvoicesPage: React.FC = () => {
             setError('Failed to download PDF');
         } finally {
             setIsDownloading(null);
+        }
+    };
+
+    const handleDeleteInvoice = async (invoiceId: number, invoiceNumber: string) => {
+        if (!window.confirm(`Sind Sie sicher, dass Sie die Rechnung ${invoiceNumber} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.`)) {
+            return;
+        }
+
+        try {
+            setIsDeleting(invoiceId);
+            await deleteInvoice(invoiceId);
+
+            // Remove from local state
+            setInvoices(prevInvoices =>
+                prevInvoices.filter(invoice => invoice.id !== invoiceId)
+            );
+
+            setError('');
+        } catch (error) {
+            console.error('Error deleting invoice:', error);
+            setError('Failed to delete invoice');
+        } finally {
+            setIsDeleting(null);
         }
     };
 
@@ -364,6 +390,15 @@ const InvoicesPage: React.FC = () => {
                                                         Als bezahlt markieren
                                                     </button>
                                                 )}
+
+                                                <button
+                                                    onClick={() => handleDeleteInvoice(invoice.id, invoice.invoice_number)}
+                                                    disabled={isDeleting === invoice.id}
+                                                    className="p-1 text-gray-600 hover:text-red-600 disabled:opacity-50"
+                                                    title="Rechnung löschen"
+                                                >
+                                                    <TrashIcon className="w-5 h-5" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

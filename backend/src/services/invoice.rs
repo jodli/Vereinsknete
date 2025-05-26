@@ -292,12 +292,6 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
     })
 }
 
-// Keep the original function for backward compatibility
-pub fn generate_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<Vec<u8>> {
-    let (pdf_bytes, _, _) = generate_and_save_invoice(pool, invoice_req)?;
-    Ok(pdf_bytes)
-}
-
 pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, String)> {
     use crate::schema::invoices;
 
@@ -316,4 +310,30 @@ pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, Strin
         .context(format!("Failed to read PDF file: {}", invoice.pdf_path))?;
 
     Ok((pdf_bytes, invoice.invoice_number))
+}
+
+pub fn delete_invoice(pool: &DbPool, invoice_id: i32) -> Result<()> {
+    use crate::schema::invoices;
+
+    let mut conn = pool.get().expect("Failed to get DB connection");
+
+    // First get the invoice to get the PDF file name
+    let invoice = invoices::table
+        .find(invoice_id)
+        .first::<Invoice>(&mut conn)
+        .context("Failed to get invoice")?;
+
+    // Delete the PDF file if it exists
+    let pdf_path = format!("invoices/invoice_{}.pdf", invoice.invoice_number);
+    if std::path::Path::new(&pdf_path).exists() {
+        fs::remove_file(&pdf_path)
+            .context(format!("Failed to delete PDF file: {}", pdf_path))?;
+    }
+
+    // Delete the invoice record from database
+    diesel::delete(invoices::table.find(invoice_id))
+        .execute(&mut conn)
+        .context("Failed to delete invoice")?;
+
+    Ok(())
 }

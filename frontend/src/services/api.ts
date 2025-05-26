@@ -283,6 +283,20 @@ export const updateInvoiceStatus = async (invoiceId: number, statusRequest: Upda
     }
 };
 
+export const deleteInvoice = async (invoiceId: number): Promise<void> => {
+    try {
+        const response = await fetch(`${API_URL}/invoices/${invoiceId}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete invoice: ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error deleting invoice:', error);
+        throw error;
+    }
+};
+
 export const getDashboardMetrics = async (query: DashboardQuery): Promise<DashboardMetrics> => {
     try {
         const params = new URLSearchParams({

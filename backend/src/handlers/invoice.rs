@@ -2,7 +2,7 @@ use crate::errors::AppError;
 use crate::models::invoice::{InvoiceRequest, UpdateInvoiceStatusRequest, DashboardQuery};
 use crate::services::invoice as invoice_service;
 use crate::DbPool;
-use actix_web::{get, patch, post, web, Error, HttpResponse};
+use actix_web::{delete, get, patch, post, web, Error, HttpResponse};
 use base64::Engine;
 
 #[post("/invoices/generate")]
@@ -103,10 +103,28 @@ async fn download_invoice_pdf(
         .body(pdf_bytes))
 }
 
+#[delete("/invoices/{id}")]
+async fn delete_invoice(
+    pool: web::Data<DbPool>,
+    path: web::Path<i32>,
+) -> Result<HttpResponse, Error> {
+    let invoice_id = path.into_inner();
+
+    web::block(move || invoice_service::delete_invoice(&pool, invoice_id))
+        .await?
+        .map_err(|e| {
+            eprintln!("Error deleting invoice: {:?}", e);
+            AppError::InternalServer(format!("Error deleting invoice: {}", e))
+        })?;
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({"success": true})))
+}
+
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(generate_invoice)
         .service(get_invoices)
         .service(update_invoice_status)
         .service(get_dashboard_metrics)
-        .service(download_invoice_pdf);
+        .service(download_invoice_pdf)
+        .service(delete_invoice);
 }
