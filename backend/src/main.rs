@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::sqlite::SqliteConnection;
@@ -51,8 +52,10 @@ async fn main() -> std::io::Result<()> {
                     .configure(handlers::session::config)
                     .configure(handlers::invoice::config),
             )
+            // Serve static files from the public directory
+            .service(fs::Files::new("/", "public").index_file("index.html"))
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }

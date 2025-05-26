@@ -9,6 +9,7 @@ services:
       - "8080:8080"
     volumes:
       - ./data:/app/data
+      - ./data/invoices:/app/invoices
     environment:
       - DATABASE_URL=/app/data/database.sqlite
       - RUST_LOG=info
