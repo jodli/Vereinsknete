@@ -7,6 +7,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useLanguage } from '../i18n';
+import { formatBackendDate } from '../utils/dateUtils';
 
 const SessionsPage: React.FC = () => {
     const [sessions, setSessions] = useState<SessionWithDuration[]>([]);
@@ -111,7 +112,7 @@ const SessionsPage: React.FC = () => {
         // rather than nested inside a 'session' property
         return {
             id: item.id,
-            date: new Date(item.date).toLocaleDateString('de-DE'),
+            date: formatBackendDate(item.date),
             client_name,
             name: item.name || 'Unnamed session',
             time: `${item.start_time || '??:??'} - ${item.end_time || '??:??'}`,

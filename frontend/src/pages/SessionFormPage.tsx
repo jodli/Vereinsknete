@@ -7,6 +7,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useLanguage } from '../i18n';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import { parseGermanDateString } from '../utils/dateUtils';
 
 const SessionFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -38,10 +39,11 @@ const SessionFormPage: React.FC = () => {
                 // If editing, fetch the session data
                 if (isEditing && id) {
                     const sessionData = await getSession(parseInt(id));
+                    const parsedDate = parseGermanDateString(sessionData.date);
                     setFormData({
                         client_id: sessionData.client_id.toString(),
                         name: sessionData.name,
-                        date: new Date(sessionData.date.split('.').reverse().join('-')), // Convert DD.MM.YYYY to Date
+                        date: parsedDate || new Date(), // Fallback to current date if parsing fails
                         start_time: sessionData.start_time,
                         end_time: sessionData.end_time,
                     });
