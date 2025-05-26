@@ -160,7 +160,7 @@ const enTranslations = {
             bankDetails: 'Bank Details (optional)',
         },
         placeholders: {
-            bankDetails: 'IBAN, BIC, Bank Name',
+            bankDetails: 'IBAN, BIC, Bank Name, Reference',
         },
         buttons: {
             save: 'Save',
@@ -168,6 +168,9 @@ const enTranslations = {
         },
         success: {
             saved: 'Profile successfully saved!',
+        },
+        hints: {
+            placeholders: 'You can use {invoice_number} - this will be automatically replaced with the invoice number.',
         },
     },
     common: {

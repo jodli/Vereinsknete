@@ -130,6 +130,9 @@ const ProfilePage: React.FC = () => {
                         onChange={handleChange}
                         placeholder={translations.profile.placeholders.bankDetails}
                     />
+                    <p className="text-sm text-blue-600 mt-1 mb-4">
+                        💡 {translations.profile.hints.placeholders}
+                    </p>
 
                     <div className="flex justify-end mt-6">
                         <Button type="submit" disabled={isSaving}>

@@ -160,7 +160,7 @@ const deTranslations = {
             bankDetails: 'Bankverbindung (optional)',
         },
         placeholders: {
-            bankDetails: 'IBAN, BIC, Bank Name',
+            bankDetails: 'IBAN, BIC, Name der Bank, Verwendungszweck',
         },
         buttons: {
             save: 'Speichern',
@@ -168,6 +168,9 @@ const deTranslations = {
         },
         success: {
             saved: 'Profil erfolgreich gespeichert!',
+        },
+        hints: {
+            placeholders: 'Sie können {invoice_number} verwenden - dies wird automatisch durch die Rechnungsnummer ersetzt.',
         },
     },
     common: {

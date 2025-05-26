@@ -11,6 +11,13 @@ use chrono::NaiveDate;
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
 const DEFAULT_FONT_NAME: &str = "LiberationSans";
 
+/// Replace placeholders in text with actual values
+/// Supported placeholders:
+/// - {invoice_number}: The invoice number
+fn replace_placeholders(text: &str, invoice: &InvoiceResponse) -> String {
+    text.replace("{invoice_number}", &invoice.invoice_number)
+}
+
 /// Format a date string based on language preference
 /// Input date string is expected to be in ISO format (YYYY-MM-DD)
 fn format_date_for_language(date_str: &str, language: Language) -> String {
@@ -213,8 +220,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     );
 
     if let Some(bank_details) = &invoice.user_profile.bank_details {
+        // Replace placeholders in bank details
+        let processed_bank_details = replace_placeholders(bank_details, invoice);
+
         // Split bank details by newline and add each line as separate paragraph
-        for line in bank_details.split('\n') {
+        for line in processed_bank_details.split('\n') {
             doc.push(elements::Paragraph::new(line));
         }
     } else {
