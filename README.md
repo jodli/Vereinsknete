@@ -1,38 +1,38 @@
-# VereinsKnete
+# 💰 VereinsKnete
 
-VereinsKnete is a web application that helps freelance service providers (mainly sports instructors) track billable hours and generate professional invoices.
+VereinsKnete is a web application that helps freelance service providers (mainly sports instructors) track billable hours and generate professional invoices. 🏃‍♂️💼
 
-## Features
+## ✨ Features
 
-- User profile management
-- Client management
-- Session tracking
-- Invoice generation as PDF
-- Modern, responsive UI
+- 👤 User profile management
+- 🤝 Client management
+- ⏱️ Session tracking
+- 📄 Invoice generation as PDF
+- 🎨 Modern, responsive UI
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-### Backend
+### Backend 🦀
 - Rust with Actix-web
 - Diesel ORM with SQLite
 - PDF generation with genpdf
 
-### Frontend
+### Frontend ⚛️
 - React with TypeScript
 - React Router for navigation
 - Tailwind CSS for styling
 - HeroIcons for UI icons
 
-## Development Setup
+## 🚀 Development Setup
 
-### Prerequisites
-- Rust (1.70+)
-- Node.js (16+)
-- SQLite
+### 📋 Prerequisites
+- Rust (1.70+) 🦀
+- Node.js (16+) 🟢
+- SQLite 🗄️
 - libsqlite3-dev
-- Diesel CLI
+- Diesel CLI ⚡
 
-### Setting Up the Backend
+### 🔧 Setting Up the Backend
 
 1. Install Rust and Cargo from [rustup.rs](https://rustup.rs/)
 2. Install the required system packages:
@@ -57,9 +57,9 @@ VereinsKnete is a web application that helps freelance service providers (mainly
    cargo run
    ```
 
-### Setting Up the Frontend
+### 🎨 Setting Up the Frontend
 
-1. Install Node.js from [nodejs.org](https://nodejs.org/)
+1. Install Node.js from [nodejs.org](https://nodejs.org/) 📦
 2. Navigate to the frontend directory:
    ```
    cd frontend
@@ -73,39 +73,39 @@ VereinsKnete is a web application that helps freelance service providers (mainly
    npm start
    ```
 
-## Docker Deployment
+## 🐳 Docker Deployment
 
 The application includes Docker and Docker Compose configurations for easy deployment:
 
-1. Make sure Docker and Docker Compose are installed
+1. Make sure Docker and Docker Compose are installed 📦
 2. Build and run the application:
    ```
    docker-compose up -d
    ```
 
-The application will be available at http://localhost:8080
+The application will be available at http://localhost:8080 🌐
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 VereinsKnete/
-├── backend/             # Rust backend
-│   ├── migrations/      # Database migrations
-│   ├── src/             # Source code
-│   │   ├── handlers/    # API request handlers
-│   │   ├── models/      # Data models
-│   │   ├── services/    # Business logic
-│   │   ├── schema/      # Database schema
-│   │   └── main.rs      # Application entry point
-│   └── Cargo.toml       # Package dependencies
-├── frontend/            # React frontend
-│   ├── public/          # Static files
-│   ├── src/             # Source code
-│   │   ├── components/  # Reusable UI components
-│   │   ├── pages/       # Application pages
-│   │   ├── services/    # API service
-│   │   └── types/       # TypeScript types
-│   └── package.json     # Package dependencies
-├── Dockerfile           # Docker build instructions
-└── docker-compose.yml   # Docker Compose configuration
+├── backend/ 🦀          # Rust backend
+│   ├── migrations/ 📊   # Database migrations
+│   ├── src/ 💻         # Source code
+│   │   ├── handlers/ 🎯 # API request handlers
+│   │   ├── models/ 📋   # Data models
+│   │   ├── services/ ⚙️ # Business logic
+│   │   ├── schema/ 🗄️   # Database schema
+│   │   └── main.rs 🚀   # Application entry point
+│   └── Cargo.toml 📦    # Package dependencies
+├── frontend/ ⚛️         # React frontend
+│   ├── public/ 🌐       # Static files
+│   ├── src/ 💻         # Source code
+│   │   ├── components/ 🧩 # Reusable UI components
+│   │   ├── pages/ 📄    # Application pages
+│   │   ├── services/ 🌐 # API service
+│   │   └── types/ 📝    # TypeScript types
+│   └── package.json 📦  # Package dependencies
+├── Dockerfile 🐳        # Docker build instructions
+└── docker-compose.yml 🐙 # Docker Compose configuration
 ```
