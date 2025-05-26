@@ -35,6 +35,46 @@ const deTranslations = {
             sessions: 'Sitzungen',
             invoices: 'Rechnungen',
         },
+        metrics: {
+            revenue: 'Einnahmen',
+            pendingInvoices: 'Ausstehende Rechnungen',
+            totalInvoices: 'Gesamte Rechnungen',
+            paidInvoices: 'Bezahlte Rechnungen',
+            sentInvoices: 'Versendete Rechnungen',
+        },
+        periods: {
+            month: 'Monat',
+            quarter: 'Quartal',
+            year: 'Jahr',
+        },
+        months: [
+            'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+            'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+        ],
+        recentInvoices: {
+            title: 'Aktuelle Rechnungen',
+            columns: {
+                invoiceNumber: 'Rechnungsnummer',
+                client: 'Kunde',
+                date: 'Datum',
+                amount: 'Betrag',
+                status: 'Status',
+            },
+            noInvoices: 'Noch keine Rechnungen erstellt.',
+        },
+        quickActions: {
+            title: 'Schnellaktionen',
+            newSession: 'Neue Session',
+            newInvoice: 'Neue Rechnung',
+            allInvoices: 'Alle Rechnungen',
+        },
+        status: {
+            paid: 'Bezahlt',
+            sent: 'Versendet',
+            created: 'Erstellt',
+        },
+        loading: 'Lade Dashboard-Daten...',
+        errorLoading: 'Fehler beim Laden der Dashboard-Daten',
     },
     clients: {
         title: 'Klienten',

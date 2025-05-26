@@ -20,6 +20,11 @@ diesel::table! {
         date -> Text,
         total_amount -> Float,
         pdf_path -> Text,
+        status -> Text,
+        due_date -> Nullable<Text>,
+        paid_date -> Nullable<Text>,
+        year -> Integer,
+        sequence_number -> Integer,
         created_at -> Timestamp,
     }
 }

@@ -1,5 +1,6 @@
 backend/target
 backend/vereinsknete.db
+backend/invoices
 frontend/node_modules
 frontend/build
 

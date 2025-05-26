@@ -35,6 +35,46 @@ const enTranslations = {
             sessions: 'Sessions',
             invoices: 'Invoices',
         },
+        metrics: {
+            revenue: 'Revenue',
+            pendingInvoices: 'Pending Invoices',
+            totalInvoices: 'Total Invoices',
+            paidInvoices: 'Paid Invoices',
+            sentInvoices: 'Sent Invoices',
+        },
+        periods: {
+            month: 'Month',
+            quarter: 'Quarter',
+            year: 'Year',
+        },
+        months: [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ],
+        recentInvoices: {
+            title: 'Recent Invoices',
+            columns: {
+                invoiceNumber: 'Invoice Number',
+                client: 'Client',
+                date: 'Date',
+                amount: 'Amount',
+                status: 'Status',
+            },
+            noInvoices: 'No invoices created yet.',
+        },
+        quickActions: {
+            title: 'Quick Actions',
+            newSession: 'New Session',
+            newInvoice: 'New Invoice',
+            allInvoices: 'All Invoices',
+        },
+        status: {
+            paid: 'Paid',
+            sent: 'Sent',
+            created: 'Created',
+        },
+        loading: 'Loading dashboard data...',
+        errorLoading: 'Error loading dashboard data',
     },
     clients: {
         title: 'Clients',

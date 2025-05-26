@@ -7,7 +7,11 @@ import {
     UserProfileFormData,
     ClientFormData,
     SessionFormData,
-    SessionFilterParams
+    SessionFilterParams,
+    Invoice,
+    UpdateInvoiceStatusRequest,
+    DashboardMetrics,
+    DashboardQuery
 } from '../types';
 
 const API_URL = 'http://localhost:8080/api';
@@ -216,7 +220,7 @@ export const deleteSession = async (id: number): Promise<void> => {
 };
 
 // Invoice API calls
-export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<Blob> => {
+export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<{ invoice_id: number, pdf_bytes: string }> => {
     try {
         const response = await fetch(`${API_URL}/invoices/generate`, {
             method: 'POST',
@@ -228,9 +232,61 @@ export const generateInvoice = async (invoiceRequest: InvoiceRequest): Promise<B
         if (!response.ok) {
             throw new Error(`Failed to generate invoice: ${response.statusText}`);
         }
-        return await response.blob();
+        return await response.json();
     } catch (error) {
         console.error('Error generating invoice:', error);
+        throw error;
+    }
+};
+
+export const getAllInvoices = async (): Promise<Invoice[]> => {
+    try {
+        const response = await fetch(`${API_URL}/invoices`);
+        if (!response.ok) {
+            throw new Error(`Failed to get invoices: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error getting invoices:', error);
+        throw error;
+    }
+};
+
+export const updateInvoiceStatus = async (invoiceId: number, statusRequest: UpdateInvoiceStatusRequest): Promise<void> => {
+    try {
+        const response = await fetch(`${API_URL}/invoices/${invoiceId}/status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(statusRequest),
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update invoice status: ${response.statusText}`);
+        }
+    } catch (error) {
+        console.error('Error updating invoice status:', error);
+        throw error;
+    }
+};
+
+export const getDashboardMetrics = async (query: DashboardQuery): Promise<DashboardMetrics> => {
+    try {
+        const params = new URLSearchParams({
+            period: query.period,
+            year: query.year.toString(),
+        });
+        if (query.month) {
+            params.append('month', query.month.toString());
+        }
+
+        const response = await fetch(`${API_URL}/dashboard/metrics?${params}`);
+        if (!response.ok) {
+            throw new Error(`Failed to get dashboard metrics: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Error getting dashboard metrics:', error);
         throw error;
     }
 };

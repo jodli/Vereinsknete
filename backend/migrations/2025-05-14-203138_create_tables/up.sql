@@ -38,8 +38,14 @@ CREATE TABLE invoices (
     date TEXT NOT NULL,
     total_amount REAL NOT NULL,
     pdf_path TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'created',
+    due_date TEXT,
+    paid_date TEXT,
+    year INTEGER NOT NULL,
+    sequence_number INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE
+    FOREIGN KEY (client_id) REFERENCES clients (id) ON DELETE CASCADE,
+    UNIQUE(year, sequence_number)
 );
 
 -- Add trigger to update the updated_at timestamp for user_profile

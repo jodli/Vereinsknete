@@ -93,3 +93,34 @@ export interface InvoiceResponse {
     total_hours: number;
     total_amount: number;
 }
+
+export interface Invoice {
+    id: number;
+    invoice_number: string;
+    client_name: string;
+    date: string;
+    total_amount: number;
+    status: string;
+    due_date: string | null;
+    paid_date: string | null;
+    created_at: string;
+}
+
+export interface UpdateInvoiceStatusRequest {
+    status: string;
+    paid_date?: string | null;
+}
+
+export interface DashboardMetrics {
+    total_revenue_period: number;
+    pending_invoices_amount: number;
+    total_invoices_count: number;
+    paid_invoices_count: number;
+    pending_invoices_count: number;
+}
+
+export interface DashboardQuery {
+    period: 'month' | 'quarter' | 'year';
+    year: number;
+    month?: number;
+}

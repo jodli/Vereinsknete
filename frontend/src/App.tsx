@@ -10,7 +10,7 @@ import ClientsPage from './pages/ClientsPage';
 import ClientFormPage from './pages/ClientFormPage';
 import SessionsPage from './pages/SessionsPage';
 import SessionFormPage from './pages/SessionFormPage';
-import InvoicePage from './pages/InvoicePage';
+import InvoicesPage from './pages/InvoicesPage';
 
 function App() {
   return (
@@ -26,7 +26,7 @@ function App() {
             <Route path="/sessions" element={<SessionsPage />} />
             <Route path="/sessions/:id" element={<SessionFormPage />} />
             <Route path="/sessions/new" element={<SessionFormPage />} />
-            <Route path="/invoices" element={<InvoicePage />} />
+            <Route path="/invoices" element={<InvoicesPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
