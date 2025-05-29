@@ -6,6 +6,7 @@ const enTranslations = {
         clients: 'Clients',
         sessions: 'Sessions',
         invoices: 'Invoices',
+        settings: 'Settings',
     },
     dashboard: {
         title: 'Dashboard',

@@ -6,6 +6,7 @@ const deTranslations = {
         clients: 'Klienten',
         sessions: 'Sitzungen',
         invoices: 'Rechnungen',
+        settings: 'Einstellungen',
     },
     dashboard: {
         title: 'Dashboard',
