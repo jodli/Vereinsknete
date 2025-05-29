@@ -1,8 +1,8 @@
 use crate::models::{client::Client, user_profile::UserProfile};
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
-use diesel::prelude::*;
 use crate::schema::invoices;
+use chrono::NaiveDate;
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct InvoiceRequest {

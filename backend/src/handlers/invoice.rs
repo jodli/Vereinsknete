@@ -1,5 +1,5 @@
 use crate::errors::AppError;
-use crate::models::invoice::{InvoiceRequest, UpdateInvoiceStatusRequest, DashboardQuery};
+use crate::models::invoice::{DashboardQuery, InvoiceRequest, UpdateInvoiceStatusRequest};
 use crate::services::invoice as invoice_service;
 use crate::DbPool;
 use actix_web::{delete, get, patch, post, web, Error, HttpResponse};
@@ -10,13 +10,14 @@ async fn generate_invoice(
     pool: web::Data<DbPool>,
     invoice_req: web::Json<InvoiceRequest>,
 ) -> Result<HttpResponse, Error> {
-    let (pdf_bytes, invoice_id, invoice_number) =
-        web::block(move || invoice_service::generate_and_save_invoice(&pool, invoice_req.into_inner()))
-            .await?
-            .map_err(|e| {
-                eprintln!("Error generating invoice: {:?}", e);
-                AppError::InternalServerError(format!("Error generating invoice: {}", e))
-            })?;
+    let (pdf_bytes, invoice_id, invoice_number) = web::block(move || {
+        invoice_service::generate_and_save_invoice(&pool, invoice_req.into_inner())
+    })
+    .await?
+    .map_err(|e| {
+        eprintln!("Error generating invoice: {:?}", e);
+        AppError::InternalServer(format!("Error generating invoice: {}", e))
+    })?;
 
     Ok(HttpResponse::Ok()
         .content_type("application/pdf")
@@ -68,14 +69,13 @@ async fn get_dashboard_metrics(
     pool: web::Data<DbPool>,
     query: web::Query<DashboardQuery>,
 ) -> Result<HttpResponse, Error> {
-    let metrics = web::block(move || {
-        invoice_service::get_dashboard_metrics(&pool, query.into_inner())
-    })
-    .await?
-    .map_err(|e| {
-        eprintln!("Error getting dashboard metrics: {:?}", e);
-        AppError::InternalServerError(format!("Error getting dashboard metrics: {}", e))
-    })?;
+    let metrics =
+        web::block(move || invoice_service::get_dashboard_metrics(&pool, query.into_inner()))
+            .await?
+            .map_err(|e| {
+                eprintln!("Error getting dashboard metrics: {:?}", e);
+                AppError::InternalServer(format!("Error getting dashboard metrics: {}", e))
+            })?;
 
     Ok(HttpResponse::Ok().json(metrics))
 }
@@ -87,12 +87,13 @@ async fn download_invoice_pdf(
 ) -> Result<HttpResponse, Error> {
     let invoice_id = path.into_inner();
 
-    let (pdf_bytes, invoice_number) = web::block(move || invoice_service::get_invoice_pdf(&pool, invoice_id))
-        .await?
-        .map_err(|e| {
-            eprintln!("Error getting invoice PDF: {:?}", e);
-            AppError::InternalServerError(format!("Error getting invoice PDF: {}", e))
-        })?;
+    let (pdf_bytes, invoice_number) =
+        web::block(move || invoice_service::get_invoice_pdf(&pool, invoice_id))
+            .await?
+            .map_err(|e| {
+                eprintln!("Error getting invoice PDF: {:?}", e);
+                AppError::InternalServer(format!("Error getting invoice PDF: {}", e))
+            })?;
 
     Ok(HttpResponse::Ok()
         .content_type("application/pdf")

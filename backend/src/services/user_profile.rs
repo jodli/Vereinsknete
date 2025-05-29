@@ -1,6 +1,6 @@
-use diesel::prelude::*;
+use crate::models::user_profile::{NewUserProfile, UpdateUserProfile, UserProfile};
 use crate::DbPool;
-use crate::models::user_profile::{UserProfile, NewUserProfile, UpdateUserProfile};
+use diesel::prelude::*;
 
 pub fn get_profile(pool: &DbPool) -> Result<Option<UserProfile>, diesel::result::Error> {
     use crate::schema::user_profile::dsl::*;
@@ -12,7 +12,10 @@ pub fn get_profile(pool: &DbPool) -> Result<Option<UserProfile>, diesel::result:
         .optional()
 }
 
-pub fn create_profile(pool: &DbPool, new_profile: NewUserProfile) -> Result<UserProfile, diesel::result::Error> {
+pub fn create_profile(
+    pool: &DbPool,
+    new_profile: NewUserProfile,
+) -> Result<UserProfile, diesel::result::Error> {
     use crate::schema::user_profile;
     use crate::schema::user_profile::dsl::*;
 
@@ -30,7 +33,11 @@ pub fn create_profile(pool: &DbPool, new_profile: NewUserProfile) -> Result<User
         .get_result(&mut conn)
 }
 
-pub fn update_profile(pool: &DbPool, profile_id: i32, update_profile: UpdateUserProfile) -> Result<UserProfile, diesel::result::Error> {
+pub fn update_profile(
+    pool: &DbPool,
+    profile_id: i32,
+    update_profile: UpdateUserProfile,
+) -> Result<UserProfile, diesel::result::Error> {
     use crate::schema::user_profile::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");

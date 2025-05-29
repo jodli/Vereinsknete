@@ -1,16 +1,18 @@
 use crate::models::invoice::{
-    InvoiceRequest, InvoiceResponse, InvoiceSessionItem,
-    Invoice, NewInvoice, UpdateInvoiceStatusRequest,
-    InvoiceListItem, DashboardMetrics, DashboardQuery
+    DashboardMetrics, DashboardQuery, Invoice, InvoiceListItem, InvoiceRequest, InvoiceResponse,
+    InvoiceSessionItem, NewInvoice, UpdateInvoiceStatusRequest,
 };
 use crate::services::{client, pdf, user_profile};
 use crate::DbPool;
 use anyhow::{Context, Result};
-use chrono::{NaiveTime, Utc, Datelike};
+use chrono::{Datelike, NaiveTime, Utc};
 use diesel::prelude::*;
 use std::fs;
 
-pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> Result<(Vec<u8>, i32, String)> {
+pub fn generate_and_save_invoice(
+    pool: &DbPool,
+    invoice_req: InvoiceRequest,
+) -> Result<(Vec<u8>, i32, String)> {
     // Get user profile
     let user_profile = user_profile::get_profile(pool)
         .context("Failed to get user profile")?
@@ -88,8 +90,8 @@ pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> 
     };
 
     // Generate PDF
-    let pdf_bytes = pdf::generate_invoice_pdf(&invoice_response, language)
-        .context("Failed to generate PDF")?;
+    let pdf_bytes =
+        pdf::generate_invoice_pdf(&invoice_response, language).context("Failed to generate PDF")?;
 
     // Save PDF to file
     let pdf_filename = format!("invoice_{}.pdf", invoice_number_str);
@@ -100,7 +102,9 @@ pub fn generate_and_save_invoice(pool: &DbPool, invoice_req: InvoiceRequest) -> 
     std::fs::write(&pdf_path_str, &pdf_bytes).context("Failed to save PDF file")?;
 
     // Calculate due date (30 days from today)
-    let due_date_str = (Utc::now() + chrono::Duration::days(30)).format("%Y-%m-%d").to_string();
+    let due_date_str = (Utc::now() + chrono::Duration::days(30))
+        .format("%Y-%m-%d")
+        .to_string();
 
     // Save invoice to database
     let new_invoice = NewInvoice {
@@ -148,7 +152,7 @@ fn get_next_sequence_number(pool: &DbPool, target_year: i32) -> Result<i32> {
 }
 
 pub fn get_all_invoices(pool: &DbPool) -> Result<Vec<InvoiceListItem>> {
-    use crate::schema::{invoices, clients};
+    use crate::schema::{clients, invoices};
 
     let mut conn = pool.get().expect("Failed to get DB connection");
 
@@ -166,30 +170,56 @@ pub fn get_all_invoices(pool: &DbPool) -> Result<Vec<InvoiceListItem>> {
             invoices::created_at,
         ))
         .order(invoices::created_at.desc())
-        .load::<(i32, String, String, String, f32, String, Option<String>, Option<String>, chrono::NaiveDateTime)>(&mut conn)
+        .load::<(
+            i32,
+            String,
+            String,
+            String,
+            f32,
+            String,
+            Option<String>,
+            Option<String>,
+            chrono::NaiveDateTime,
+        )>(&mut conn)
         .context("Failed to get invoices")?;
 
     let invoice_list = results
         .into_iter()
-        .map(|(invoice_id, invoice_number_val, client_name, invoice_date, total_amount_val, invoice_status, due_date_val, paid_date_val, created_at_val)| {
-            InvoiceListItem {
-                id: invoice_id,
-                invoice_number: invoice_number_val,
+        .map(
+            |(
+                invoice_id,
+                invoice_number_val,
                 client_name,
-                date: invoice_date,
-                total_amount: total_amount_val,
-                status: invoice_status,
-                due_date: due_date_val,
-                paid_date: paid_date_val,
-                created_at: created_at_val,
-            }
-        })
+                invoice_date,
+                total_amount_val,
+                invoice_status,
+                due_date_val,
+                paid_date_val,
+                created_at_val,
+            )| {
+                InvoiceListItem {
+                    id: invoice_id,
+                    invoice_number: invoice_number_val,
+                    client_name,
+                    date: invoice_date,
+                    total_amount: total_amount_val,
+                    status: invoice_status,
+                    due_date: due_date_val,
+                    paid_date: paid_date_val,
+                    created_at: created_at_val,
+                }
+            },
+        )
         .collect();
 
     Ok(invoice_list)
 }
 
-pub fn update_invoice_status(pool: &DbPool, invoice_id: i32, status_req: UpdateInvoiceStatusRequest) -> Result<()> {
+pub fn update_invoice_status(
+    pool: &DbPool,
+    invoice_id: i32,
+    status_req: UpdateInvoiceStatusRequest,
+) -> Result<()> {
     use crate::schema::invoices;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
@@ -225,7 +255,7 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
                 format!("{}-{:02}-01", query.year, month + 1)
             };
             (start, end)
-        },
+        }
         "quarter" => {
             let quarter = ((query.month.unwrap_or(Utc::now().month() as i32) - 1) / 3) + 1;
             let start_month = (quarter - 1) * 3 + 1;
@@ -236,12 +266,12 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
                 format!("{}-{:02}-01", query.year, start_month + 3)
             };
             (start, end)
-        },
+        }
         "year" => {
             let start = format!("{}-01-01", query.year);
             let end = format!("{}-01-01", query.year + 1);
             (start, end)
-        },
+        }
         _ => anyhow::bail!("Invalid period. Use 'month', 'quarter', or 'year'"),
     };
 
@@ -326,8 +356,7 @@ pub fn delete_invoice(pool: &DbPool, invoice_id: i32) -> Result<()> {
     // Delete the PDF file if it exists
     let pdf_path = format!("invoices/invoice_{}.pdf", invoice.invoice_number);
     if std::path::Path::new(&pdf_path).exists() {
-        fs::remove_file(&pdf_path)
-            .context(format!("Failed to delete PDF file: {}", pdf_path))?;
+        fs::remove_file(&pdf_path).context(format!("Failed to delete PDF file: {}", pdf_path))?;
     }
 
     // Delete the invoice record from database

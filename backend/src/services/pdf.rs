@@ -1,12 +1,12 @@
+use crate::i18n::{translate, Language};
 use crate::models::invoice::InvoiceResponse;
-use crate::i18n::{Language, translate};
 use anyhow::Result;
+use chrono::NaiveDate;
 use genpdf::{
     elements::{self},
     fonts, style, Element, Margins,
 };
 use std::io::Cursor;
-use chrono::NaiveDate;
 
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
 const DEFAULT_FONT_NAME: &str = "LiberationSans";
@@ -50,13 +50,21 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     doc.set_page_decorator(decorator);
 
     // Set document properties
-    doc.set_title(&format!("{} #{}", translate(lang, "invoice", "invoice"), &invoice.invoice_number));
+    doc.set_title(format!(
+        "{} #{}",
+        translate(lang, "invoice", "invoice"),
+        &invoice.invoice_number
+    ));
     doc.set_minimal_conformance();
     doc.set_line_spacing(1.5);
 
     // Add invoice header with larger font and bold styling
-    let header = elements::Paragraph::new(&format!("{} #{}", translate(lang, "invoice", "invoice"), &invoice.invoice_number))
-        .styled(style::Style::new().bold().with_font_size(22));
+    let header = elements::Paragraph::new(format!(
+        "{} #{}",
+        translate(lang, "invoice", "invoice"),
+        &invoice.invoice_number
+    ))
+    .styled(style::Style::new().bold().with_font_size(22));
     doc.push(header);
 
     // Add date with some space below
@@ -85,7 +93,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     }
 
     if let Some(tax_id) = &invoice.user_profile.tax_id {
-        from_section.push(elements::Paragraph::new(&format!("{}: {}", translate(lang, "invoice", "tax_id"), tax_id)));
+        from_section.push(elements::Paragraph::new(format!(
+            "{}: {}",
+            translate(lang, "invoice", "tax_id"),
+            tax_id
+        )));
     }
 
     // TO section
@@ -102,7 +114,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     }
 
     if let Some(contact) = &invoice.client.contact_person {
-        to_section.push(elements::Paragraph::new(&format!("{}: {}", translate(lang, "invoice", "contact"), contact)));
+        to_section.push(elements::Paragraph::new(format!(
+            "{}: {}",
+            translate(lang, "invoice", "contact"),
+            contact
+        )));
     }
 
     // Add from and to sections to the columns
@@ -166,7 +182,10 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     for item in invoice.sessions.iter() {
         table.push_row(vec![
             Box::new(elements::Paragraph::new(&item.name).padded(Margins::all(1))),
-            Box::new(elements::Paragraph::new(&format_date_for_language(&item.date, lang)).padded(Margins::all(1))),
+            Box::new(
+                elements::Paragraph::new(format_date_for_language(&item.date, lang))
+                    .padded(Margins::all(1)),
+            ),
             Box::new(elements::Paragraph::new(&item.start_time).padded(Margins::all(1))),
             Box::new(elements::Paragraph::new(&item.end_time).padded(Margins::all(1))),
             Box::new(
@@ -215,8 +234,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
     doc.push(elements::Break::new(1.5));
 
     doc.push(
-        elements::Paragraph::new(&format!("{}:", translate(lang, "invoice", "payment_details")))
-            .styled(style::Style::new().bold().with_font_size(14)),
+        elements::Paragraph::new(format!(
+            "{}:",
+            translate(lang, "invoice", "payment_details")
+        ))
+        .styled(style::Style::new().bold().with_font_size(14)),
     );
 
     if let Some(bank_details) = &invoice.user_profile.bank_details {
@@ -228,9 +250,11 @@ pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -
             doc.push(elements::Paragraph::new(line));
         }
     } else {
-        doc.push(elements::Paragraph::new(
-            translate(lang, "invoice", "no_payment_details"),
-        ));
+        doc.push(elements::Paragraph::new(translate(
+            lang,
+            "invoice",
+            "no_payment_details",
+        )));
     }
 
     // Render the document to a byte buffer

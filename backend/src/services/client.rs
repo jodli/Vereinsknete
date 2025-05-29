@@ -1,17 +1,18 @@
-use diesel::prelude::*;
-use crate::DbPool;
 use crate::models::client::{Client, NewClient, UpdateClient};
+use crate::DbPool;
+use diesel::prelude::*;
 
 pub fn get_all_clients(pool: &DbPool) -> Result<Vec<Client>, diesel::result::Error> {
     use crate::schema::clients::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
-    clients
-        .select(Client::as_select())
-        .load(&mut conn)
+    clients.select(Client::as_select()).load(&mut conn)
 }
 
-pub fn get_client_by_id(pool: &DbPool, client_id: i32) -> Result<Option<Client>, diesel::result::Error> {
+pub fn get_client_by_id(
+    pool: &DbPool,
+    client_id: i32,
+) -> Result<Option<Client>, diesel::result::Error> {
     use crate::schema::clients::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
@@ -22,7 +23,10 @@ pub fn get_client_by_id(pool: &DbPool, client_id: i32) -> Result<Option<Client>,
         .optional()
 }
 
-pub fn create_client(pool: &DbPool, new_client: NewClient) -> Result<Client, diesel::result::Error> {
+pub fn create_client(
+    pool: &DbPool,
+    new_client: NewClient,
+) -> Result<Client, diesel::result::Error> {
     use crate::schema::clients;
     use crate::schema::clients::dsl::*;
 
@@ -40,7 +44,11 @@ pub fn create_client(pool: &DbPool, new_client: NewClient) -> Result<Client, die
         .get_result(&mut conn)
 }
 
-pub fn update_client(pool: &DbPool, client_id: i32, update_client: UpdateClient) -> Result<Client, diesel::result::Error> {
+pub fn update_client(
+    pool: &DbPool,
+    client_id: i32,
+    update_client: UpdateClient,
+) -> Result<Client, diesel::result::Error> {
     use crate::schema::clients::dsl::*;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
@@ -61,6 +69,5 @@ pub fn delete_client(pool: &DbPool, client_id: i32) -> Result<usize, diesel::res
 
     let mut conn = pool.get().expect("Failed to get DB connection");
 
-    diesel::delete(clients.filter(id.eq(client_id)))
-        .execute(&mut conn)
+    diesel::delete(clients.filter(id.eq(client_id))).execute(&mut conn)
 }
