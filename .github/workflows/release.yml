@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Fetch all history for changelog generation
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+        if [ -z "$PREVIOUS_TAG" ]; then
+          echo "No previous tag found, generating changelog from first commit"
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" --reverse)
+        else
+          echo "Generating changelog from $PREVIOUS_TAG to ${{ github.ref_name }}"
+          CHANGELOG=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD)
+        fi
+
+        # Save changelog to output
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## Changes in ${{ github.ref_name }}
+
+          ${{ steps.changelog.outputs.changelog }}
+
+          ## Docker Image
+
+          The Docker image for this release is available at:
+          ```
+          ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          ```
+
+          ## Usage
+
+          ```bash
+          # Pull and run the latest release
+          docker run -d \\
+            --name vereinsknete \\
+            -p 8080:8080 \\
+            -v ./data:/app/data \\
+            -v ./data/invoices:/app/invoices \\
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+          ```
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        generate_release_notes: true
+        token: ${{ secrets.GITHUB_TOKEN }}
