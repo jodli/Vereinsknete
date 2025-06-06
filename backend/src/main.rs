@@ -31,8 +31,11 @@ async fn main() -> std::io::Result<()> {
         .build(manager)
         .expect("Failed to create pool");
 
+    // Set the bind target (IP address and port)
+    let target = ("0.0.0.0", 8080);
+
     // Set up and start the HTTP server
-    log::info!("Starting VereinsKnete server at http://localhost:8080");
+    log::info!("Starting VereinsKnete server at http://{}:{}", target.0, target.1);
 
     // Check if we're in development mode
     let is_dev_mode = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string()) == "development";
@@ -75,7 +78,7 @@ async fn main() -> std::io::Result<()> {
 
         app
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(target)?
     .run()
     .await
 }
