@@ -1,5 +1,20 @@
 # syntax=docker/dockerfile:1
 
+# Build stage for the diesel CLI tool
+FROM rust:1.86 as diesel-builder
+
+# Install dependencies for building diesel_cli with sqlite
+RUN apt-get update && \
+    apt-get install -y libsqlite3-dev pkg-config && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install diesel_cli with sqlite support
+RUN cargo install diesel_cli --no-default-features --features sqlite
+
+# Copy the diesel binary to a separate output directory for easy extraction
+RUN mkdir -p /out && cp /usr/local/cargo/bin/diesel /out/
+
+
 # Build stage for the backend
 FROM rust:1.86 AS backend-builder
 WORKDIR /app
@@ -9,9 +24,6 @@ RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     pkg-config \
     && rm -rf /var/lib/apt/lists/*
-
-# Install diesel CLI for migrations
-RUN cargo install diesel_cli --no-default-features --features sqlite
 
 # Copy dependency files first for better caching
 COPY backend/Cargo.toml backend/Cargo.lock ./
@@ -53,7 +65,7 @@ RUN mkdir -p /app/data /app/invoices && \
 # Copy backend binary and necessary files
 COPY --from=backend-builder /app/target/release/backend /app/
 COPY --from=backend-builder /app/migrations /app/migrations
-COPY --from=backend-builder /usr/local/cargo/bin/diesel /usr/local/bin/
+COPY --from=diesel-builder /out/diesel /usr/local/bin/
 
 # Copy frontend build
 COPY --from=frontend-builder /app/build /app/public
