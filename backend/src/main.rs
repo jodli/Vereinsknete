@@ -94,25 +94,32 @@ async fn main() -> std::io::Result<()> {
         target.1
     );
 
-    // Check if we're in development mode
-    let is_dev_mode =
-        env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string()) == "development";
-    let static_files_path = "../frontend/build";
-    let serve_static_files = !is_dev_mode && Path::new(static_files_path).exists();
+    // Determine static file serving based on environment mode
+    let static_files_path = env::var("STATIC_FILES_PATH")
+        .unwrap_or_else(|_| match env_mode {
+            AppEnv::Dev => "../frontend/build".to_string(),
+            AppEnv::Prod => "./public".to_string(),
+        });
+    let serve_static_files = matches!(env_mode, AppEnv::Prod) && Path::new(&static_files_path).exists();
 
-    if is_dev_mode {
-        log::info!("Running in development mode - static files will not be served");
-        log::info!("Frontend should be started separately (e.g., with npm start)");
-    } else if serve_static_files {
-        log::info!(
-            "Running in production mode - serving static files from {}",
-            static_files_path
-        );
-    } else {
-        log::warn!(
-            "Production mode but no static files found at {}",
-            static_files_path
-        );
+    match env_mode {
+        AppEnv::Dev => {
+            log::info!("Running in development mode - static files will not be served");
+            log::info!("Frontend should be started separately (e.g., with npm start)");
+        }
+        AppEnv::Prod => {
+            if serve_static_files {
+                log::info!(
+                    "Running in production mode - serving static files from {}",
+                    static_files_path
+                );
+            } else {
+                log::warn!(
+                    "Production mode but no static files found at {}",
+                    static_files_path
+                );
+            }
+        }
     }
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -135,7 +142,7 @@ async fn main() -> std::io::Result<()> {
 
         // Conditionally serve static files only in production
         if serve_static_files {
-            app = app.service(fs::Files::new("/", static_files_path).index_file("index.html"));
+            app = app.service(fs::Files::new("/", &static_files_path).index_file("index.html"));
         }
 
         app
