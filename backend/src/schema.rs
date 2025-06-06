@@ -56,4 +56,9 @@ diesel::table! {
 diesel::joinable!(invoices -> clients (client_id));
 diesel::joinable!(sessions -> clients (client_id));
 
-diesel::allow_tables_to_appear_in_same_query!(clients, invoices, sessions, user_profile,);
+diesel::allow_tables_to_appear_in_same_query!(
+    clients,
+    invoices,
+    sessions,
+    user_profile,
+);
