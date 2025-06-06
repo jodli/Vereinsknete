@@ -1,11 +1,13 @@
 backend/target
 backend/vereinsknete.db
+backend/data
 backend/invoices
 frontend/node_modules
 frontend/build
 
-# Environment files
+# Environment files - local overrides only
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 frontend/.env.production.local
+backend/.env.local

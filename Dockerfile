@@ -62,6 +62,7 @@ EXPOSE 8080
 
 ENV DATABASE_URL=/app/data/database.sqlite
 ENV RUST_LOG=info
+ENV RUST_ENV=production
 
 # Initialize the database on first run
 RUN echo '#!/bin/bash\n\

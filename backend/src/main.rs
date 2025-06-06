@@ -6,6 +6,7 @@ use diesel::sqlite::SqliteConnection;
 use dotenvy::dotenv;
 use std::env;
 use std::path::Path;
+use std::str::FromStr;
 
 mod errors;
 mod handlers;
@@ -16,29 +17,86 @@ mod services;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 
+#[derive(Debug)]
+pub enum AppEnv {
+    Dev,
+    Prod,
+}
+
+impl FromStr for AppEnv {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "dev" | "development" => Ok(AppEnv::Dev),
+            "prod" | "production" => Ok(AppEnv::Prod),
+            s => Err(format!("Invalid environment: {s}")),
+        }
+    }
+}
+
+impl AppEnv {
+    pub fn from_env() -> Self {
+        std::env::var("RUST_ENV")
+            .ok()
+            .and_then(|v| AppEnv::from_str(&v).ok())
+            .unwrap_or(AppEnv::Dev)
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Load environment variables from .env file if present
-    dotenv().ok();
+    // Load environment variables from appropriate .env file
+    // Check for explicit environment first, then default to development
+    let env_mode = AppEnv::from_env();
+
+    match env_mode {
+        AppEnv::Prod => {
+            if Path::new(".env.production").exists() {
+                dotenvy::from_filename(".env.production").ok();
+            } else {
+                dotenv().ok();
+            }
+        }
+        AppEnv::Dev => {
+            if Path::new(".env.development").exists() {
+                dotenvy::from_filename(".env.development").ok();
+            } else {
+                dotenv().ok();
+            }
+        }
+    }
 
     // Initialize the logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    log::info!("Running in {:?} mode", env_mode);
 
     // Set up database connection pool
     let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| "vereinsknete.db".to_string());
+    log::info!("Using database URL: {}", database_url);
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool");
 
-    // Set the bind target (IP address and port)
-    let target = ("0.0.0.0", 8080);
+    // Set the bind target (IP address and port) from environment variables
+    let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
+        .parse::<u16>()
+        .unwrap_or(8080);
+    let target = (host.as_str(), port);
 
     // Set up and start the HTTP server
-    log::info!("Starting VereinsKnete server at http://{}:{}", target.0, target.1);
+    log::info!(
+        "Starting VereinsKnete server at http://{}:{}",
+        target.0,
+        target.1
+    );
 
     // Check if we're in development mode
-    let is_dev_mode = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string()) == "development";
+    let is_dev_mode =
+        env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string()) == "development";
     let static_files_path = "../frontend/build";
     let serve_static_files = !is_dev_mode && Path::new(static_files_path).exists();
 
@@ -46,21 +104,25 @@ async fn main() -> std::io::Result<()> {
         log::info!("Running in development mode - static files will not be served");
         log::info!("Frontend should be started separately (e.g., with npm start)");
     } else if serve_static_files {
-        log::info!("Running in production mode - serving static files from {}", static_files_path);
+        log::info!(
+            "Running in production mode - serving static files from {}",
+            static_files_path
+        );
     } else {
-        log::warn!("Production mode but no static files found at {}", static_files_path);
+        log::warn!(
+            "Production mode but no static files found at {}",
+            static_files_path
+        );
     }
     HttpServer::new(move || {
-        // Configure CORS to allow frontend to access API
         let cors = Cors::default()
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header()
             .max_age(3600);
-
         let mut app = App::new()
-            .wrap(cors)
             .wrap(Logger::default())
+            .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
             // Register API routes
             .service(
