@@ -4,22 +4,47 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+# Core web framework
 actix-web = "4"
 actix-cors = "0.6"
 actix-files = "0.6"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+
+# Database
 diesel = { version = "2", features = ["sqlite", "r2d2", "chrono"] }
 diesel_migrations = "2"
-dotenvy = "0.15"
-chrono = { version = "0.4", features = ["serde"] }
 r2d2 = "0.8"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Date/time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Error handling
 thiserror = "1"
+anyhow = "1.0"
+
+# Validation
+validator = { version = "0.16", features = ["derive"] }
+
+# Utilities
 uuid = { version = "1", features = ["v4", "serde"] }
+lazy_static = "1.4"
+regex = "1"
+base64 = "0.21"
+
+# Environment
+dotenvy = "0.15"
+
+# Logging
 env_logger = "0.10"
 log = "0.4"
+
+# PDF generation
 genpdf = "0.2"
 rusttype = "0.9"
-anyhow = "1.0"
-lazy_static = "1.4"
-base64 = "0.21"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3"

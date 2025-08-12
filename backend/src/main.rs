@@ -4,20 +4,23 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::sqlite::SqliteConnection;
 use dotenvy::dotenv;
+use middleware::{RequestIdMiddleware, SecurityHeadersMiddleware};
 use std::env;
 use std::path::Path;
 use std::str::FromStr;
+use std::time::Duration;
 
 mod errors;
 mod handlers;
 mod i18n;
+mod middleware;
 mod models;
 mod schema;
 mod services;
 
 pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AppEnv {
     Dev,
     Prod,
@@ -76,6 +79,9 @@ async fn main() -> std::io::Result<()> {
     log::info!("Using database URL: {}", database_url);
     let manager = ConnectionManager::<SqliteConnection>::new(database_url);
     let pool = r2d2::Pool::builder()
+        .max_size(10)
+        .min_idle(Some(1))
+        .connection_timeout(Duration::from_secs(30))
         .build(manager)
         .expect("Failed to create pool");
 
@@ -95,12 +101,12 @@ async fn main() -> std::io::Result<()> {
     );
 
     // Determine static file serving based on environment mode
-    let static_files_path = env::var("STATIC_FILES_PATH")
-        .unwrap_or_else(|_| match env_mode {
-            AppEnv::Dev => "../frontend/build".to_string(),
-            AppEnv::Prod => "./public".to_string(),
-        });
-    let serve_static_files = matches!(env_mode, AppEnv::Prod) && Path::new(&static_files_path).exists();
+    let static_files_path = env::var("STATIC_FILES_PATH").unwrap_or_else(|_| match env_mode {
+        AppEnv::Dev => "../frontend/build".to_string(),
+        AppEnv::Prod => "./public".to_string(),
+    });
+    let serve_static_files =
+        matches!(env_mode, AppEnv::Prod) && Path::new(&static_files_path).exists();
 
     match env_mode {
         AppEnv::Dev => {
@@ -122,15 +128,27 @@ async fn main() -> std::io::Result<()> {
         }
     }
     HttpServer::new(move || {
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allow_any_method()
-            .allow_any_header()
-            .max_age(3600);
+        let cors = match env_mode {
+            AppEnv::Dev => Cors::default()
+                .allow_any_origin()
+                .allow_any_method()
+                .allow_any_header()
+                .max_age(3600),
+            AppEnv::Prod => Cors::default()
+                .allowed_origin("https://yourdomain.com") // Configure for production
+                .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
+                .allowed_headers(vec!["Content-Type", "Authorization"])
+                .max_age(3600),
+        };
+
         let mut app = App::new()
             .wrap(Logger::default())
+            .wrap(RequestIdMiddleware)
+            .wrap(SecurityHeadersMiddleware)
             .wrap(cors)
             .app_data(web::Data::new(pool.clone()))
+            // Health check endpoints (outside API scope for monitoring)
+            .configure(handlers::health::config)
             // Register API routes
             .service(
                 web::scope("/api")

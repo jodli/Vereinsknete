@@ -9,19 +9,66 @@ use chrono::{Datelike, NaiveTime, Utc};
 use diesel::prelude::*;
 use std::fs;
 
+/// Generates and saves an invoice with PDF
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `invoice_req` - Invoice generation request with client ID and date range
+///
+/// # Returns
+/// * `Result<(Vec<u8>, i32, String)>` - PDF bytes, invoice ID, and invoice number or error
 pub fn generate_and_save_invoice(
     pool: &DbPool,
     invoice_req: InvoiceRequest,
 ) -> Result<(Vec<u8>, i32, String)> {
+    // Business logic validation
+    if invoice_req.client_id <= 0 {
+        log::warn!(
+            "Attempted to generate invoice with invalid client ID: {}",
+            invoice_req.client_id
+        );
+        anyhow::bail!("Invalid client ID");
+    }
+
+    if invoice_req.end_date <= invoice_req.start_date {
+        log::warn!(
+            "Attempted to generate invoice with invalid date range: {} to {}",
+            invoice_req.start_date,
+            invoice_req.end_date
+        );
+        anyhow::bail!("End date must be after start date");
+    }
+
+    // Check if date range is reasonable (not more than 1 year)
+    let date_diff = invoice_req.end_date - invoice_req.start_date;
+    if date_diff.num_days() > 365 {
+        log::warn!(
+            "Attempted to generate invoice with date range longer than 1 year: {} days",
+            date_diff.num_days()
+        );
+        anyhow::bail!("Date range cannot exceed 1 year");
+    }
+
+    log::info!(
+        "Generating invoice for client {} from {} to {}",
+        invoice_req.client_id,
+        invoice_req.start_date,
+        invoice_req.end_date
+    );
+
     // Get user profile
     let user_profile = user_profile::get_profile(pool)
         .context("Failed to get user profile")?
-        .context("User profile not found")?;
+        .context("User profile not found - please create a user profile first")?;
+
+    log::debug!("Retrieved user profile: {}", user_profile.name);
 
     // Get client
     let client_data = client::get_client_by_id(pool, invoice_req.client_id)
         .context("Failed to get client")?
         .context("Client not found")?;
+
+    log::debug!("Retrieved client: {}", client_data.name);
 
     let current_year = Utc::now().year();
 
@@ -30,6 +77,8 @@ pub fn generate_and_save_invoice(
 
     // Generate invoice number: YYYY-NNNN
     let invoice_number_str = format!("{}-{:04}", current_year, next_sequence_number);
+
+    log::info!("Generated invoice number: {}", invoice_number_str);
 
     // Extract language preference
     let language = invoice_req.language.as_deref();
@@ -45,9 +94,30 @@ pub fn generate_and_save_invoice(
         .load::<crate::models::session::Session>(&mut conn)
         .context("Failed to get sessions")?;
 
+    if session_data.is_empty() {
+        log::warn!(
+            "No sessions found for client {} in date range {} to {}",
+            invoice_req.client_id,
+            invoice_req.start_date,
+            invoice_req.end_date
+        );
+        anyhow::bail!("No sessions found in the specified date range");
+    }
+
+    log::debug!("Found {} sessions for invoice", session_data.len());
+
     // Calculate totals and create invoice items
     let mut total_hours = 0.0_f32;
     let hourly_rate = client_data.default_hourly_rate;
+
+    if hourly_rate <= 0.0 {
+        log::error!(
+            "Client {} has invalid hourly rate: {}",
+            client_data.id,
+            hourly_rate
+        );
+        anyhow::bail!("Client has invalid hourly rate");
+    }
 
     let invoice_items: Vec<InvoiceSessionItem> = session_data
         .iter()
@@ -78,6 +148,20 @@ pub fn generate_and_save_invoice(
 
     let total_amount_calc = total_hours * hourly_rate;
 
+    if total_amount_calc <= 0.0 {
+        log::warn!(
+            "Invoice would have zero or negative amount: {}",
+            total_amount_calc
+        );
+        anyhow::bail!("Invoice amount must be positive");
+    }
+
+    log::info!(
+        "Invoice totals: {} hours, {} amount",
+        total_hours,
+        total_amount_calc
+    );
+
     // Create invoice response for PDF generation
     let invoice_response = InvoiceResponse {
         invoice_number: invoice_number_str.clone(),
@@ -90,8 +174,11 @@ pub fn generate_and_save_invoice(
     };
 
     // Generate PDF
+    log::debug!("Generating PDF for invoice {}", invoice_number_str);
     let pdf_bytes =
         pdf::generate_invoice_pdf(&invoice_response, language).context("Failed to generate PDF")?;
+
+    log::debug!("Generated PDF with {} bytes", pdf_bytes.len());
 
     // Save PDF to file
     let pdf_filename = format!("invoice_{}.pdf", invoice_number_str);
@@ -100,6 +187,8 @@ pub fn generate_and_save_invoice(
     // Create directory if it doesn't exist
     std::fs::create_dir_all("invoices").context("Failed to create invoices directory")?;
     std::fs::write(&pdf_path_str, &pdf_bytes).context("Failed to save PDF file")?;
+
+    log::debug!("Saved PDF to: {}", pdf_path_str);
 
     // Calculate due date (30 days from today)
     let due_date_str = (Utc::now() + chrono::Duration::days(30))
@@ -132,13 +221,36 @@ pub fn generate_and_save_invoice(
         .first::<i32>(&mut conn)
         .context("Failed to get invoice ID")?;
 
+    log::info!(
+        "Successfully generated and saved invoice {} with ID: {}",
+        invoice_number_str,
+        invoice_id
+    );
+
     Ok((pdf_bytes, invoice_id, invoice_number_str))
 }
 
+/// Gets the next sequence number for invoice numbering in a given year
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `target_year` - Year for which to get the next sequence number
+///
+/// # Returns
+/// * `Result<i32>` - Next sequence number or error
 fn get_next_sequence_number(pool: &DbPool, target_year: i32) -> Result<i32> {
     use crate::schema::invoices;
 
+    // Validate year
+    let current_year = Utc::now().year();
+    if target_year < 2000 || target_year > current_year + 1 {
+        log::warn!("Invalid target year for invoice sequence: {}", target_year);
+        anyhow::bail!("Invalid year for invoice generation");
+    }
+
     let mut conn = pool.get().expect("Failed to get DB connection");
+
+    log::debug!("Getting next sequence number for year: {}", target_year);
 
     let max_sequence: Option<i32> = invoices::table
         .filter(invoices::year.eq(target_year))
@@ -148,13 +260,30 @@ fn get_next_sequence_number(pool: &DbPool, target_year: i32) -> Result<i32> {
         .context("Failed to get max sequence number")?
         .flatten();
 
-    Ok(max_sequence.unwrap_or(0) + 1)
+    let next_sequence = max_sequence.unwrap_or(0) + 1;
+
+    log::debug!(
+        "Next sequence number for year {}: {}",
+        target_year,
+        next_sequence
+    );
+
+    Ok(next_sequence)
 }
 
+/// Retrieves all invoices with client information
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+///
+/// # Returns
+/// * `Result<Vec<InvoiceListItem>>` - List of invoices with client names or error
 pub fn get_all_invoices(pool: &DbPool) -> Result<Vec<InvoiceListItem>> {
     use crate::schema::{clients, invoices};
 
     let mut conn = pool.get().expect("Failed to get DB connection");
+
+    log::debug!("Fetching all invoices with client information");
 
     let results = invoices::table
         .inner_join(clients::table.on(invoices::client_id.eq(clients::id)))
@@ -183,7 +312,7 @@ pub fn get_all_invoices(pool: &DbPool) -> Result<Vec<InvoiceListItem>> {
         )>(&mut conn)
         .context("Failed to get invoices")?;
 
-    let invoice_list = results
+    let invoice_list: Vec<_> = results
         .into_iter()
         .map(
             |(
@@ -212,9 +341,20 @@ pub fn get_all_invoices(pool: &DbPool) -> Result<Vec<InvoiceListItem>> {
         )
         .collect();
 
+    log::debug!("Successfully fetched {} invoices", invoice_list.len());
+
     Ok(invoice_list)
 }
 
+/// Updates the status of an existing invoice
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `invoice_id` - ID of the invoice to update
+/// * `status_req` - New status and optional paid date
+///
+/// # Returns
+/// * `Result<()>` - Success or error
 pub fn update_invoice_status(
     pool: &DbPool,
     invoice_id: i32,
@@ -222,7 +362,39 @@ pub fn update_invoice_status(
 ) -> Result<()> {
     use crate::schema::invoices;
 
+    // Validate input
+    if invoice_id <= 0 {
+        log::warn!("Invalid invoice ID for status update: {}", invoice_id);
+        anyhow::bail!("Invalid invoice ID");
+    }
+
+    // Validate status
+    let valid_statuses = ["created", "sent", "paid", "overdue", "cancelled"];
+    if !valid_statuses.contains(&status_req.status.as_str()) {
+        log::warn!(
+            "Invalid status for invoice {}: {}",
+            invoice_id,
+            status_req.status
+        );
+        anyhow::bail!("Invalid status. Must be one of: created, sent, paid, overdue, cancelled");
+    }
+
+    // Validate paid_date is provided when status is "paid"
+    if status_req.status == "paid" && status_req.paid_date.is_none() {
+        log::warn!(
+            "Attempted to mark invoice {} as paid without paid_date",
+            invoice_id
+        );
+        anyhow::bail!("Paid date is required when marking invoice as paid");
+    }
+
     let mut conn = pool.get().expect("Failed to get DB connection");
+
+    log::info!(
+        "Updating invoice {} status to: {}",
+        invoice_id,
+        status_req.status
+    );
 
     let update_result = diesel::update(invoices::table.filter(invoices::id.eq(invoice_id)))
         .set((
@@ -233,16 +405,52 @@ pub fn update_invoice_status(
         .context("Failed to update invoice status")?;
 
     if update_result == 0 {
+        log::warn!("Attempted to update non-existent invoice: {}", invoice_id);
         anyhow::bail!("Invoice not found");
     }
+
+    log::info!(
+        "Successfully updated invoice {} status to: {}",
+        invoice_id,
+        status_req.status
+    );
 
     Ok(())
 }
 
+/// Retrieves dashboard metrics for a specified period
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `query` - Dashboard query with period, year, and optional month
+///
+/// # Returns
+/// * `Result<DashboardMetrics>` - Dashboard metrics or error
 pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<DashboardMetrics> {
     use crate::schema::invoices;
 
+    // Validate input
+    let current_year = Utc::now().year();
+    if query.year < 2000 || query.year > current_year + 1 {
+        log::warn!("Invalid year for dashboard metrics: {}", query.year);
+        anyhow::bail!("Invalid year");
+    }
+
+    if let Some(month) = query.month {
+        if !(1..=12).contains(&month) {
+            log::warn!("Invalid month for dashboard metrics: {}", month);
+            anyhow::bail!("Invalid month");
+        }
+    }
+
     let mut conn = pool.get().expect("Failed to get DB connection");
+
+    log::debug!(
+        "Calculating dashboard metrics for period: {} year: {} month: {:?}",
+        query.period,
+        query.year,
+        query.month
+    );
 
     // Calculate date range based on period
     let (start_date, end_date) = match query.period.as_str() {
@@ -272,8 +480,13 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
             let end = format!("{}-01-01", query.year + 1);
             (start, end)
         }
-        _ => anyhow::bail!("Invalid period. Use 'month', 'quarter', or 'year'"),
+        _ => {
+            log::warn!("Invalid period for dashboard metrics: {}", query.period);
+            anyhow::bail!("Invalid period. Use 'month', 'quarter', or 'year'");
+        }
     };
+
+    log::debug!("Date range for metrics: {} to {}", start_date, end_date);
 
     // Get paid invoices in period for revenue
     let paid_invoices = invoices::table
@@ -313,19 +526,46 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
         .get_result::<i64>(&mut conn)
         .context("Failed to get pending invoice count")? as i32;
 
-    Ok(DashboardMetrics {
+    let metrics = DashboardMetrics {
         total_revenue_period,
         pending_invoices_amount,
         total_invoices_count,
         paid_invoices_count,
         pending_invoices_count,
-    })
+    };
+
+    log::debug!(
+        "Dashboard metrics calculated: revenue={}, pending={}, total={}, paid={}, pending_count={}",
+        metrics.total_revenue_period,
+        metrics.pending_invoices_amount,
+        metrics.total_invoices_count,
+        metrics.paid_invoices_count,
+        metrics.pending_invoices_count
+    );
+
+    Ok(metrics)
 }
 
+/// Retrieves the PDF file for a specific invoice
+///
+/// # Arguments
+/// * `pool` - Database connection pool
+/// * `invoice_id` - ID of the invoice
+///
+/// # Returns
+/// * `Result<(Vec<u8>, String)>` - PDF bytes and invoice number or error
 pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, String)> {
     use crate::schema::invoices;
 
+    // Validate input
+    if invoice_id <= 0 {
+        log::warn!("Invalid invoice ID for PDF retrieval: {}", invoice_id);
+        anyhow::bail!("Invalid invoice ID");
+    }
+
     let mut conn = pool.get().expect("Failed to get DB connection");
+
+    log::debug!("Retrieving PDF for invoice: {}", invoice_id);
 
     // Get the invoice to find the PDF path and invoice number
     let invoice = invoices::table
@@ -335,9 +575,27 @@ pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, Strin
         .context("Failed to query invoice")?
         .context("Invoice not found")?;
 
+    log::debug!(
+        "Found invoice {}, PDF path: {}",
+        invoice.invoice_number,
+        invoice.pdf_path
+    );
+
+    // Check if PDF file exists
+    if !std::path::Path::new(&invoice.pdf_path).exists() {
+        log::error!(
+            "PDF file not found for invoice {}: {}",
+            invoice.invoice_number,
+            invoice.pdf_path
+        );
+        anyhow::bail!("PDF file not found");
+    }
+
     // Read the PDF file
     let pdf_bytes = fs::read(&invoice.pdf_path)
         .context(format!("Failed to read PDF file: {}", invoice.pdf_path))?;
+
+    log::debug!("Successfully read PDF file: {} bytes", pdf_bytes.len());
 
     Ok((pdf_bytes, invoice.invoice_number))
 }

@@ -1,6 +1,7 @@
 use chrono::{NaiveDate, NaiveTime};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Selectable)]
 #[diesel(table_name = crate::schema::sessions)]
@@ -15,10 +16,18 @@ pub struct Session {
     pub created_at: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct NewSessionRequest {
+    #[validate(range(min = 1, message = "Client ID must be positive"))]
     pub client_id: i32,
+
+    #[validate(length(
+        min = 1,
+        max = 200,
+        message = "Session name must be between 1 and 200 characters"
+    ))]
     pub name: String,
+
     pub date: NaiveDate,
     pub start_time: NaiveTime,
     pub end_time: NaiveTime,
@@ -48,10 +57,18 @@ impl From<NewSessionRequest> for NewSession {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Validate)]
 pub struct UpdateSessionRequest {
+    #[validate(range(min = 1, message = "Client ID must be positive"))]
     pub client_id: i32,
+
+    #[validate(length(
+        min = 1,
+        max = 200,
+        message = "Session name must be between 1 and 200 characters"
+    ))]
     pub name: String,
+
     pub date: NaiveDate,
     pub start_time: NaiveTime,
     pub end_time: NaiveTime,
@@ -79,6 +96,48 @@ impl From<UpdateSessionRequest> for UpdateSession {
     }
 }
 
+impl NewSessionRequest {
+    pub fn validate_and_sanitize(&mut self) -> Result<(), validator::ValidationErrors> {
+        // Sanitize input
+        self.name = self.name.trim().to_string();
+
+        // Validate basic fields
+        self.validate()?;
+
+        // Custom validation: end time must be after start time
+        if self.end_time <= self.start_time {
+            let mut errors = validator::ValidationErrors::new();
+            let mut error = validator::ValidationError::new("invalid_time_range");
+            error.message = Some("End time must be after start time".into());
+            errors.add("end_time", error);
+            return Err(errors);
+        }
+
+        Ok(())
+    }
+}
+
+impl UpdateSessionRequest {
+    pub fn validate_and_sanitize(&mut self) -> Result<(), validator::ValidationErrors> {
+        // Sanitize input
+        self.name = self.name.trim().to_string();
+
+        // Validate basic fields
+        self.validate()?;
+
+        // Custom validation: end time must be after start time
+        if self.end_time <= self.start_time {
+            let mut errors = validator::ValidationErrors::new();
+            let mut error = validator::ValidationError::new("invalid_time_range");
+            error.message = Some("End time must be after start time".into());
+            errors.add("end_time", error);
+            return Err(errors);
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct SessionWithDuration {
     #[serde(flatten)]
@@ -87,7 +146,7 @@ pub struct SessionWithDuration {
     pub duration_minutes: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct SessionFilterParams {
     pub client_id: Option<i32>,
     pub start_date: Option<NaiveDate>,
