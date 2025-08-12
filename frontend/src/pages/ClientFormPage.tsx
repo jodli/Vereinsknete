@@ -1,23 +1,59 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Input, Textarea, Button } from '../components/UI';
+import { Card, Input, Textarea, Button, LoadingState, ErrorState } from '../components/UI';
 import { getClient, createClient, updateClient, deleteClient } from '../services/api';
 import { ClientFormData } from '../types';
-import { TrashIcon } from '@heroicons/react/24/outline';
+import { TrashIcon, UserIcon, CurrencyEuroIcon } from '@heroicons/react/24/outline';
 import { useLanguage } from '../i18n';
+import { useFormState } from '../utils/hooks';
+import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 
 const ClientFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const isEditing = id && id !== 'new';
     const { translations } = useLanguage();
+    const { success, error: showError } = useToast();
+    const { confirm } = useConfirm();
 
-    const [formData, setFormData] = useState<ClientFormData>({
+    const initialFormData: ClientFormData = {
         name: '',
         address: '',
         contact_person: '',
-        default_hourly_rate: 30, // Default rate
-    });
+        default_hourly_rate: 30,
+    };
+
+    const validationRules = {
+        name: (value: string) => {
+            if (!value.trim()) return 'Name is required';
+            if (value.length < 2) return 'Name must be at least 2 characters';
+            if (value.length > 100) return 'Name must be less than 100 characters';
+            return null;
+        },
+        address: (value: string) => {
+            if (!value.trim()) return 'Address is required';
+            if (value.length < 10) return 'Address must be at least 10 characters';
+            if (value.length > 500) return 'Address must be less than 500 characters';
+            return null;
+        },
+        default_hourly_rate: (value: number) => {
+            if (value <= 0) return 'Hourly rate must be greater than 0';
+            if (value > 1000) return 'Hourly rate must be less than 1000';
+            return null;
+        },
+    };
+
+    const {
+        formData,
+        errors,
+        touched,
+        setFieldValue,
+        setFieldTouched,
+        validateForm,
+        resetForm,
+    } = useFormState(initialFormData, validationRules);
+
     const [isLoading, setIsLoading] = useState(isEditing);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -29,12 +65,10 @@ const ClientFormPage: React.FC = () => {
 
             try {
                 const data = await getClient(parseInt(id));
-                setFormData({
-                    name: data.name,
-                    address: data.address,
-                    contact_person: data.contact_person || '',
-                    default_hourly_rate: data.default_hourly_rate,
-                });
+                setFieldValue('name', data.name);
+                setFieldValue('address', data.address);
+                setFieldValue('contact_person', data.contact_person || '');
+                setFieldValue('default_hourly_rate', data.default_hourly_rate);
                 setError('');
             } catch (error) {
                 console.error('Error fetching client:', error);
@@ -45,150 +79,229 @@ const ClientFormPage: React.FC = () => {
         };
 
         fetchClient();
-    }, [id, isEditing, translations.common.errors.failedToLoad]);
+    }, [id, isEditing, translations.common.errors.failedToLoad, setFieldValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target as HTMLInputElement;
+        const fieldName = name as keyof ClientFormData;
 
         if (type === 'number') {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: parseFloat(value) || 0,
-            }));
+            setFieldValue(fieldName, parseFloat(value) || 0);
         } else {
-            setFormData((prev) => ({
-                ...prev,
-                [name]: value,
-            }));
+            setFieldValue(fieldName, value);
         }
+    };
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const fieldName = e.target.name as keyof ClientFormData;
+        setFieldTouched(fieldName, true);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!validateForm()) {
+            return;
+        }
+
         setIsSaving(true);
         setError('');
 
         try {
             if (isEditing && id) {
                 await updateClient(parseInt(id), formData);
+                success(translations.clients.form.notifications.updated, translations.clients.form.notifications.updatedMessage);
             } else {
                 await createClient(formData);
+                success(translations.clients.form.notifications.created, translations.clients.form.notifications.createdMessage);
             }
             navigate('/clients');
         } catch (error) {
             console.error('Error saving client:', error);
-            setError(translations.common.errors.failedToSave);
+            const errorMessage = isEditing 
+                ? translations.clients.form.notifications.updateError 
+                : translations.clients.form.notifications.createError;
+            showError(errorMessage, error instanceof Error ? error.message : translations.clients.form.notifications.unexpectedError);
             setIsSaving(false);
         }
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this client?')) {
-            return;
-        }
+    const handleDelete = () => {
+        confirm({
+            title: translations.clients.form.confirmDelete.title,
+            message: translations.clients.form.confirmDelete.message.replace('{name}', formData.name),
+            confirmLabel: translations.clients.form.confirmDelete.confirmLabel,
+            variant: 'danger',
+            onConfirm: async () => {
+                setIsDeleting(true);
+                setError('');
 
-        setIsDeleting(true);
-        setError('');
-
-        try {
-            if (id) {
-                await deleteClient(parseInt(id));
-                navigate('/clients');
-            }
-        } catch (error) {
-            console.error('Error deleting client:', error);
-            setError(translations.common.errors.failedToDelete);
-            setIsDeleting(false);
-        }
+                try {
+                    if (id) {
+                        await deleteClient(parseInt(id));
+                        success(translations.clients.form.notifications.deleted, translations.clients.form.notifications.deletedMessage);
+                        navigate('/clients');
+                    }
+                } catch (error) {
+                    console.error('Error deleting client:', error);
+                    showError(translations.clients.form.notifications.deleteError, error instanceof Error ? error.message : translations.clients.form.notifications.unexpectedError);
+                    setIsDeleting(false);
+                }
+            },
+        });
     };
 
     if (isLoading) {
+        return <LoadingState message={translations.common.loading} />;
+    }
+
+    if (error && !isSaving && !isDeleting) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <p className="text-gray-600">{translations.common.loading}</p>
-            </div>
+            <ErrorState 
+                message={error}
+                onRetry={() => window.location.reload()}
+                retryLabel={translations.common.buttons.tryAgain}
+            />
         );
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">
-                    {isEditing ? translations.clients.form.title.edit : translations.clients.form.title.new}
-                </h1>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        {isEditing ? translations.clients.form.title.edit : translations.clients.form.title.new}
+                    </h1>
+                    <p className="text-gray-600 mt-1">
+                        {isEditing 
+                            ? translations.clients.form.subtitle.edit
+                            : translations.clients.form.subtitle.new
+                        }
+                    </p>
+                </div>
                 {isEditing && (
                     <Button
                         variant="danger"
                         onClick={handleDelete}
                         disabled={isDeleting}
+                        loading={isDeleting}
                         className="flex items-center"
                     >
-                        <TrashIcon className="w-5 h-5 mr-1" />
-                        {isDeleting ? translations.common.loading : translations.clients.form.buttons.delete}
+                        <TrashIcon className="w-5 h-5 mr-2" />
+                        {translations.clients.form.buttons.delete}
                     </Button>
                 )}
             </div>
 
-            <Card>
-                {error && (
-                    <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">
-                        {error}
-                    </div>
-                )}
+            {/* Form */}
+            <div className="max-w-2xl">
+                <Card>
+                    {error && (isSaving || isDeleting) && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-red-800">{error}</p>
+                        </div>
+                    )}
 
-                <form onSubmit={handleSubmit}>
-                    <Input
-                        id="name"
-                        name="name"
-                        label={translations.clients.form.labels.name}
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                    />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Basic Information */}
+                        <fieldset className="border border-gray-200 rounded-lg p-6">
+                            <legend className="text-lg font-medium text-gray-900 px-2">
+                                {translations.clients.form.sections.basicInfo}
+                            </legend>
+                            <div className="space-y-4 mt-4">
+                                <Input
+                                    id="name"
+                                    name="name"
+                                    label={translations.clients.form.labels.name}
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={touched.name ? errors.name : undefined}
+                                    leftIcon={<UserIcon />}
+                                    required
+                                />
 
-                    <Textarea
-                        id="address"
-                        name="address"
-                        label={translations.clients.form.labels.address}
-                        value={formData.address}
-                        onChange={handleChange}
-                        required
-                    />
+                                <Input
+                                    id="contact_person"
+                                    name="contact_person"
+                                    label={translations.clients.form.labels.contactPerson}
+                                    value={formData.contact_person}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={touched.contact_person ? errors.contact_person : undefined}
+                                    leftIcon={<UserIcon />}
+                                    helpText={translations.clients.form.helpText.contactPerson}
+                                />
+                            </div>
+                        </fieldset>
 
-                    <Input
-                        id="contact_person"
-                        name="contact_person"
-                        label={translations.clients.form.labels.contactPerson}
-                        value={formData.contact_person}
-                        onChange={handleChange}
-                    />
+                        {/* Address Information */}
+                        <fieldset className="border border-gray-200 rounded-lg p-6">
+                            <legend className="text-lg font-medium text-gray-900 px-2">
+                                {translations.clients.form.sections.addressInfo}
+                            </legend>
+                            <div className="mt-4">
+                                <Textarea
+                                    id="address"
+                                    name="address"
+                                    label={translations.clients.form.labels.address}
+                                    value={formData.address}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={touched.address ? errors.address : undefined}
+                                    rows={3}
+                                    helpText={translations.clients.form.helpText.address}
+                                    required
+                                />
+                            </div>
+                        </fieldset>
 
-                    <Input
-                        id="default_hourly_rate"
-                        name="default_hourly_rate"
-                        label={translations.clients.form.labels.hourlyRate}
-                        type="number"
-                        value={formData.default_hourly_rate}
-                        onChange={handleChange}
-                        min={0}
-                        step={0.01}
-                        required
-                    />
+                        {/* Billing Information */}
+                        <fieldset className="border border-gray-200 rounded-lg p-6">
+                            <legend className="text-lg font-medium text-gray-900 px-2">
+                                {translations.clients.form.sections.billingInfo}
+                            </legend>
+                            <div className="mt-4">
+                                <Input
+                                    id="default_hourly_rate"
+                                    name="default_hourly_rate"
+                                    label={translations.clients.form.labels.hourlyRate}
+                                    type="number"
+                                    value={formData.default_hourly_rate}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
+                                    error={touched.default_hourly_rate ? errors.default_hourly_rate : undefined}
+                                    leftIcon={<CurrencyEuroIcon />}
+                                    rightAddon="€/hour"
+                                    min={0}
+                                    step={0.01}
+                                    helpText={translations.clients.form.helpText.hourlyRate}
+                                    required
+                                />
+                            </div>
+                        </fieldset>
 
-                    <div className="flex justify-between mt-6">
-                        <Button
-                            variant="secondary"
-                            onClick={() => navigate('/clients')}
-                            type="button"
-                        >
-                            {translations.common.cancel}
-                        </Button>
-                        <Button type="submit" disabled={isSaving}>
-                            {isSaving ? `${translations.common.loading}...` : translations.clients.form.buttons.save}
-                        </Button>
-                    </div>
-                </form>
-            </Card>
+                        {/* Form Actions */}
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-6 border-t border-gray-200">
+                            <Button
+                                variant="secondary"
+                                onClick={() => navigate('/clients')}
+                                type="button"
+                            >
+                                {translations.common.cancel}
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                disabled={isSaving}
+                                loading={isSaving}
+                            >
+                                {translations.clients.form.buttons.save}
+                            </Button>
+                        </div>
+                    </form>
+                </Card>
+            </div>
         </div>
     );
 };

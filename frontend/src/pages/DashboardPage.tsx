@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { getDashboardMetrics, getAllInvoices } from '../services/api';
 import { DashboardMetrics, Invoice } from '../types';
 import { useLanguage } from '../i18n';
+import { Card, Button, LoadingState, ErrorState, StatusBadge, Table } from '../components/UI';
+import { 
+    PlusIcon, 
+    DocumentTextIcon, 
+    CalendarIcon,
+    CurrencyEuroIcon,
+    ChartBarIcon,
+    ClockIcon
+} from '@heroicons/react/24/outline';
 
 interface DashboardPageProps { }
 
@@ -96,31 +106,35 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
     };
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-64">
-                <div className="text-lg">{translations.dashboard.loading}</div>
-            </div>
-        );
+        return <LoadingState message={translations.dashboard.loading} />;
     }
 
     if (error) {
         return (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {translations.dashboard.errorLoading}: {error}
-            </div>
+            <ErrorState 
+                message={`${translations.dashboard.errorLoading}: ${error}`}
+                onRetry={fetchDashboardData}
+                retryLabel={translations.common.buttons.tryAgain}
+            />
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-gray-900">{translations.dashboard.title}</h1>
+        <div className="space-y-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">{translations.dashboard.title}</h1>
+                    <p className="text-gray-600 mt-1">
+                        {translations.dashboard.subtitle}
+                    </p>
+                </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-3">
                     <select
                         value={selectedPeriod}
                         onChange={(e) => setSelectedPeriod(e.target.value as 'month' | 'quarter' | 'year')}
-                        className="border border-gray-300 rounded-md px-3 py-2"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="month">{translations.dashboard.periods.month}</option>
                         <option value="quarter">{translations.dashboard.periods.quarter}</option>
@@ -130,7 +144,7 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
                     <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                        className="border border-gray-300 rounded-md px-3 py-2"
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                         {[2023, 2024, 2025, 2026].map(year => (
                             <option key={year} value={year}>{year}</option>
@@ -141,7 +155,7 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
                         <select
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                            className="border border-gray-300 rounded-md px-3 py-2"
+                            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                                 <option key={month} value={month}>
@@ -155,99 +169,154 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
 
             {/* Metrics Cards */}
             {metrics && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-sm font-medium text-gray-500">{translations.dashboard.metrics.revenue} ({getPeriodDisplayName()})</h3>
-                        <p className="text-2xl font-bold text-green-600">{formatCurrency(metrics.total_revenue_period)}</p>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    <Card className="text-center">
+                        <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-lg mx-auto mb-4">
+                            <CurrencyEuroIcon className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            {translations.dashboard.metrics.revenue}
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-1">({getPeriodDisplayName()})</p>
+                        <p className="text-2xl font-bold text-emerald-600">
+                            {formatCurrency(metrics.total_revenue_period)}
+                        </p>
+                    </Card>
 
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-sm font-medium text-gray-500">{translations.dashboard.metrics.pendingInvoices}</h3>
-                        <p className="text-2xl font-bold text-yellow-600">{formatCurrency(metrics.pending_invoices_amount)}</p>
-                    </div>
+                    <Card className="text-center">
+                        <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mx-auto mb-4">
+                            <ClockIcon className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            {translations.dashboard.metrics.pendingInvoices}
+                        </h3>
+                        <p className="text-2xl font-bold text-amber-600">
+                            {formatCurrency(metrics.pending_invoices_amount)}
+                        </p>
+                    </Card>
 
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-sm font-medium text-gray-500">{translations.dashboard.metrics.totalInvoices}</h3>
-                        <p className="text-2xl font-bold text-blue-600">{metrics.total_invoices_count}</p>
-                    </div>
+                    <Card className="text-center">
+                        <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-4">
+                            <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            {translations.dashboard.metrics.totalInvoices}
+                        </h3>
+                        <p className="text-2xl font-bold text-blue-600">
+                            {metrics.total_invoices_count}
+                        </p>
+                    </Card>
 
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-sm font-medium text-gray-500">{translations.dashboard.metrics.paidInvoices}</h3>
-                        <p className="text-2xl font-bold text-green-600">{metrics.paid_invoices_count}</p>
-                    </div>
+                    <Card className="text-center">
+                        <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-lg mx-auto mb-4">
+                            <ChartBarIcon className="w-6 h-6 text-emerald-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            {translations.dashboard.metrics.paidInvoices}
+                        </h3>
+                        <p className="text-2xl font-bold text-emerald-600">
+                            {metrics.paid_invoices_count}
+                        </p>
+                    </Card>
 
-                    <div className="bg-white p-6 rounded-lg shadow">
-                        <h3 className="text-sm font-medium text-gray-500">{translations.dashboard.metrics.sentInvoices}</h3>
-                        <p className="text-2xl font-bold text-yellow-600">{metrics.pending_invoices_count}</p>
-                    </div>
+                    <Card className="text-center">
+                        <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg mx-auto mb-4">
+                            <DocumentTextIcon className="w-6 h-6 text-amber-600" />
+                        </div>
+                        <h3 className="text-sm font-medium text-gray-500 mb-2">
+                            {translations.dashboard.metrics.sentInvoices}
+                        </h3>
+                        <p className="text-2xl font-bold text-amber-600">
+                            {metrics.pending_invoices_count}
+                        </p>
+                    </Card>
                 </div>
             )}
 
             {/* Recent Invoices */}
-            <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">{translations.dashboard.recentInvoices.title}</h2>
-                </div>
-                <div className="p-6">
-                    {recentInvoices.length === 0 ? (
-                        <p className="text-gray-500">{translations.dashboard.recentInvoices.noInvoices}</p>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-200">
-                                        <th className="text-left py-2 font-medium text-gray-700">{translations.dashboard.recentInvoices.columns.invoiceNumber}</th>
-                                        <th className="text-left py-2 font-medium text-gray-700">{translations.dashboard.recentInvoices.columns.client}</th>
-                                        <th className="text-left py-2 font-medium text-gray-700">{translations.dashboard.recentInvoices.columns.date}</th>
-                                        <th className="text-left py-2 font-medium text-gray-700">{translations.dashboard.recentInvoices.columns.amount}</th>
-                                        <th className="text-left py-2 font-medium text-gray-700">{translations.dashboard.recentInvoices.columns.status}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentInvoices.map((invoice) => (
-                                        <tr key={invoice.id} className="border-b border-gray-100">
-                                            <td className="py-3 font-mono text-sm">{invoice.invoice_number}</td>
-                                            <td className="py-3">{invoice.client_name}</td>
-                                            <td className="py-3">{new Date(invoice.date).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US')}</td>
-                                            <td className="py-3 font-semibold">{formatCurrency(invoice.total_amount)}</td>
-                                            <td className="py-3">
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                                                    {getStatusText(invoice.status)}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <Card 
+                title={translations.dashboard.recentInvoices.title}
+                actions={
+                    <Link to="/invoices">
+                        <Button variant="secondary" size="sm">
+                            {translations.common.buttons.viewAll}
+                        </Button>
+                    </Link>
+                }
+            >
+                <Table
+                    columns={[
+                        { 
+                            key: 'invoice_number', 
+                            label: translations.dashboard.recentInvoices.columns.invoiceNumber,
+                            render: (value) => <span className="font-mono text-sm">{value}</span>
+                        },
+                        { key: 'client_name', label: translations.dashboard.recentInvoices.columns.client },
+                        { 
+                            key: 'date', 
+                            label: translations.dashboard.recentInvoices.columns.date,
+                            render: (value) => new Date(value).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US')
+                        },
+                        { 
+                            key: 'total_amount', 
+                            label: translations.dashboard.recentInvoices.columns.amount,
+                            render: (value) => <span className="font-semibold">{formatCurrency(value)}</span>
+                        },
+                        { 
+                            key: 'status', 
+                            label: translations.dashboard.recentInvoices.columns.status,
+                            render: (value) => (
+                                <StatusBadge status={value}>
+                                    {getStatusText(value)}
+                                </StatusBadge>
+                            )
+                        },
+                    ]}
+                    data={recentInvoices}
+                    emptyMessage={translations.dashboard.recentInvoices.noInvoices}
+                />
+            </Card>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">{translations.dashboard.quickActions.title}</h2>
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => window.location.href = '/sessions/new'}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        {translations.dashboard.quickActions.newSession}
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/invoice'}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"
-                    >
-                        {translations.dashboard.quickActions.newInvoice}
-                    </button>
-                    <button
-                        onClick={() => window.location.href = '/invoices'}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors"
-                    >
-                        {translations.dashboard.quickActions.allInvoices}
-                    </button>
+            <Card title={translations.dashboard.quickActions.title}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Link to="/sessions/new" className="block">
+                        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 text-center group">
+                            <CalendarIcon className="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" />
+                            <h3 className="font-medium text-gray-900 group-hover:text-blue-700">
+                                {translations.dashboard.quickActions.newSession}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {translations.dashboard.quickActionsDescriptions.newSession}
+                            </p>
+                        </div>
+                    </Link>
+
+                    <Link to="/invoices/generate" className="block">
+                        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all duration-200 text-center group">
+                            <DocumentTextIcon className="w-8 h-8 text-gray-400 group-hover:text-emerald-500 mx-auto mb-2" />
+                            <h3 className="font-medium text-gray-900 group-hover:text-emerald-700">
+                                {translations.dashboard.quickActions.newInvoice}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {translations.dashboard.quickActionsDescriptions.newInvoice}
+                            </p>
+                        </div>
+                    </Link>
+
+                    <Link to="/clients/new" className="block">
+                        <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all duration-200 text-center group">
+                            <PlusIcon className="w-8 h-8 text-gray-400 group-hover:text-indigo-500 mx-auto mb-2" />
+                            <h3 className="font-medium text-gray-900 group-hover:text-indigo-700">
+                                {translations.clients.addNew}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                {translations.dashboard.quickActionsDescriptions.addClient}
+                            </p>
+                        </div>
+                    </Link>
                 </div>
-            </div>
+            </Card>
         </div>
     );
 };

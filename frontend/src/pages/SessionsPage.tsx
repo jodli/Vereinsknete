@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, Button, Table, Select } from '../components/UI';
+import { Card, Button, Table, Select, LoadingState, ErrorState, EmptyState } from '../components/UI';
 import { getSessions, getClients } from '../services/api';
 import { SessionWithDuration, Client } from '../types';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useLanguage } from '../i18n';
 import { formatBackendDate } from '../utils/dateUtils';
+import { useAsyncData } from '../utils/hooks';
 
 const SessionsPage: React.FC = () => {
     const [sessions, setSessions] = useState<SessionWithDuration[]>([]);
@@ -120,20 +121,40 @@ const SessionsPage: React.FC = () => {
         };
     });
 
+    if (isLoading) {
+        return <LoadingState message={translations.common.loading} />;
+    }
+
+    if (error) {
+        return (
+            <ErrorState 
+                message={error}
+                onRetry={fetchSessions}
+                retryLabel={translations.common.buttons.tryAgain}
+            />
+        );
+    }
+
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">{translations.sessions.title}</h1>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">{translations.sessions.title}</h1>
+                    <p className="text-gray-600 mt-1">
+                        Track and manage your work sessions
+                    </p>
+                </div>
                 <Link to="/sessions/new">
                     <Button className="flex items-center">
-                        <PlusIcon className="w-5 h-5 mr-1" />
+                        <PlusIcon className="w-5 h-5 mr-2" />
                         {translations.sessions.addNew}
                     </Button>
                 </Link>
             </div>
 
-            <Card className="mb-6">
-                <h2 className="text-lg font-semibold mb-4">{translations.common.filter}</h2>
+            {/* Filters */}
+            <Card title={translations.common.filter}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Select
                         id="client-filter"
@@ -179,30 +200,32 @@ const SessionsPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex justify-end space-x-2 mt-2">
+                <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-6">
                     <Button variant="secondary" onClick={handleClearFilters}>
-                        Filter zurücksetzen
+                        {translations.common.buttons.clearFilters || 'Clear Filters'}
                     </Button>
                     <Button onClick={handleFilter}>
-                        Filter anwenden
+                        {translations.common.buttons.applyFilters || 'Apply Filters'}
                     </Button>
                 </div>
             </Card>
 
-            {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-gray-600">Loading sessions...</p>
-                </div>
-            ) : error ? (
-                <Card className="text-center py-8">
-                    <p className="text-red-500">{error}</p>
-                    <Button
-                        variant="secondary"
-                        className="mt-4"
-                        onClick={() => fetchSessions()}
-                    >
-                        Try Again
-                    </Button>
+            {/* Sessions Table */}
+            {formattedSessions.length === 0 ? (
+                <Card>
+                    <EmptyState
+                        icon="📅"
+                        title={translations.sessions.emptyState?.title || 'No sessions yet'}
+                        description={translations.sessions.emptyState?.description || 'Start by adding your first work session to track your time.'}
+                        action={
+                            <Link to="/sessions/new">
+                                <Button>
+                                    <CalendarIcon className="w-5 h-5 mr-2" />
+                                    {translations.sessions.emptyState?.action || 'Add Your First Session'}
+                                </Button>
+                            </Link>
+                        }
+                    />
                 </Card>
             ) : (
                 <Card>
@@ -212,6 +235,7 @@ const SessionsPage: React.FC = () => {
                         onRowClick={(row) => {
                             navigate(`/sessions/${row.id}`);
                         }}
+                        emptyMessage={translations.sessions.noSessions}
                     />
                 </Card>
             )}

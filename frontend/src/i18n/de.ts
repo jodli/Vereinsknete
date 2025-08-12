@@ -10,6 +10,12 @@ const deTranslations = {
     },
     dashboard: {
         title: 'Dashboard',
+        subtitle: 'Überblick über Ihre Geschäftskennzahlen',
+        quickActionsDescriptions: {
+            newSession: 'Neue Arbeitssitzung aufzeichnen',
+            newInvoice: 'Neue Rechnung erstellen',
+            addClient: 'Neuen Klienten hinzufügen',
+        },
         setupSteps: {
             completeProfile: {
                 title: 'Dein Profil vervollständigen',
@@ -79,6 +85,7 @@ const deTranslations = {
     },
     clients: {
         title: 'Klienten',
+        subtitle: 'Verwalten Sie Ihre Klienten und deren Informationen',
         addNew: 'Neuen Klienten hinzufügen',
         columns: {
             name: 'Name',
@@ -86,10 +93,46 @@ const deTranslations = {
             hourlyRate: 'Stundensatz (€)',
         },
         noClients: 'Keine Klienten gefunden',
+        emptyState: {
+            title: 'Noch keine Klienten',
+            description: 'Beginnen Sie, indem Sie Ihren ersten Klienten hinzufügen, um Sitzungen zu verfolgen und Rechnungen zu erstellen.',
+            action: 'Ersten Klienten hinzufügen',
+        },
         form: {
             title: {
                 edit: 'Klient bearbeiten',
                 new: 'Neuer Klient',
+            },
+            subtitle: {
+                edit: 'Klienteninformationen und Einstellungen aktualisieren',
+                new: 'Neuen Klienten hinzufügen, um Sitzungen zu verfolgen und Rechnungen zu erstellen',
+            },
+            sections: {
+                basicInfo: 'Grundinformationen',
+                addressInfo: 'Adressinformationen',
+                billingInfo: 'Abrechnungsinformationen',
+            },
+            helpText: {
+                contactPerson: 'Optional: Hauptansprechpartner für diesen Klienten',
+                address: 'Vollständige Adresse einschließlich Straße, Stadt und Postleitzahl',
+                hourlyRate: 'Standard-Stundensatz für diesen Klienten (kann pro Sitzung überschrieben werden)',
+            },
+            confirmDelete: {
+                title: 'Klient löschen',
+                message: 'Sind Sie sicher, dass Sie "{name}" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden und entfernt alle zugehörigen Daten.',
+                confirmLabel: 'Klient löschen',
+            },
+            notifications: {
+                created: 'Klient erstellt',
+                createdMessage: 'Neuer Klient wurde erfolgreich hinzugefügt.',
+                updated: 'Klient aktualisiert',
+                updatedMessage: 'Klienteninformationen wurden erfolgreich aktualisiert.',
+                deleted: 'Klient gelöscht',
+                deletedMessage: 'Klient wurde erfolgreich entfernt.',
+                createError: 'Fehler beim Erstellen des Klienten',
+                updateError: 'Fehler beim Aktualisieren des Klienten',
+                deleteError: 'Fehler beim Löschen des Klienten',
+                unexpectedError: 'Ein unerwarteter Fehler ist aufgetreten',
             },
             labels: {
                 name: 'Name',
@@ -125,6 +168,7 @@ const deTranslations = {
     },
     sessions: {
         title: 'Sitzungen',
+        subtitle: 'Verfolgen und verwalten Sie Ihre Arbeitssitzungen',
         addNew: 'Neue Sitzung hinzufügen',
         columns: {
             date: 'Datum',
@@ -135,10 +179,23 @@ const deTranslations = {
             invoiced: 'Abgerechnet',
         },
         noSessions: 'Keine Sitzungen gefunden',
+        emptyState: {
+            title: 'Noch keine Sitzungen',
+            description: 'Beginnen Sie, indem Sie Ihre erste Arbeitssitzung hinzufügen, um Ihre Zeit zu verfolgen.',
+            action: 'Erste Sitzung hinzufügen',
+        },
         form: {
             title: {
                 edit: 'Sitzung bearbeiten',
                 new: 'Neue Sitzung',
+            },
+            subtitle: {
+                edit: 'Sitzungsdetails und Zeiten aktualisieren',
+                new: 'Neue Arbeitssitzung für die Zeiterfassung aufzeichnen',
+            },
+            sections: {
+                sessionDetails: 'Sitzungsdetails',
+                dateTime: 'Datum & Zeit',
             },
             noClients: 'Sie müssen zuerst einen Klienten erstellen, bevor Sie eine Sitzung erfassen können.',
             labels: {
@@ -238,6 +295,12 @@ const deTranslations = {
             failedToSave: 'Daten konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.',
             failedToDelete: 'Löschen fehlgeschlagen. Bitte versuchen Sie es erneut.',
             failedToGenerate: 'Generierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+        },
+        buttons: {
+            tryAgain: 'Erneut versuchen',
+            viewAll: 'Alle anzeigen',
+            clearFilters: 'Filter zurücksetzen',
+            applyFilters: 'Filter anwenden',
         },
     },
 };

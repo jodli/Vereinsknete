@@ -10,6 +10,12 @@ const enTranslations = {
     },
     dashboard: {
         title: 'Dashboard',
+        subtitle: 'Overview of your business metrics',
+        quickActionsDescriptions: {
+            newSession: 'Record a new work session',
+            newInvoice: 'Generate a new invoice',
+            addClient: 'Add a new client',
+        },
         setupSteps: {
             completeProfile: {
                 title: 'Complete Your Profile',
@@ -79,6 +85,7 @@ const enTranslations = {
     },
     clients: {
         title: 'Clients',
+        subtitle: 'Manage your clients and their information',
         addNew: 'Add New Client',
         columns: {
             name: 'Name',
@@ -86,10 +93,46 @@ const enTranslations = {
             hourlyRate: 'Hourly Rate (€)',
         },
         noClients: 'No clients found',
+        emptyState: {
+            title: 'No clients yet',
+            description: 'Get started by adding your first client to track sessions and generate invoices.',
+            action: 'Add Your First Client',
+        },
         form: {
             title: {
                 edit: 'Edit Client',
                 new: 'New Client',
+            },
+            subtitle: {
+                edit: 'Update client information and settings',
+                new: 'Add a new client to start tracking sessions and generating invoices',
+            },
+            sections: {
+                basicInfo: 'Basic Information',
+                addressInfo: 'Address Information',
+                billingInfo: 'Billing Information',
+            },
+            helpText: {
+                contactPerson: 'Optional: Primary contact person for this client',
+                address: 'Full address including street, city, and postal code',
+                hourlyRate: 'Default hourly rate for this client (can be overridden per session)',
+            },
+            confirmDelete: {
+                title: 'Delete Client',
+                message: 'Are you sure you want to delete "{name}"? This action cannot be undone and will remove all associated data.',
+                confirmLabel: 'Delete Client',
+            },
+            notifications: {
+                created: 'Client created',
+                createdMessage: 'New client has been successfully added.',
+                updated: 'Client updated',
+                updatedMessage: 'Client information has been successfully updated.',
+                deleted: 'Client deleted',
+                deletedMessage: 'Client has been successfully removed.',
+                createError: 'Failed to create client',
+                updateError: 'Failed to update client',
+                deleteError: 'Failed to delete client',
+                unexpectedError: 'An unexpected error occurred',
             },
             labels: {
                 name: 'Name',
@@ -125,6 +168,7 @@ const enTranslations = {
     },
     sessions: {
         title: 'Sessions',
+        subtitle: 'Track and manage your work sessions',
         addNew: 'Add New Session',
         columns: {
             date: 'Date',
@@ -135,10 +179,23 @@ const enTranslations = {
             invoiced: 'Invoiced',
         },
         noSessions: 'No sessions found',
+        emptyState: {
+            title: 'No sessions yet',
+            description: 'Start by adding your first work session to track your time.',
+            action: 'Add Your First Session',
+        },
         form: {
             title: {
                 edit: 'Edit Session',
                 new: 'New Session',
+            },
+            subtitle: {
+                edit: 'Update session details and timing',
+                new: 'Record a new work session for time tracking',
+            },
+            sections: {
+                sessionDetails: 'Session Details',
+                dateTime: 'Date & Time',
             },
             noClients: 'You need to create a client first before you can log a session.',
             labels: {
@@ -238,6 +295,12 @@ const enTranslations = {
             failedToSave: 'Failed to save data. Please try again.',
             failedToDelete: 'Failed to delete. Please try again.',
             failedToGenerate: 'Failed to generate. Please try again.'
+        },
+        buttons: {
+            tryAgain: 'Try Again',
+            viewAll: 'View All',
+            clearFilters: 'Clear Filters',
+            applyFilters: 'Apply Filters',
         },
     },
 };

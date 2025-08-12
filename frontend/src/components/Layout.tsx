@@ -12,6 +12,7 @@ import {
     Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { useLanguage } from '../i18n';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -101,12 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </div>
                 </div>
 
-                {/* Language Switcher for collapsed sidebar */}
-                {/* {sidebarCollapsed && (
-                    <div className="px-2 py-2 border-b border-gray-200">
-                        <LanguageSwitcher />
-                    </div>
-                )} */}
+
 
                 {/* Main Navigation */}
                 <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -165,33 +161,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     ))}
                 </nav>
 
-                {/* User section (prepared for future auth) */}
-                {/* <div className="border-t border-gray-200 p-3">
-                    {!sidebarCollapsed && (
-                        <div className="flex items-center space-x-3 p-2">
-                            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                <UserIcon className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                    User Name
-                                </p>
-                                <p className="text-xs text-gray-500 truncate">
-                                    user@example.com
-                                </p>
-                            </div>
-                            <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                                <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                            </button>
-                        </div>
-                    )}
-
-                    {!sidebarCollapsed && (
-                        <div className="mt-2">
-                            <LanguageSwitcher />
-                        </div>
-                    )}
-                </div> */}
+                {/* Language Switcher at bottom - consistent for both states */}
+                <div className="border-t border-gray-200 p-3">
+                    <div className={`${sidebarCollapsed ? 'flex justify-center' : 'mt-2'}`}>
+                        <LanguageSwitcher compact={sidebarCollapsed} />
+                    </div>
+                </div>
             </div>
 
             {/* Main Content */}
@@ -206,16 +181,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </button>
 
                     <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded"></div>
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                            <span className="text-white font-bold text-xs">VK</span>
+                        </div>
                         <h1 className="text-lg font-semibold text-gray-900">VereinsKnete</h1>
                     </div>
 
-                    <div className="w-10"></div> {/* Spacer for centering */}
+                    <div className="lg:hidden">
+                        <LanguageSwitcher />
+                    </div>
                 </div>
 
                 {/* Main content area */}
                 <main className="flex-1 overflow-auto bg-gray-50">
-                    <div className="p-6">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                         {children}
                     </div>
                 </main>
