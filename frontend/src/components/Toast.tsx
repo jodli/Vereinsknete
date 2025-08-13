@@ -102,7 +102,7 @@ const ToastContainer: React.FC = () => {
     const { toasts, removeToast } = useToast();
 
     return (
-        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm" data-testid="toast-container">
             {toasts.map(toast => (
                 <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
             ))}
@@ -144,7 +144,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove }) => {
     const styles = getToastStyles(toast.type);
 
     return (
-        <div className={`
+    <div data-testid={`toast-${toast.type}`} className={`
             ${styles.container} 
             border rounded-lg p-4 shadow-lg animate-slide-up
             transition-all duration-300 ease-in-out

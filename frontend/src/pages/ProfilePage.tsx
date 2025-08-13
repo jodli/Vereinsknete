@@ -4,7 +4,7 @@ import { getUserProfile, updateUserProfile } from '../services/api';
 import { UserProfileFormData } from '../types';
 import { useLanguage } from '../i18n';
 import { useToast } from '../components/Toast';
-import { UserIcon, BuildingOfficeIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { UserIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 const ProfilePage: React.FC = () => {
     const [formData, setFormData] = useState<UserProfileFormData>({

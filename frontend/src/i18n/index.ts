@@ -11,8 +11,9 @@ const languages = {
     de,
 };
 
-// Default language is German
-export const defaultLanguage = 'de';
+// Default language is German (product default). Tests that need English should
+// explicitly set localStorage('preferredLanguage','en') before rendering.
+export const defaultLanguage: keyof typeof languages = 'de';
 
 // Type for supported languages
 export type SupportedLanguage = keyof typeof languages;
@@ -33,23 +34,40 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-    const [language, setLanguageState] = useState<SupportedLanguage>(defaultLanguage);
-    const [translations, setTranslations] = useState<TranslationsType>(getTranslations(language));
+    // Initialize with stored preference or default
+    const getInitialLanguage = (): SupportedLanguage => {
+        try {
+            const storedLang = localStorage.getItem('preferredLanguage') as SupportedLanguage | null;
+            if (storedLang && languages[storedLang]) {
+                return storedLang;
+            }
+        } catch {
+            // ignore
+        }
+        return defaultLanguage;
+    };
 
-    // Check for stored preference on component mount
+    const initialLanguage = getInitialLanguage();
+    const [language, setLanguageState] = useState<SupportedLanguage>(initialLanguage);
+    const [translations, setTranslations] = useState<TranslationsType>(getTranslations(initialLanguage));
+
+    // Check for stored preference on component mount (for cases where initial state couldn't access localStorage)
     useEffect(() => {
         const storedLang = localStorage.getItem('preferredLanguage') as SupportedLanguage | null;
-        if (storedLang && languages[storedLang]) {
+        if (storedLang && languages[storedLang] && storedLang !== language) {
             setLanguageState(storedLang);
             setTranslations(getTranslations(storedLang));
         }
-    }, []);
+    }, [language]);
 
     const setLanguage = (lang: SupportedLanguage) => {
         setLanguageState(lang);
         setTranslations(getTranslations(lang));
-        // Persist language preference
-        localStorage.setItem('preferredLanguage', lang);
+        try {
+            localStorage.setItem('preferredLanguage', lang);
+        } catch {
+            // ignore persistence errors (e.g., in private mode)
+        }
     };
 
     const value = { language, translations, setLanguage };

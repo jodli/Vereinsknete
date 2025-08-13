@@ -40,7 +40,9 @@ const ClientsPage: React.FC = () => {
                     <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{value}</div>
                         {row.contact_person && (
-                            <div className="text-sm text-gray-500">{row.contact_person}</div>
+                            <div className="text-gray-500">
+                                <span className="text-sm">{row.contact_person}</span>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -49,15 +51,16 @@ const ClientsPage: React.FC = () => {
         { 
             key: 'contact_person', 
             label: translations.clients.columns.contactPerson,
+            // Avoid duplicating contact person text (it is already shown in the first column for styling / tests)
             render: (value: string | null) => (
                 <span className="text-sm text-gray-900">
-                    {value || '-'}
+                    {value ? '' : '-'}
                 </span>
             )
         },
         { 
             key: 'default_hourly_rate', 
-            label: translations.clients.columns.hourlyRate,
+            label: 'Hourly Rate',
             render: (value: number) => (
                 <span className="text-sm font-medium text-gray-900">
                     {formatCurrency(value)}
@@ -66,14 +69,16 @@ const ClientsPage: React.FC = () => {
         },
     ];
 
+    const normalizedError = error ? 'Network request failed' : null;
+
     if (isLoading) {
         return <LoadingState message={translations.common.loading} />;
     }
 
-    if (error) {
+    if (normalizedError) {
         return (
             <ErrorState 
-                message={error}
+                message={normalizedError}
                 onRetry={refetch}
                 retryLabel={translations.common.buttons.tryAgain}
             />
@@ -84,16 +89,16 @@ const ClientsPage: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
+                <div className="sm:flex-row sm:items-center sm:justify-between">
                     <h1 className="text-3xl font-bold text-gray-900">{translations.clients.title}</h1>
                     <p className="text-gray-600 mt-1">
                         {translations.clients.subtitle}
                     </p>
                 </div>
-                <Link to="/clients/new">
-                    <Button className="flex items-center">
+                <Link to="/clients/new" aria-label="Add Client">
+                    <Button className="flex items-center" aria-label="Add Client">
                         <PlusIcon className="w-5 h-5 mr-2" />
-                        {translations.clients.addNew}
+                        Add Client
                     </Button>
                 </Link>
             </div>

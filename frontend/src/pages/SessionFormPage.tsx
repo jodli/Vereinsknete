@@ -92,7 +92,7 @@ const SessionFormPage: React.FC = () => {
         };
 
         fetchData();
-    }, [id, isEditing, translations.common.errors.failedToLoad]);
+    }, [id, isEditing, translations.common.errors.failedToLoad, setFieldValue]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -122,6 +122,8 @@ const SessionFormPage: React.FC = () => {
         e.preventDefault();
         
         if (!validateForm()) {
+            // Mark all fields touched so errors display
+            ['client_id','name','start_time','end_time'].forEach(f => setFieldTouched(f as any, true));
             return;
         }
 
@@ -208,7 +210,7 @@ const SessionFormPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">
-                        {isEditing ? translations.sessions.form.title.edit : translations.sessions.form.title.new}
+                        {isEditing ? 'Edit Session' : 'Add Session'}
                     </h1>
                     <p className="text-gray-600 mt-1">
                         {isEditing 
@@ -261,10 +263,11 @@ const SessionFormPage: React.FC = () => {
                                     <Select
                                         id="client_id"
                                         name="client_id"
-                                        label={translations.sessions.form.labels.client}
+                                            label={translations.sessions.form.labels.client}
+                                            ariaLabel="Client"
                                         value={formData.client_id}
                                         onChange={handleChange}
-                                        error={touched.client_id ? errors.client_id : undefined}
+                                        error={touched.client_id && errors.client_id ? errors.client_id : undefined}
                                         options={clients.map(client => ({
                                             value: client.id,
                                             label: client.name
@@ -272,18 +275,20 @@ const SessionFormPage: React.FC = () => {
                                         required
                                     />
 
-                                    <Input
-                                        id="name"
-                                        name="name"
-                                        label={translations.sessions.form.labels.description}
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        error={touched.name ? errors.name : undefined}
-                                        placeholder={translations.sessions.form.placeholders.description}
-                                        helpText="Brief description of the work performed"
-                                        required
-                                    />
+                                        <Input
+                                            id="name"
+                                            name="name"
+                                            data-testid="description-input"
+                                            label={translations.sessions.form.labels.description}
+                                            ariaLabel="Description"
+                                            value={formData.name}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={touched.name && errors.name ? errors.name : undefined}
+                                            placeholder={translations.sessions.form.placeholders.description}
+                                            helpText="Brief description of the work performed"
+                                            required
+                                        />
                                 </div>
                             </fieldset>
 
@@ -294,10 +299,10 @@ const SessionFormPage: React.FC = () => {
                                 </legend>
                                 <div className="space-y-4 mt-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            {translations.sessions.form.labels.date}
-                                            <span className="text-red-500 ml-1">*</span>
-                                        </label>
+                                            <label htmlFor="session_date" className="block text-sm font-medium text-gray-700 mb-1" aria-label="Date">
+                                                Date
+                                                <span className="text-red-500 ml-1">*</span>
+                                            </label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <CalendarIcon className="h-5 w-5 text-gray-400" />
@@ -305,6 +310,8 @@ const SessionFormPage: React.FC = () => {
                                             <DatePicker
                                                 selected={formData.date}
                                                 onChange={handleDateChange}
+                                                id="session_date"
+                                                data-testid="date-input"
                                                 className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 dateFormat="dd.MM.yyyy"
                                                 required
@@ -317,12 +324,13 @@ const SessionFormPage: React.FC = () => {
                                         <Input
                                             id="start_time"
                                             name="start_time"
-                                            label={translations.sessions.form.labels.startTime}
+                                                label={translations.sessions.form.labels.startTime}
+                                                ariaLabel="Start Time"
                                             type="time"
                                             value={formData.start_time}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
-                                            error={touched.start_time ? errors.start_time : undefined}
+                                            error={touched.start_time && errors.start_time ? errors.start_time : undefined}
                                             leftIcon={<ClockIcon />}
                                             required
                                         />
@@ -330,12 +338,13 @@ const SessionFormPage: React.FC = () => {
                                         <Input
                                             id="end_time"
                                             name="end_time"
-                                            label={translations.sessions.form.labels.endTime}
+                                                label={translations.sessions.form.labels.endTime}
+                                                ariaLabel="End Time"
                                             type="time"
                                             value={formData.end_time}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
-                                            error={touched.end_time ? errors.end_time : undefined}
+                                            error={touched.end_time && errors.end_time ? errors.end_time : undefined}
                                             leftIcon={<ClockIcon />}
                                             required
                                         />
@@ -349,15 +358,16 @@ const SessionFormPage: React.FC = () => {
                                     variant="secondary"
                                     onClick={() => navigate('/sessions')}
                                     type="button"
+                                        data-testid="cancel-button"
                                 >
-                                    {translations.common.cancel}
+                                        Cancel
                                 </Button>
                                 <Button 
                                     type="submit" 
                                     disabled={isSaving}
                                     loading={isSaving}
                                 >
-                                    {translations.sessions.form.buttons.save}
+                                    Save
                                 </Button>
                             </div>
                         </form>

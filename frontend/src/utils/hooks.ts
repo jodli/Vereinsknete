@@ -20,11 +20,15 @@ export const useAsyncData = <T>(
         } finally {
             setLoading(false);
         }
-    }, dependencies);
+    }, [fetchFunction]);
+
+    // Serialize dependencies to trigger re-fetch when their values (not just identity) change without using a spread in deps array.
+    const depsKey = JSON.stringify(dependencies);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- depsKey captures external dependencies changes
+    }, [fetchData, depsKey]);
 
     const refetch = useCallback(() => {
         fetchData();
@@ -68,6 +72,7 @@ export const useFormState = <T extends Record<string, any>>(
         
         const newErrors: Partial<Record<keyof T, string>> = {};
         let isValid = true;
+        const newTouched: Partial<Record<keyof T, boolean>> = {};
 
         Object.keys(validationRules).forEach(key => {
             const field = key as keyof T;
@@ -76,9 +81,14 @@ export const useFormState = <T extends Record<string, any>>(
                 newErrors[field] = error;
                 isValid = false;
             }
+            // Mark every validated field as touched so UI shows errors after submit
+            newTouched[field] = true;
         });
 
         setErrors(newErrors);
+        if (Object.keys(newTouched).length) {
+            setTouched(prev => ({ ...prev, ...newTouched }));
+        }
         return isValid;
     }, [formData, validationRules]);
 

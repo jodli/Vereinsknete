@@ -173,6 +173,8 @@ const deTranslations = {
         columns: {
             date: 'Datum',
             client: 'Klient',
+            name: 'Beschreibung',
+            time: 'Startzeit',
             duration: 'Dauer',
             rate: 'Rate',
             amount: 'Betrag',

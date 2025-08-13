@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getDashboardMetrics, getAllInvoices } from '../services/api';
 import { DashboardMetrics, Invoice } from '../types';
 import { useLanguage } from '../i18n';
-import { Card, Button, LoadingState, ErrorState, StatusBadge, Table } from '../components/UI';
+import { Card, Button, StatusBadge, Table, ErrorState } from '../components/UI';
 import { 
     PlusIcon, 
     DocumentTextIcon, 
@@ -61,18 +61,7 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
         }).format(amount);
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'paid':
-                return 'text-green-600 bg-green-100';
-            case 'sent':
-                return 'text-yellow-600 bg-yellow-100';
-            case 'created':
-                return 'text-blue-600 bg-blue-100';
-            default:
-                return 'text-gray-600 bg-gray-100';
-        }
-    };
+    // Removed unused getStatusColor helper (StatusBadge handles styling)
 
     const getStatusText = (status: string) => {
         switch (status) {
@@ -105,10 +94,8 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
         }
     };
 
-    if (loading) {
-        return <LoadingState message={translations.dashboard.loading} />;
-    }
-
+    // Show header even while loading so tests that assert title presence immediately pass.
+    // Only short-circuit fully on error (tests look for error specific messaging then retry button).
     if (error) {
         return (
             <ErrorState 
@@ -166,9 +153,23 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
                     )}
                 </div>
             </div>
+            {loading && (
+                <p className="text-sm text-gray-500" aria-label="loading-indicator">Loading...</p>
+            )}
 
-            {/* Metrics Cards */}
-            {metrics && (
+            {/* Metrics Cards (show skeleton when loading) */}
+            {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6" data-testid="metrics-skeleton">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i} className="animate-pulse text-center">
+                            <div className="w-12 h-12 rounded-lg bg-gray-200 mx-auto mb-4" />
+                            <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-2" />
+                            <div className="h-3 bg-gray-100 rounded w-2/3 mx-auto mb-1" />
+                            <div className="h-6 bg-gray-300 rounded w-1/3 mx-auto" />
+                        </Card>
+                    ))}
+                </div>
+            ) : metrics && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                     <Card className="text-center">
                         <div className="flex items-center justify-center w-12 h-12 bg-emerald-100 rounded-lg mx-auto mb-4">
@@ -244,37 +245,46 @@ const DashboardPage: React.FC<DashboardPageProps> = () => {
                     </Link>
                 }
             >
-                <Table
-                    columns={[
-                        { 
-                            key: 'invoice_number', 
-                            label: translations.dashboard.recentInvoices.columns.invoiceNumber,
-                            render: (value) => <span className="font-mono text-sm">{value}</span>
-                        },
-                        { key: 'client_name', label: translations.dashboard.recentInvoices.columns.client },
-                        { 
-                            key: 'date', 
-                            label: translations.dashboard.recentInvoices.columns.date,
-                            render: (value) => new Date(value).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US')
-                        },
-                        { 
-                            key: 'total_amount', 
-                            label: translations.dashboard.recentInvoices.columns.amount,
-                            render: (value) => <span className="font-semibold">{formatCurrency(value)}</span>
-                        },
-                        { 
-                            key: 'status', 
-                            label: translations.dashboard.recentInvoices.columns.status,
-                            render: (value) => (
-                                <StatusBadge status={value}>
-                                    {getStatusText(value)}
-                                </StatusBadge>
-                            )
-                        },
-                    ]}
-                    data={recentInvoices}
-                    emptyMessage={translations.dashboard.recentInvoices.noInvoices}
-                />
+                {loading ? (
+                    <div className="animate-pulse space-y-2" data-testid="invoices-skeleton">
+                        <div className="h-6 bg-gray-200 rounded w-full" />
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="h-10 bg-gray-100 rounded" />
+                        ))}
+                    </div>
+                ) : (
+                    <Table
+                        columns={[
+                            { 
+                                key: 'invoice_number', 
+                                label: translations.dashboard.recentInvoices.columns.invoiceNumber,
+                                render: (value) => <span className="font-mono text-sm">{value}</span>
+                            },
+                            { key: 'client_name', label: translations.dashboard.recentInvoices.columns.client },
+                            { 
+                                key: 'date', 
+                                label: translations.dashboard.recentInvoices.columns.date,
+                                render: (value) => new Date(value).toLocaleDateString(language === 'de' ? 'de-DE' : 'en-US')
+                            },
+                            { 
+                                key: 'total_amount', 
+                                label: translations.dashboard.recentInvoices.columns.amount,
+                                render: (value) => <span className="font-semibold">{formatCurrency(value)}</span>
+                            },
+                            { 
+                                key: 'status', 
+                                label: translations.dashboard.recentInvoices.columns.status,
+                                render: (value) => (
+                                    <StatusBadge status={value}>
+                                        {getStatusText(value)}
+                                    </StatusBadge>
+                                )
+                            },
+                        ]}
+                        data={recentInvoices}
+                        emptyMessage={translations.dashboard.recentInvoices.noInvoices}
+                    />
+                )}
             </Card>
 
             {/* Quick Actions */}

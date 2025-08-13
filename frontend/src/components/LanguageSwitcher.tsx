@@ -18,66 +18,38 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ compact = false }) 
         setLanguage(lang);
     };
 
-    const currentLanguage = languages.find(lang => lang.code === language);
+    // Removed unused currentLanguage lookup (was only used for a previous implementation)
 
-    if (compact) {
-        // Compact version for collapsed sidebar - just show flag
-        return (
-            <div className="relative group">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 cursor-pointer transform hover:scale-105">
-                    <span className="text-lg">{currentLanguage?.flag}</span>
-                </div>
-
-                {/* Dropdown menu positioned to the right */}
-                <div className="absolute bottom-0 left-full ml-2 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 animate-slide-up min-w-32">
-                    {languages.map((lang) => (
-                        <button
-                            key={lang.code}
-                            onClick={() => handleLanguageChange(lang.code)}
-                            className={`w-full text-left px-3 py-2 text-sm transition-all duration-200 first:rounded-t-lg last:rounded-b-lg ${language === lang.code
-                                    ? 'bg-blue-50 text-blue-700 font-medium shadow-sm'
-                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                                }`}
-                        >
-                            <span className="flex items-center space-x-2">
-                                <span>{lang.flag}</span>
-                                <span>{lang.name}</span>
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-
-    // Full version for expanded sidebar
+    // Unified implementation: always show two accessible buttons (tests rely on querying by role & name)
     return (
-        <div className="relative group">
-            <div className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all duration-200 cursor-pointer transform hover:scale-105">
-                <GlobeAltIcon className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-700 font-medium">
-                    {currentLanguage?.flag} {currentLanguage?.name}
-                </span>
-            </div>
-
-            {/* Dropdown menu */}
-            <div className="absolute bottom-full left-0 mb-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 animate-slide-up">
-                {languages.map((lang) => (
+        <div className={`flex ${compact ? 'flex-col space-y-2 items-center' : 'space-x-2'} `} aria-label="Language Switcher">
+            {languages.map((lang) => {
+                const isActive = language === lang.code;
+                return (
                     <button
                         key={lang.code}
                         onClick={() => handleLanguageChange(lang.code)}
-                        className={`w-full text-left px-3 py-2 text-sm transition-all duration-200 first:rounded-t-lg last:rounded-b-lg ${language === lang.code
-                                ? 'bg-blue-50 text-blue-700 font-medium shadow-sm'
-                                : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                            }`}
+                        aria-pressed={isActive}
+                        // Provide accessible name when in compact mode (flag alone isn't descriptive)
+                        {...(compact ? { 'aria-label': lang.name } : {})}
+                        className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                            ${isActive
+                                ? 'bg-blue-600 text-white shadow-sm hover:bg-blue-700'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                            ${compact ? 'w-10 h-10 justify-center p-0' : ''}
+                        `}
                     >
-                        <span className="flex items-center space-x-2">
-                            <span>{lang.flag}</span>
-                            <span>{lang.name}</span>
-                        </span>
+                        {compact ? (
+                            <span className="text-base" aria-hidden>{lang.flag}</span>
+                        ) : (
+                            <span className="flex items-center space-x-1">
+                                <GlobeAltIcon className="w-4 h-4 text-gray-500" aria-hidden />
+                                <span>{lang.name}</span>
+                            </span>
+                        )}
                     </button>
-                ))}
-            </div>
+                );
+            })}
         </div>
     );
 };
