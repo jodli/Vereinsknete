@@ -300,3 +300,267 @@ pub fn delete_client(pool: &DbPool, client_id: i32) -> Result<usize, diesel::res
 
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+    static DB_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn setup_pool() -> DbPool {
+        let count = DB_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
+        let db_name = format!(
+            "file:client_service_test_{}?mode=memory&cache=shared",
+            count
+        );
+        let manager = diesel::r2d2::ConnectionManager::<SqliteConnection>::new(db_name);
+        let pool = diesel::r2d2::Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .expect("failed to build pool");
+        // Run migrations
+        {
+            let mut conn = pool.get().unwrap();
+            conn.run_pending_migrations(MIGRATIONS).unwrap();
+        }
+        pool
+    }
+
+    fn new_client(name: &str, rate: f32) -> NewClient {
+        NewClient {
+            name: name.to_string(),
+            address: "Teststr. 1".to_string(),
+            contact_person: Some("Tester".to_string()),
+            default_hourly_rate: rate,
+        }
+    }
+
+    #[test]
+    fn create_client_success() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("Acme", 120.0)).expect("should create");
+        assert_eq!(c.name, "Acme");
+        // get by id happy path
+        let fetched = get_client_by_id(&pool, c.id).unwrap();
+        assert!(fetched.is_some());
+    }
+
+    #[test]
+    fn create_client_empty_name_fails() {
+        let pool = setup_pool();
+        let err = create_client(&pool, new_client("", 100.0)).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_client_negative_rate_fails() {
+        let pool = setup_pool();
+        let err = create_client(&pool, new_client("Valid", -1.0)).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_client_duplicate_name_fails() {
+        let pool = setup_pool();
+        create_client(&pool, new_client("Dup", 50.0)).unwrap();
+        let err = create_client(&pool, new_client("Dup", 60.0)).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn get_client_by_id_invalid_id() {
+        let pool = setup_pool();
+        let err = get_client_by_id(&pool, 0).unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn get_client_by_id_nonexistent_returns_none() {
+        let pool = setup_pool();
+        // create a different client so table not empty
+        create_client(&pool, new_client("Someone", 10.0)).unwrap();
+        let result = get_client_by_id(&pool, 999).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn update_client_success() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("Old", 10.0)).unwrap();
+        let upd = UpdateClient {
+            name: Some("New".into()),
+            address: None,
+            contact_person: None,
+            default_hourly_rate: Some(25.0),
+        };
+        let updated = update_client(&pool, c.id, upd).unwrap();
+        assert_eq!(updated.name, "New");
+        assert!((updated.default_hourly_rate - 25.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn update_client_duplicate_name_fails() {
+        let pool = setup_pool();
+        let c1 = create_client(&pool, new_client("C1", 10.0)).unwrap();
+        let _c2 = create_client(&pool, new_client("C2", 20.0)).unwrap();
+        let upd = UpdateClient {
+            name: Some("C2".into()),
+            address: None,
+            contact_person: None,
+            default_hourly_rate: None,
+        };
+        let err = update_client(&pool, c1.id, upd).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_client_invalid_rate_fails() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("Test", 10.0)).unwrap();
+        let upd = UpdateClient {
+            name: None,
+            address: None,
+            contact_person: None,
+            default_hourly_rate: Some(-5.0),
+        };
+        let err = update_client(&pool, c.id, upd).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_client_empty_name_fails() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("Test", 10.0)).unwrap();
+        let upd = UpdateClient {
+            name: Some("   ".into()),
+            address: None,
+            contact_person: None,
+            default_hourly_rate: None,
+        };
+        let err = update_client(&pool, c.id, upd).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_client_nonexistent_id() {
+        let pool = setup_pool();
+        let err = update_client(
+            &pool,
+            12345,
+            UpdateClient {
+                name: Some("X".into()),
+                address: None,
+                contact_person: None,
+                default_hourly_rate: None,
+            },
+        )
+        .unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn delete_client_success() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("ToDelete", 10.0)).unwrap();
+        let deleted = delete_client(&pool, c.id).unwrap();
+        assert_eq!(deleted, 1);
+    }
+
+    #[test]
+    fn delete_client_with_sessions_fails() {
+        let pool = setup_pool();
+        let c = create_client(&pool, new_client("WithSessions", 10.0)).unwrap();
+        // Insert a session referencing this client
+        use crate::schema::sessions;
+        #[derive(Insertable)]
+        #[diesel(table_name = crate::schema::sessions)]
+        struct TestSessionInsert {
+            client_id: i32,
+            name: String,
+            date: String,
+            start_time: String,
+            end_time: String,
+            created_at: String,
+        }
+        let session = TestSessionInsert {
+            client_id: c.id,
+            name: "S".into(),
+            date: "2024-01-01".into(),
+            start_time: "09:00".into(),
+            end_time: "10:00".into(),
+            created_at: "2024-01-01T09:00:00".into(),
+        };
+        {
+            let mut conn = pool.get().unwrap();
+            diesel::insert_into(sessions::table)
+                .values(&session)
+                .execute(&mut conn)
+                .unwrap();
+        }
+        let err = delete_client(&pool, c.id).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn delete_client_invalid_id() {
+        let pool = setup_pool();
+        let err = delete_client(&pool, 0).unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn get_all_clients_counts() {
+        let pool = setup_pool();
+        for i in 0..3 {
+            create_client(&pool, new_client(&format!("C{}", i), 10.0)).unwrap();
+        }
+        let all = get_all_clients(&pool).unwrap();
+        assert_eq!(all.len(), 3);
+    }
+}

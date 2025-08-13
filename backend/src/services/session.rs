@@ -178,8 +178,11 @@ pub fn get_all_sessions(
 
             // Calculate duration in minutes
             let duration_minutes = if end < start {
-                // Handle sessions that go past midnight
-                (end + chrono::Duration::hours(24) - start).num_minutes()
+                // Handle sessions that go past midnight (end time next day)
+                // NaiveTime arithmetic wraps at 24h, so we can't add 24h to end directly.
+                // Example: 23:00 -> 01:00 should be 2h (120m).
+                // Compute as 24h - (start - end).
+                (chrono::Duration::hours(24) - (start - end)).num_minutes()
             } else {
                 (end - start).num_minutes()
             };
@@ -434,4 +437,344 @@ pub fn delete_session(pool: &DbPool, session_id: i32) -> Result<(), diesel::resu
     }
 
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{NaiveDate, NaiveTime};
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    use crate::models::session::SessionFilterParams;
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+    static DB_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn setup_pool() -> DbPool {
+        let count = DB_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
+        let db_name = format!(
+            "file:session_service_test_{}?mode=memory&cache=shared",
+            count
+        );
+        let manager = diesel::r2d2::ConnectionManager::<SqliteConnection>::new(db_name);
+        let pool = diesel::r2d2::Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .unwrap();
+        {
+            let mut conn = pool.get().unwrap();
+            conn.run_pending_migrations(MIGRATIONS).unwrap();
+        }
+        pool
+    }
+
+    fn insert_client(pool: &DbPool, name_val: &str) -> i32 {
+        use crate::schema::clients;
+        #[derive(Insertable)]
+        #[diesel(table_name = crate::schema::clients)]
+        struct TestClient {
+            name: String,
+            address: String,
+            contact_person: Option<String>,
+            default_hourly_rate: f32,
+        }
+        let client = TestClient {
+            name: name_val.into(),
+            address: "Street 1".into(),
+            contact_person: None,
+            default_hourly_rate: 50.0,
+        };
+        let mut conn = pool.get().unwrap();
+        diesel::insert_into(clients::table)
+            .values(&client)
+            .execute(&mut conn)
+            .unwrap();
+        // fetch id
+        use crate::schema::clients::dsl::*;
+        clients
+            .order(id.desc())
+            .select(id)
+            .first(&mut conn)
+            .unwrap()
+    }
+
+    fn valid_new_session_req(client_id: i32) -> NewSessionRequest {
+        NewSessionRequest {
+            client_id,
+            name: "Consulting".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 10).unwrap(),
+            start_time: NaiveTime::from_hms_opt(9, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(11, 0, 0).unwrap(),
+        }
+    }
+
+    #[test]
+    fn create_session_success() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let s = create_session(&pool, valid_new_session_req(cid)).unwrap();
+        assert_eq!(s.client_id, cid);
+        assert_eq!(s.name, "Consulting");
+    }
+
+    #[test]
+    fn create_session_invalid_client_id_check_violation() {
+        let pool = setup_pool();
+        let req = valid_new_session_req(0);
+        let err = create_session(&pool, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_session_empty_name_fails() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let mut req = valid_new_session_req(cid);
+        req.name = "   ".into();
+        let err = create_session(&pool, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_session_invalid_time_range_fails() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let mut req = valid_new_session_req(cid);
+        req.end_time = req.start_time; // end == start
+        let err = create_session(&pool, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_session_nonexistent_client_fk_violation() {
+        let pool = setup_pool();
+        // Do not insert client
+        let req = valid_new_session_req(9999);
+        let err = create_session(&pool, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn get_all_sessions_basic_and_duration() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        create_session(&pool, valid_new_session_req(cid)).unwrap();
+        let list = get_all_sessions(&pool, None).unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].duration_minutes, 120);
+    }
+
+    #[test]
+    fn get_all_sessions_invalid_client_filter() {
+        let pool = setup_pool();
+        let filter = SessionFilterParams {
+            client_id: Some(0),
+            start_date: None,
+            end_date: None,
+        };
+        let err = get_all_sessions(&pool, Some(filter)).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn get_all_sessions_invalid_date_range() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        create_session(&pool, valid_new_session_req(cid)).unwrap();
+        let filter = SessionFilterParams {
+            client_id: None,
+            start_date: Some(NaiveDate::from_ymd_opt(2025, 2, 1).unwrap()),
+            end_date: Some(NaiveDate::from_ymd_opt(2025, 1, 1).unwrap()),
+        };
+        let err = get_all_sessions(&pool, Some(filter)).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn get_all_sessions_overnight_duration() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "NightCo");
+        // Simulate an overnight span by inserting a record with start 23:00 and end 01:00 (next day) which the service wraps.
+        use crate::schema::sessions;
+        #[derive(Insertable)]
+        #[diesel(table_name = crate::schema::sessions)]
+        struct TestSession {
+            client_id: i32,
+            name: String,
+            date: String,
+            start_time: String,
+            end_time: String,
+            created_at: String,
+        }
+        {
+            let mut conn = pool.get().unwrap();
+            let sess = TestSession {
+                client_id: cid,
+                name: "Overnight".into(),
+                date: "2025-01-10".into(),
+                start_time: "23:00".into(),
+                end_time: "01:00".into(),
+                created_at: "2025-01-10T23:00:00".into(),
+            };
+            diesel::insert_into(sessions::table)
+                .values(&sess)
+                .execute(&mut conn)
+                .unwrap();
+        }
+        let list = get_all_sessions(&pool, None).unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].duration_minutes, 120);
+    }
+
+    #[test]
+    fn update_session_success() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let s = create_session(&pool, valid_new_session_req(cid)).unwrap();
+        let req = UpdateSessionRequest {
+            client_id: cid,
+            name: "Updated".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 11).unwrap(),
+            start_time: NaiveTime::from_hms_opt(10, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+        };
+        let updated = update_session(&pool, s.id, req).unwrap();
+        assert_eq!(updated.name, "Updated");
+        assert_eq!(updated.date, "2025-01-11");
+    }
+
+    #[test]
+    fn update_session_invalid_id() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let req = UpdateSessionRequest {
+            client_id: cid,
+            name: "Updated".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 11).unwrap(),
+            start_time: NaiveTime::from_hms_opt(10, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+        };
+        let err = update_session(&pool, 0, req).unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn update_session_nonexistent_session() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let req = UpdateSessionRequest {
+            client_id: cid,
+            name: "Updated".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 11).unwrap(),
+            start_time: NaiveTime::from_hms_opt(10, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+        };
+        let err = update_session(&pool, 12345, req).unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn update_session_nonexistent_client_fk_violation() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let s = create_session(&pool, valid_new_session_req(cid)).unwrap();
+        let req = UpdateSessionRequest {
+            client_id: 9999,
+            name: "Updated".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 11).unwrap(),
+            start_time: NaiveTime::from_hms_opt(10, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+        };
+        let err = update_session(&pool, s.id, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::ForeignKeyViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_session_invalid_time_range() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let s = create_session(&pool, valid_new_session_req(cid)).unwrap();
+        let req = UpdateSessionRequest {
+            client_id: cid,
+            name: "Updated".into(),
+            date: NaiveDate::from_ymd_opt(2025, 1, 11).unwrap(),
+            start_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+            end_time: NaiveTime::from_hms_opt(10, 0, 0).unwrap(),
+        };
+        let err = update_session(&pool, s.id, req).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn delete_session_success() {
+        let pool = setup_pool();
+        let cid = insert_client(&pool, "Acme");
+        let s = create_session(&pool, valid_new_session_req(cid)).unwrap();
+        delete_session(&pool, s.id).unwrap();
+        // Confirm deletion
+        use crate::schema::sessions::dsl::*;
+        let mut conn = pool.get().unwrap();
+        let count: i64 = sessions
+            .filter(id.eq(s.id))
+            .select(diesel::dsl::count_star())
+            .first(&mut conn)
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn delete_session_invalid_id() {
+        let pool = setup_pool();
+        let err = delete_session(&pool, 0).unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
 }

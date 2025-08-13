@@ -69,7 +69,12 @@ where
             let method = req.method().to_string();
             let path = req.path().to_string();
 
-            let res = service.call(req).await?;
+            let mut res = service.call(req).await?;
+            // Propagate the request id to the response headers so clients/tests can read it
+            if let Ok(header_val) = HeaderValue::from_str(&request_id) {
+                res.headers_mut()
+                    .insert(HeaderName::from_static("x-request-id"), header_val);
+            }
             let duration = start_time.elapsed();
 
             // Log request completion with structured logging

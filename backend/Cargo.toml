@@ -48,3 +48,18 @@ rusttype = "0.9"
 # Async runtime
 tokio = { version = "1", features = ["full"] }
 futures-util = "0.3"
+
+[dev-dependencies]
+# Test / dev-only dependencies
+# actix-rt: legacy runtime helpers used by some actix test utilities
+actix-rt = "2"
+# actix-http: request type used in actix-web test utilities generic bounds
+actix-http = "3"
+# tokio-test: utilities like block_on for async unit tests
+tokio-test = "0.4"
+# tempfile: create temporary sqlite files when persistence across connections needed
+tempfile = "3"
+# serial_test: ensure tests that share global state (like in-memory sqlite naming) run serially
+serial_test = "3"
+# bytes: handy for dealing with response bodies in integration tests
+bytes = "1"

@@ -177,3 +177,168 @@ pub fn update_profile(
 
     result
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+    static DB_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn setup_pool() -> DbPool {
+        let count = DB_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
+        let db_name = format!(
+            "file:user_profile_service_test_{}?mode=memory&cache=shared",
+            count
+        );
+        let manager = diesel::r2d2::ConnectionManager::<SqliteConnection>::new(db_name);
+        let pool = diesel::r2d2::Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .unwrap();
+        {
+            let mut conn = pool.get().unwrap();
+            conn.run_pending_migrations(MIGRATIONS).unwrap();
+        }
+        pool
+    }
+
+    fn new_profile(name: &str, address: &str) -> NewUserProfile {
+        NewUserProfile {
+            name: name.to_string(),
+            address: address.to_string(),
+            tax_id: Some("TAX123".into()),
+            bank_details: Some("Bank {invoice_number}".into()),
+        }
+    }
+
+    #[test]
+    fn create_profile_success() {
+        let pool = setup_pool();
+        let profile = create_profile(&pool, new_profile("Alice", "Main St 1")).unwrap();
+        assert_eq!(profile.name, "Alice");
+        assert!(get_profile(&pool).unwrap().is_some());
+    }
+
+    #[test]
+    fn create_profile_empty_name_fails() {
+        let pool = setup_pool();
+        let err = create_profile(&pool, new_profile("   ", "Addr")).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_profile_empty_address_fails() {
+        let pool = setup_pool();
+        let err = create_profile(&pool, new_profile("Alice", "   ")).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn create_profile_duplicate_fails() {
+        let pool = setup_pool();
+        create_profile(&pool, new_profile("Alice", "Addr")).unwrap();
+        let err = create_profile(&pool, new_profile("Bob", "Addr2")).unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::UniqueViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_profile_success() {
+        let pool = setup_pool();
+        let p = create_profile(&pool, new_profile("Alice", "Addr")).unwrap();
+        let upd = UpdateUserProfile {
+            name: Some("Alice B".into()),
+            address: Some("New Addr".into()),
+            tax_id: None,
+            bank_details: None,
+        };
+        let updated = update_profile(&pool, p.id, upd).unwrap();
+        assert_eq!(updated.name, "Alice B");
+        assert_eq!(updated.address, "New Addr");
+    }
+
+    #[test]
+    fn update_profile_nonexistent() {
+        let pool = setup_pool();
+        let err = update_profile(
+            &pool,
+            9999,
+            UpdateUserProfile {
+                name: Some("X".into()),
+                address: None,
+                tax_id: None,
+                bank_details: None,
+            },
+        )
+        .unwrap_err();
+        matches!(err, diesel::result::Error::NotFound);
+    }
+
+    #[test]
+    fn update_profile_empty_name_fails() {
+        let pool = setup_pool();
+        let p = create_profile(&pool, new_profile("Alice", "Addr")).unwrap();
+        let err = update_profile(
+            &pool,
+            p.id,
+            UpdateUserProfile {
+                name: Some("   ".into()),
+                address: None,
+                tax_id: None,
+                bank_details: None,
+            },
+        )
+        .unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+
+    #[test]
+    fn update_profile_empty_address_fails() {
+        let pool = setup_pool();
+        let p = create_profile(&pool, new_profile("Alice", "Addr")).unwrap();
+        let err = update_profile(
+            &pool,
+            p.id,
+            UpdateUserProfile {
+                name: None,
+                address: Some("   ".into()),
+                tax_id: None,
+                bank_details: None,
+            },
+        )
+        .unwrap_err();
+        matches!(
+            err,
+            diesel::result::Error::DatabaseError(
+                diesel::result::DatabaseErrorKind::CheckViolation,
+                _
+            )
+        );
+    }
+}

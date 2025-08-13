@@ -271,6 +271,8 @@ fn get_next_sequence_number(pool: &DbPool, target_year: i32) -> Result<i32> {
     Ok(next_sequence)
 }
 
+// NOTE: All public functions appear before the test module to satisfy clippy::items-after-test-module
+
 /// Retrieves all invoices with client information
 ///
 /// # Arguments
@@ -623,4 +625,291 @@ pub fn delete_invoice(pool: &DbPool, invoice_id: i32) -> Result<()> {
         .context("Failed to delete invoice")?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{NaiveDate, Utc};
+    use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+    use std::sync::atomic::{AtomicU32, Ordering};
+
+    const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+    static DB_COUNTER: AtomicU32 = AtomicU32::new(0);
+
+    fn setup_pool() -> DbPool {
+        let count = DB_COUNTER.fetch_add(1, Ordering::SeqCst) + 1;
+        let db_name = format!(
+            "file:invoice_service_test_{}?mode=memory&cache=shared",
+            count
+        );
+        let manager = diesel::r2d2::ConnectionManager::<SqliteConnection>::new(db_name);
+        let pool = diesel::r2d2::Pool::builder()
+            .max_size(1)
+            .build(manager)
+            .unwrap();
+        {
+            let mut conn = pool.get().unwrap();
+            conn.run_pending_migrations(MIGRATIONS).unwrap();
+        }
+        pool
+    }
+
+    // Helpers to insert required entities directly (bypassing services not under test focus)
+    fn insert_profile(pool: &DbPool) -> i32 {
+        use crate::schema::user_profile;
+        #[derive(diesel::Insertable)]
+        #[diesel(table_name = crate::schema::user_profile)]
+        struct TestProfile {
+            name: String,
+            address: String,
+            tax_id: Option<String>,
+            bank_details: Option<String>,
+        }
+        let p = TestProfile {
+            name: "Alice".into(),
+            address: "Addr".into(),
+            tax_id: None,
+            bank_details: Some("Bank {invoice_number}".into()),
+        };
+        let mut conn = pool.get().unwrap();
+        diesel::insert_into(user_profile::table)
+            .values(&p)
+            .execute(&mut conn)
+            .unwrap();
+        use crate::schema::user_profile::dsl::*;
+        user_profile
+            .order(id.desc())
+            .select(id)
+            .first(&mut conn)
+            .unwrap()
+    }
+
+    fn insert_client(pool: &DbPool, name_val: &str, rate: f32) -> i32 {
+        use crate::schema::clients;
+        #[derive(diesel::Insertable)]
+        #[diesel(table_name = crate::schema::clients)]
+        struct TestClient {
+            name: String,
+            address: String,
+            contact_person: Option<String>,
+            default_hourly_rate: f32,
+        }
+        let c = TestClient {
+            name: name_val.into(),
+            address: "Addr".into(),
+            contact_person: None,
+            default_hourly_rate: rate,
+        };
+        let mut conn = pool.get().unwrap();
+        diesel::insert_into(clients::table)
+            .values(&c)
+            .execute(&mut conn)
+            .unwrap();
+        use crate::schema::clients::dsl::*;
+        clients
+            .order(id.desc())
+            .select(id)
+            .first(&mut conn)
+            .unwrap()
+    }
+
+    fn insert_session(pool: &DbPool, client_id: i32, date: &str, start: &str, end: &str) {
+        use crate::schema::sessions;
+        #[derive(diesel::Insertable)]
+        #[diesel(table_name = crate::schema::sessions)]
+        struct TestSession {
+            client_id: i32,
+            name: String,
+            date: String,
+            start_time: String,
+            end_time: String,
+            created_at: String,
+        }
+        let s = TestSession {
+            client_id,
+            name: "Work".into(),
+            date: date.into(),
+            start_time: start.into(),
+            end_time: end.into(),
+            created_at: format!("{}T00:00:00", date),
+        };
+        let mut conn = pool.get().unwrap();
+        diesel::insert_into(sessions::table)
+            .values(&s)
+            .execute(&mut conn)
+            .unwrap();
+    }
+
+    fn list_invoices(pool: &DbPool) -> Vec<InvoiceListItem> {
+        get_all_invoices(pool).unwrap()
+    }
+
+    #[test]
+    fn generate_invoice_success_and_sequence() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 100.0);
+        insert_session(&pool, client_id, "2025-01-10", "09:00", "11:00"); // 2h -> 200
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
+            language: None,
+        };
+        let (_pdf, _id, number) = generate_and_save_invoice(&pool, req).unwrap();
+        assert!(number.ends_with("0001"));
+        // Second invoice same year increments sequence
+        insert_session(&pool, client_id, "2025-01-15", "10:00", "11:00");
+        let req2 = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 12, 31).unwrap(),
+            language: None,
+        };
+        let (_pdf2, _id2, number2) = generate_and_save_invoice(&pool, req2).unwrap();
+        assert!(number2.ends_with("0002"));
+        assert_eq!(list_invoices(&pool).len(), 2);
+    }
+
+    #[test]
+    fn generate_invoice_no_sessions_fails() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 100.0);
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 2, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 2, 28).unwrap(),
+            language: None,
+        };
+        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        assert!(err.to_string().contains("No sessions"));
+    }
+
+    #[test]
+    fn generate_invoice_invalid_date_range_fails() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 100.0);
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 3, 10).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 3, 1).unwrap(),
+            language: None,
+        };
+        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("End date must be after start date"));
+    }
+
+    #[test]
+    fn generate_invoice_invalid_rate_fails() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 0.0); // invalid hourly rate (<=0)
+        insert_session(&pool, client_id, "2025-01-10", "09:00", "10:00");
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
+            language: None,
+        };
+        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        assert!(err.to_string().contains("invalid hourly rate"));
+    }
+
+    #[test]
+    fn update_invoice_status_flow_and_validation() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 100.0);
+        insert_session(&pool, client_id, "2025-01-10", "09:00", "11:00");
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
+            language: None,
+        };
+        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req).unwrap();
+        // Invalid status
+        let bad = update_invoice_status(
+            &pool,
+            id,
+            UpdateInvoiceStatusRequest {
+                status: "weird".into(),
+                paid_date: None,
+            },
+        )
+        .unwrap_err();
+        assert!(bad.to_string().contains("Invalid status"));
+        // Paid without date
+        let bad2 = update_invoice_status(
+            &pool,
+            id,
+            UpdateInvoiceStatusRequest {
+                status: "paid".into(),
+                paid_date: None,
+            },
+        )
+        .unwrap_err();
+        assert!(bad2.to_string().contains("Paid date is required"));
+        // Valid transition to sent
+        update_invoice_status(
+            &pool,
+            id,
+            UpdateInvoiceStatusRequest {
+                status: "sent".into(),
+                paid_date: None,
+            },
+        )
+        .unwrap();
+        // Mark paid with date
+        update_invoice_status(
+            &pool,
+            id,
+            UpdateInvoiceStatusRequest {
+                status: "paid".into(),
+                paid_date: Some(Utc::now().format("%Y-%m-%d").to_string()),
+            },
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn dashboard_metrics_basic() {
+        let pool = setup_pool();
+        insert_profile(&pool);
+        let client_id = insert_client(&pool, "Acme", 100.0);
+        insert_session(&pool, client_id, "2025-01-10", "09:00", "10:00"); // 1h -> 100
+        let req = InvoiceRequest {
+            client_id,
+            start_date: NaiveDate::from_ymd_opt(2025, 1, 1).unwrap(),
+            end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
+            language: None,
+        };
+        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req).unwrap();
+        // Mark as paid so revenue counts
+        update_invoice_status(
+            &pool,
+            id,
+            UpdateInvoiceStatusRequest {
+                status: "paid".into(),
+                paid_date: Some(Utc::now().format("%Y-%m-%d").to_string()),
+            },
+        )
+        .unwrap();
+        let metrics = get_dashboard_metrics(
+            &pool,
+            DashboardQuery {
+                period: "year".into(),
+                year: Utc::now().year(),
+                month: None,
+            },
+        )
+        .unwrap();
+        assert!(metrics.total_revenue_period >= 100.0);
+        assert!(metrics.total_invoices_count >= 1);
+    }
 }

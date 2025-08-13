@@ -4,19 +4,19 @@ use actix_web::{middleware::Logger, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::sqlite::SqliteConnection;
 use dotenvy::dotenv;
-use middleware::{RequestIdMiddleware, SecurityHeadersMiddleware};
 use std::env;
 use std::path::Path;
 use std::str::FromStr;
 use std::time::Duration;
 
-mod errors;
-mod handlers;
-mod i18n;
-mod middleware;
-mod models;
-mod schema;
-mod services;
+// Import modules from the library crate instead of redefining them locally.
+// Previously we had `mod handlers;` etc. which recompiled the same source files
+// into the binary target. That caused unit tests inside those modules to be
+// discovered twice: once for the library test harness and once for the binary
+// test harness (showing 114 tests twice). By importing from the library crate
+// (whose package name is `backend`), we ensure tests only live in one place.
+use backend::{handlers, middleware};
+use middleware::{RequestIdMiddleware, SecurityHeadersMiddleware};
 
 pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
 

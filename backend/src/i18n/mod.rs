@@ -12,11 +12,22 @@ pub enum Language {
 }
 
 impl Language {
-    pub fn from_str(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
+    /// Convenience helper returning a Language from &str using same rules as `FromStr`.
+    /// Accepts "en" for English; any other value defaults to German.
+    pub fn parse_lang(s: &str) -> Self {
+        s.parse().unwrap_or_default()
+    }
+}
+
+impl std::str::FromStr for Language {
+    type Err = std::convert::Infallible; // Parsing never fails; unknown maps to default (German)
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // Only two supported short codes for now; unknown defaults to German.
+        Ok(match s.to_ascii_lowercase().as_str() {
             "en" => Language::English,
             _ => Language::German,
-        }
+        })
     }
 }
 

@@ -7,6 +7,7 @@ use genpdf::{
     fonts, style, Element, Margins,
 };
 use std::io::Cursor;
+use std::str::FromStr;
 
 const FONT_DIR: &str = "/usr/share/fonts/truetype/liberation";
 const DEFAULT_FONT_NAME: &str = "LiberationSans";
@@ -36,7 +37,7 @@ fn format_date_for_language(date_str: &str, language: Language) -> String {
 pub fn generate_invoice_pdf(invoice: &InvoiceResponse, language: Option<&str>) -> Result<Vec<u8>> {
     // Determine language from parameter or fall back to default (German)
     let lang = match language {
-        Some(lang_str) => Language::from_str(lang_str),
+        Some(lang_str) => Language::from_str(lang_str).unwrap_or_default(),
         None => Language::default(),
     };
 
