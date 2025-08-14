@@ -1,0 +1,22 @@
+# Home Assistant Add-on Build Configuration
+# Multi-architecture build support for VereinsKnete
+
+build_from:
+  aarch64: "ghcr.io/home-assistant/aarch64-base:latest"
+  amd64: "ghcr.io/home-assistant/amd64-base:latest"
+
+labels:
+  org.opencontainers.image.title: "VereinsKnete Home Assistant Add-on"
+  org.opencontainers.image.description: "Freelance time tracking and invoicing application"
+  org.opencontainers.image.source: "https://github.com/your-username/vereinsknete-addon"
+  org.opencontainers.image.licenses: "MIT"
+
+args:
+  RUST_VERSION: "1.86"
+  NODE_VERSION: "22"
+
+# Squash layers for smaller final image
+squash: false
+
+# Build timeout (in seconds)
+timeout: 3600

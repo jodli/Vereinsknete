@@ -65,3 +65,13 @@ For issues and feature requests, please visit the [GitHub repository](https://gi
 ## License
 
 This add-on is licensed under the MIT License.
+
+## Container Image
+
+Images are published to GitHub Container Registry for both `linux/amd64` and `linux/arm64`:
+
+```
+ghcr.io/jodli/vereinsknete-addon:<tag>
+```
+
+Where `<tag>` corresponds to a released application version (e.g. `1.2.0`) or `latest`.
