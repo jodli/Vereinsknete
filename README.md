@@ -1,111 +1,104 @@
 # 💰 VereinsKnete
 
-VereinsKnete is a web application that helps freelance service providers (mainly sports instructors) track billable hours and generate professional invoices. 🏃‍♂️💼
+A modern web application for freelance service providers to track billable hours and generate professional invoices. Built with Rust and React. 🏃‍♂️💼
 
 ## ✨ Features
 
-- 👤 User profile management
-- 🤝 Client management
-- ⏱️ Session tracking
-- 📄 Invoice generation as PDF
-- 🎨 Modern, responsive UI
+- 👤 User profile management with multilingual support (German/English)
+- 🤝 Client management with full CRUD operations
+- ⏱️ Session tracking with time logging
+- 📄 Professional PDF invoice generation
+- 📊 Dashboard with overview metrics
+- 📱 Responsive design for all devices
 
 ## 🛠️ Tech Stack
 
-### Backend 🦀
-- Rust with Actix-web
-- Diesel ORM with SQLite
-- PDF generation with genpdf
+- **Backend**: Rust + Actix-web + Diesel ORM + SQLite
+- **Frontend**: React 19 + TypeScript + Tailwind CSS
+- **Testing**: Comprehensive test coverage for both frontend and backend
 
-### Frontend ⚛️
-- React with TypeScript
-- React Router for navigation
-- Tailwind CSS for styling
-- HeroIcons for UI icons
+## 🚀 Quick Start
 
-## 🚀 Development Setup
+### Prerequisites
+- Rust (1.70+) and Cargo
+- Node.js (18+) and npm
+- SQLite and libsqlite3-dev
+- Diesel CLI: `cargo install diesel_cli --no-default-features --features sqlite`
 
-### 📋 Prerequisites
-- Rust (1.70+) 🦀
-- Node.js (16+) 🟢
-- SQLite 🗄️
-- libsqlite3-dev
-- Diesel CLI ⚡
+### Development Setup
 
-### 🔧 Setting Up the Backend
+```bash
+# Clone and setup
+git clone <repository-url>
+cd VereinsKnete
 
-1. Install Rust and Cargo from [rustup.rs](https://rustup.rs/)
-2. Install the required system packages:
-   ```
-   sudo apt-get update && sudo apt-get install -y libsqlite3-dev
-   ```
-3. Install the Diesel CLI:
-   ```
-   cargo install diesel_cli --no-default-features --features sqlite
-   ```
-4. Navigate to the backend directory:
-   ```
-   cd backend
-   ```
-5. Set up the database:
-   ```
-   diesel setup --database-url=database.sqlite
-   diesel migration run --database-url=database.sqlite
-   ```
-6. Run the backend server:
-   ```
-   cargo run
-   ```
+# Install dependencies and start development servers
+./dev.sh
+```
 
-### 🎨 Setting Up the Frontend
+The `dev.sh` script starts both backend (`:8080`) and frontend (`:3000`) servers in tmux.
 
-1. Install Node.js from [nodejs.org](https://nodejs.org/) 📦
-2. Navigate to the frontend directory:
-   ```
-   cd frontend
-   ```
-3. Install dependencies:
-   ```
-   npm install
-   ```
-4. Start the development server:
-   ```
-   npm start
-   ```
+### Manual Setup
 
-## 🐳 Docker Deployment
+```bash
+# Backend
+cd backend
+diesel setup && diesel migration run
+cargo run
 
-The application includes Docker and Docker Compose configurations for easy deployment:
+# Frontend (new terminal)
+cd frontend
+npm install && npm start
+```
 
-1. Make sure Docker and Docker Compose are installed 📦
-2. Build and run the application:
-   ```
-   docker-compose up -d
-   ```
+## 🐳 Docker
 
-The application will be available at http://localhost:8080 🌐
+```bash
+# Development
+docker-compose up -d
+
+# Production
+docker build -t vereinsknete .
+docker run -p 8080:8080 -v $(pwd)/data:/app/data vereinsknete
+```
+
+## 🧪 Testing
+
+```bash
+# Frontend tests
+cd frontend && npm test
+
+# Backend tests  
+cd backend && cargo test
+```
 
 ## 📁 Project Structure
 
 ```
 VereinsKnete/
-├── backend/ 🦀          # Rust backend
-│   ├── migrations/ 📊   # Database migrations
-│   ├── src/ 💻         # Source code
-│   │   ├── handlers/ 🎯 # API request handlers
-│   │   ├── models/ 📋   # Data models
-│   │   ├── services/ ⚙️ # Business logic
-│   │   ├── schema/ 🗄️   # Database schema
-│   │   └── main.rs 🚀   # Application entry point
-│   └── Cargo.toml 📦    # Package dependencies
-├── frontend/ ⚛️         # React frontend
-│   ├── public/ 🌐       # Static files
-│   ├── src/ 💻         # Source code
-│   │   ├── components/ 🧩 # Reusable UI components
-│   │   ├── pages/ 📄    # Application pages
-│   │   ├── services/ 🌐 # API service
-│   │   └── types/ 📝    # TypeScript types
-│   └── package.json 📦  # Package dependencies
-├── Dockerfile 🐳        # Docker build instructions
-└── docker-compose.yml 🐙 # Docker Compose configuration
+├── backend/           # Rust backend (Actix-web + Diesel + SQLite)
+│   ├── src/
+│   │   ├── handlers/  # API endpoints
+│   │   ├── models/    # Data models
+│   │   ├── services/  # Business logic
+│   │   └── main.rs
+│   └── migrations/    # Database migrations
+├── frontend/          # React frontend (TypeScript + Tailwind)
+│   └── src/
+│       ├── components/ # UI components
+│       ├── pages/     # Page components
+│       ├── services/  # API integration
+│       └── i18n/      # Translations
+├── specs/             # Project documentation
+└── dev.sh            # Development startup script
 ```
+
+## 📚 Documentation
+
+- **[ENVIRONMENT.md](ENVIRONMENT.md)** - Environment configuration and deployment
+- **[specs/](specs/)** - Technical specifications and requirements
+- **Development Guidelines** - See `.kiro/steering/` for frontend and backend patterns
+
+---
+
+**VereinsKnete** - Simple freelance time tracking and invoicing 💰
