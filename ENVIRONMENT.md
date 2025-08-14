@@ -1,109 +1,70 @@
 # Environment Configuration
 
-VereinsKnete supports multiple environments with different configurations for development and production.
+VereinsKnete supports development and production environments with automatic configuration management.
 
-## Available Environments
+## Environments
 
-### Development Environment
-- **Database**: Local SQLite file (`vereinsknete.db`)
-- **Logging**: Debug level with verbose output
-- **Frontend**: Runs on development server with hot reloading
-- **Backend**: Serves API only, no static files
-- **CORS**: Permissive for local development
+| Environment | Database | Frontend | Backend | Logging |
+|-------------|----------|----------|---------|---------|
+| **Development** | `vereinsknete.db` | Dev server (:3000) | API only (:8080) | Debug |
+| **Production** | `data/vereinsknete.db` | Static files | API + Static (:8080) | Info |
 
-### Production Environment
-- **Database**: SQLite file in `data/` directory
-- **Logging**: Info level for production
-- **Frontend**: Built static files served by backend
-- **Backend**: Serves both API and static files
-- **CORS**: Configured for production use
+## Quick Commands
 
-## Environment Files
-
-### Backend Environment Files
-- `.env.development` - Development configuration
-- `.env.production` - Production configuration
-- `.env` - Active environment (created by env.sh script)
-
-### Frontend Environment Files
-- `.env.development` - Development configuration (with API URL pointing to localhost:8080)
-- `.env.production` - Production configuration (with relative API URL)
-- `.env` - Active environment (created by env.sh script)
-
-## Usage
-
-### Quick Start - Development
 ```bash
-./env.sh development
+# Development (starts both backend and frontend in tmux)
 ./dev.sh
+
+# Manual development setup
+cd backend && cargo run          # Backend (:8080)
+cd frontend && npm start         # Frontend (:3000)
+
+# Production build
+cd frontend && npm run build     # Build frontend
+cd backend && cargo build --release  # Build backend
+
+# Docker
+docker-compose up -d                                                    # Development
+docker build -t vereinsknete . && docker run -p 8080:8080 vereinsknete  # Production
 ```
 
-### Quick Start - Production Build
-```bash
-./build-prod.sh
-```
+## Environment Management
 
-### Manual Environment Setup
+Environment files are automatically loaded based on the `RUST_ENV` variable:
 
-#### Switch to Development
-```bash
-./env.sh development
-```
+- **Development**: Loads `.env.development` files (default)
+- **Production**: Loads `.env.production` files when `RUST_ENV=production`
 
-#### Switch to Production
-```bash
-./env.sh production
-```
+The backend automatically selects the appropriate environment file, and the frontend uses the corresponding `.env` file.
 
-### Running in Different Environments
+## Key Environment Variables
 
-#### Development Mode
-```bash
-# Set up development environment
-./env.sh development
-
-# Start development servers (backend + frontend)
-./dev.sh
-```
-
-#### Production Mode
-```bash
-# Build for production
-./build-prod.sh
-
-# Run production server
-cd backend
-RUST_ENV=production ./target/release/backend
-```
-
-#### Docker Production
-```bash
-# Build Docker image
-docker build -t vereinsknete .
-
-# Run container
-docker run -p 8080:8080 -v $(pwd)/data:/app/data vereinsknete
-```
-
-## Environment Variables
-
-### Backend Variables
-- `RUST_ENV` - Environment mode (`development` or `production`)
-- `DATABASE_URL` - Path to SQLite database file
-- `ENVIRONMENT` - Application environment (controls static file serving)
+### Backend
+- `RUST_ENV` - `development` or `production`
+- `DATABASE_URL` - SQLite database path
 - `RUST_LOG` - Logging level
-- `HOST` - Server bind address (default: `0.0.0.0`)
-- `PORT` - Server port (default: `8080`)
+- `PORT` - Server port (default: 8080)
 
-### Frontend Variables
-- `GENERATE_SOURCEMAP` - Enable/disable source maps
-- `REACT_APP_API_URL` - Backend API URL
-- `REACT_APP_ENV` - Environment identifier
+### Frontend  
+- `REACT_APP_API_URL` - Backend API endpoint
+- `GENERATE_SOURCEMAP` - Source map generation
 
-## Local Environment Overrides
+## Local Overrides
 
-You can create local environment files that won't be committed to git:
-- `backend/.env.local` - Local backend overrides
-- `frontend/.env.local` - Local frontend overrides
+Create `.env.local` files for personal settings (not committed to git):
+- `backend/.env.local` - Backend overrides
+- `frontend/.env.local` - Frontend overrides
 
-These files will be loaded in addition to the environment-specific files and can override any settings for your local development needs.
+## Environment Files Structure
+
+```
+backend/
+├── .env.development    # Development configuration
+├── .env.production     # Production configuration  
+└── .env               # Current active environment
+
+frontend/
+├── .env.development    # Development configuration
+├── .env.production     # Production configuration
+└── .env               # Current active environment
+```
