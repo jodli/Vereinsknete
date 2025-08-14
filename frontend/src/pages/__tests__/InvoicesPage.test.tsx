@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '../../test-utils/test-utils'
 import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
 import InvoicesPage from '../InvoicesPage';
-import { mockInvoices, mockClients } from '../../test-utils/mocks/mockData';
+// import { mockInvoices } from '../../test-utils/mocks/mockData';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 

@@ -1,4 +1,5 @@
 import { rest } from 'msw';
+import { server } from '../../test-utils/mocks/server';
 import {
   getUserProfile,
   updateUserProfile,
@@ -25,7 +26,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
 // Global MSW server is started in setupTests.ts (avoid duplicate setup here)
 // We still import rest to override handlers per test using server.use (server is global)
-import { server } from '../../test-utils/mocks/server';
 
 describe('User Profile API', () => {
   describe('getUserProfile', () => {

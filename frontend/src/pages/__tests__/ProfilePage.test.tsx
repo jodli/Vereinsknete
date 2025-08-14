@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '../../test-utils/test-utils'
 import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
 import ProfilePage from '../ProfilePage';
-import { mockUserProfile } from '../../test-utils/mocks/mockData';
+
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -44,8 +44,8 @@ describe('ProfilePage', () => {
     // Check if data is loaded
     await waitFor(() => {
       expect(screen.getByDisplayValue('John Doe')).toBeInTheDocument();
-      expect(screen.getByDisplayValue('123 Main St, City, Country')).toBeInTheDocument();
     });
+    expect(screen.getByDisplayValue('123 Main St, City, Country')).toBeInTheDocument();
   });
 
   it('handles form submission', async () => {

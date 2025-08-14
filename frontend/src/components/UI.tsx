@@ -46,7 +46,7 @@ export const Button: React.FC<ButtonProps> = ({
             className={`${baseStyle} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
         >
             {loading && (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" data-testid="loading-spinner"></div>
             )}
             {children}
         </button>
@@ -467,7 +467,7 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className = '' })
     };
 
     return (
-        <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeStyles[size]} ${className}`}></div>
+        <div className={`animate-spin rounded-full border-b-2 border-blue-600 ${sizeStyles[size]} ${className}`} data-testid="loading-spinner"></div>
     );
 };
 

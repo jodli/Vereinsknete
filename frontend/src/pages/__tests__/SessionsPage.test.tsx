@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '../../test-utils/test-utils';
 import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
-import { mockSessions, mockClients } from '../../test-utils/mocks/mockData';
+import SessionsPage from '../SessionsPage';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -15,8 +15,6 @@ jest.mock('react-router-dom', () => ({
     <a href={to} {...props}>{children}</a>
   ),
 }));
-
-import SessionsPage from '../SessionsPage';
 
 // Mock react-datepicker
 jest.mock('react-datepicker', () => {
@@ -116,9 +114,10 @@ describe('SessionsPage', () => {
     await waitFor(() => {
       const table = screen.getByRole('table');
       expect(within(table).getByText('Website Development')).toBeInTheDocument();
-      expect(within(table).getByText('Bug Fixes')).toBeInTheDocument();
-      expect(within(table).queryByText('Database Optimization')).not.toBeInTheDocument();
     });
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('Bug Fixes')).toBeInTheDocument();
+    expect(within(table).queryByText('Database Optimization')).not.toBeInTheDocument();
   });
 
   it('filters sessions by date range', async () => {
@@ -141,8 +140,9 @@ describe('SessionsPage', () => {
     await waitFor(() => {
       const table = screen.getByRole('table');
       expect(within(table).getByText('Website Development')).toBeInTheDocument();
-      expect(within(table).queryByText('Database Optimization')).not.toBeInTheDocument();
     });
+    const table = screen.getByRole('table');
+    expect(within(table).queryByText('Database Optimization')).not.toBeInTheDocument();
   });
 
   it('clears filters when clear button is clicked', async () => {
@@ -163,9 +163,10 @@ describe('SessionsPage', () => {
     await waitFor(() => {
       const table = screen.getByRole('table');
       expect(within(table).getByText('Website Development')).toBeInTheDocument();
-      expect(within(table).getByText('Database Optimization')).toBeInTheDocument();
-      expect(within(table).getByText('Bug Fixes')).toBeInTheDocument();
     });
+    const table = screen.getByRole('table');
+    expect(within(table).getByText('Database Optimization')).toBeInTheDocument();
+    expect(within(table).getByText('Bug Fixes')).toBeInTheDocument();
   });
 
   it('handles row clicks to navigate to session details', async () => {
@@ -274,8 +275,6 @@ describe('SessionsPage', () => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
     });
 
-    const clientSelect = screen.getByLabelText(/client/i);
-    
     // Check that all clients are in the dropdown
     expect(screen.getByRole('option', { name: 'All Clients' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Acme Corporation' })).toBeInTheDocument();

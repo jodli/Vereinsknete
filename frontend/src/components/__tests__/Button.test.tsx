@@ -39,7 +39,7 @@ describe('Button Component', () => {
     expect(button).toBeDisabled();
     expect(screen.getByText('Loading')).toBeInTheDocument();
     // Check for loading spinner
-    expect(button.querySelector('.animate-spin')).toBeInTheDocument();
+    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
   });
 
   it('handles disabled state', () => {

@@ -66,7 +66,14 @@ class MockIntersectionObserver implements IntersectionObserver {
   readonly root: Element | Document | null = null;
   readonly rootMargin: string = '';
   readonly thresholds: ReadonlyArray<number> = [];
-  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) { }
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) { 
+    // Store callback and options for mock implementation
+    this.callback = callback;
+    this.options = options;
+  }
+  
+  private callback: IntersectionObserverCallback;
+  private options?: IntersectionObserverInit;
   disconnect(): void { }
   observe(_target: Element): void { }
   unobserve(_target: Element): void { }
@@ -76,7 +83,12 @@ Object.defineProperty(globalThis, 'IntersectionObserver', { value: MockIntersect
 
 // Mock ResizeObserver
 class MockResizeObserver implements ResizeObserver {
-  constructor(_callback?: ResizeObserverCallback) { }
+  constructor(callback?: ResizeObserverCallback) { 
+    // Store callback for mock implementation
+    this.callback = callback;
+  }
+  
+  private callback?: ResizeObserverCallback;
   observe(_target: Element, _options?: ResizeObserverOptions): void { }
   unobserve(_target: Element): void { }
   disconnect(): void { }

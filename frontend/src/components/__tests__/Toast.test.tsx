@@ -73,9 +73,7 @@ describe('Toast Context', () => {
   it('shows success toast', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Success'));
-    });
+    fireEvent.click(screen.getByText('Show Success'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
   });
@@ -83,9 +81,7 @@ describe('Toast Context', () => {
   it('shows error toast', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Error'));
-    });
+    fireEvent.click(screen.getByText('Show Error'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
   });
@@ -93,9 +89,7 @@ describe('Toast Context', () => {
   it('shows warning toast', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Warning'));
-    });
+    fireEvent.click(screen.getByText('Show Warning'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
   });
@@ -103,9 +97,7 @@ describe('Toast Context', () => {
   it('shows info toast', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Info'));
-    });
+    fireEvent.click(screen.getByText('Show Info'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
   });
@@ -113,9 +105,7 @@ describe('Toast Context', () => {
   it('shows custom toast with message', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Custom'));
-    });
+    fireEvent.click(screen.getByText('Show Custom'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
   });
@@ -123,9 +113,7 @@ describe('Toast Context', () => {
   it('auto-removes toast after duration', async () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Auto-Remove')); // 1000ms duration
-    });
+    fireEvent.click(screen.getByText('Show Auto-Remove')); // 1000ms duration
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
     
@@ -142,25 +130,19 @@ describe('Toast Context', () => {
   it('manually removes toast', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Success'));
-    });
+    fireEvent.click(screen.getByText('Show Success'));
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
     
-    act(() => {
-      fireEvent.click(screen.getByText('Remove'));
-    });
+    fireEvent.click(screen.getByText('Remove'));
     expect(screen.getByTestId('toast-count')).toHaveTextContent('0');
   });
 
   it('handles multiple toasts', () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Success'));
-      fireEvent.click(screen.getByText('Show Error'));
-      fireEvent.click(screen.getByText('Show Warning'));
-    });
+    fireEvent.click(screen.getByText('Show Success'));
+    fireEvent.click(screen.getByText('Show Error'));
+    fireEvent.click(screen.getByText('Show Warning'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('3');
   });
@@ -168,9 +150,7 @@ describe('Toast Context', () => {
   it('error toasts have longer duration', async () => {
     renderWithToastProvider(<TestComponent />);
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Error'));
-    });
+    fireEvent.click(screen.getByText('Show Error'));
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
     
@@ -200,9 +180,7 @@ describe('Toast Component Rendering', () => {
       </ToastProvider>
     );
     
-    act(() => {
-      fireEvent.click(screen.getByText('Show Success'));
-    });
+    fireEvent.click(screen.getByText('Show Success'));
     expect(screen.getByTestId('toast-count')).toHaveTextContent('1');
     
     // Find and click the close button in the actual toast component
@@ -210,9 +188,7 @@ describe('Toast Component Rendering', () => {
     const closeButton = toastContainer?.querySelector('button');
     
     if (closeButton) {
-      act(() => {
-        fireEvent.click(closeButton);
-      });
+      fireEvent.click(closeButton);
     }
     
     expect(screen.getByTestId('toast-count')).toHaveTextContent('0');

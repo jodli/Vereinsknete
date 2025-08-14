@@ -17,14 +17,14 @@ const TestComponent = () => {
 };
 
 // Component that tries to use context outside provider
-const ComponentWithoutProvider = () => {
-  try {
-    useLanguage();
-    return <div>Should not render</div>;
-  } catch (error) {
-    throw error;
-  }
-};
+// const ComponentWithoutProvider = () => {
+//   try {
+//     useLanguage();
+//     return <div>Should not render</div>;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 const renderWithLanguageProvider = (component: React.ReactElement) => {
   return render(

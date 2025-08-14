@@ -2,8 +2,9 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../../test-utils/test-utils';
 import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
+import { handlers } from '../../test-utils/mocks/handlers';
 import DashboardPage from '../DashboardPage';
-import { mockDashboardMetrics, mockInvoices } from '../../test-utils/mocks/mockData';
+import { mockInvoices } from '../../test-utils/mocks/mockData';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -205,8 +206,8 @@ describe('DashboardPage', () => {
       expect(screen.getByText(/error loading/i)).toBeInTheDocument();
     });
 
-    // Reset handlers to success
-    server.resetHandlers();
+    // Reset handlers to success - restore original handlers
+    server.resetHandlers(...handlers);
 
     // Click retry button
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
@@ -217,8 +218,12 @@ describe('DashboardPage', () => {
     // Should eventually show data
     await waitFor(() => {
       expect(screen.queryByText(/error loading/i)).not.toBeInTheDocument();
-      expect(screen.getByText('€815.00')).toBeInTheDocument();
     });
+    
+    // Wait for the revenue data to appear
+    await waitFor(() => {
+      expect(screen.getByText('€815.00')).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
   it('formats currency correctly for different locales', async () => {

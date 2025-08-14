@@ -115,9 +115,9 @@ describe('ClientFormPage', () => {
 
       await waitFor(() => {
         expect(screen.getByDisplayValue('Acme Corporation')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('456 Business Ave, Business City')).toBeInTheDocument();
-        expect(screen.getByDisplayValue('75')).toBeInTheDocument();
       });
+      expect(screen.getByDisplayValue('456 Business Ave, Business City')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('75')).toBeInTheDocument();
     });
 
     it('updates existing client', async () => {

@@ -2,7 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '../../test-utils/test-utils';
 import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
-import { mockClients } from '../../test-utils/mocks/mockData';
+import { handlers } from '../../test-utils/mocks/handlers';
+import ClientsPage from '../ClientsPage';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -15,8 +16,6 @@ jest.mock('react-router-dom', () => ({
     <a href={to} {...props}>{children}</a>
   ),
 }));
-
-import ClientsPage from '../ClientsPage';
 
 describe('ClientsPage', () => {
   beforeEach(() => {
@@ -162,8 +161,8 @@ describe('ClientsPage', () => {
       expect(screen.getByText(/network request failed/i)).toBeInTheDocument();
     });
 
-    // Reset handlers to success
-    server.resetHandlers();
+    // Reset handlers to success - restore original handlers
+    server.resetHandlers(...handlers);
 
     // Click retry button
     fireEvent.click(screen.getByRole('button', { name: /try again/i }));
@@ -174,8 +173,12 @@ describe('ClientsPage', () => {
     // Should eventually show data
     await waitFor(() => {
       expect(screen.queryByText(/network request failed/i)).not.toBeInTheDocument();
-      expect(screen.getByText('Acme Corporation')).toBeInTheDocument();
     });
+    
+    // Wait for the client data to appear
+    await waitFor(() => {
+      expect(screen.getByText('Acme Corporation')).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
   it('formats currency correctly', async () => {

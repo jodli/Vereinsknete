@@ -21,7 +21,7 @@ describe('Basic UI Components', () => {
       
       const button = screen.getByRole('button');
       expect(button).toBeDisabled();
-      expect(button.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     });
   });
 
@@ -58,7 +58,7 @@ describe('Basic UI Components', () => {
       render(<LoadingState />);
       
       expect(screen.getByText('Loading...')).toBeInTheDocument();
-      expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
     });
 
     it('renders with custom message', () => {
