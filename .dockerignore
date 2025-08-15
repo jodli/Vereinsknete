@@ -1,0 +1,59 @@
+# Docker ignore file for VereinsKnete Home Assistant Add-on
+# Optimize build context by excluding unnecessary files
+
+# Git and version control
+.git
+.gitignore
+.github
+
+# Documentation
+README.md
+*.md
+docs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backend development files
+backend/target/
+backend/.env*
+backend/vereinsknete.db*
+backend/invoices/
+
+# Frontend development files
+frontend/node_modules/
+frontend/build/
+frontend/coverage/
+frontend/.env*
+
+# Test files
+frontend/src/**/*.test.tsx
+frontend/src/**/*.test.ts
+backend/tests/
+
+# Development scripts
+dev.sh
+*.code-workspace
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Specs and planning documents
+specs/
+.kiro/

@@ -5,7 +5,7 @@ import { server } from '../../test-utils/mocks/server';
 import InvoicesPage from '../InvoicesPage';
 // import { mockInvoices } from '../../test-utils/mocks/mockData';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 describe('InvoicesPage', () => {
   const mockConfirm = jest.fn();

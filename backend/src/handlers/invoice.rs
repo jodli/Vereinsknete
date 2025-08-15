@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::errors::AppError;
 use crate::models::invoice::{DashboardQuery, InvoiceRequest, UpdateInvoiceStatusRequest};
 use crate::services::invoice as invoice_service;
@@ -16,6 +17,7 @@ fn get_request_id(req: &HttpRequest) -> String {
 #[post("/invoices/generate")]
 async fn generate_invoice(
     pool: web::Data<DbPool>,
+    config: web::Data<Config>,
     mut invoice_req: web::Json<InvoiceRequest>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
@@ -49,8 +51,9 @@ async fn generate_invoice(
         return Err(AppError::Validation(format!("Validation failed: {:?}", errors)).into());
     }
 
+    let invoice_dir = config.invoice_dir.clone();
     let (pdf_bytes, invoice_id, invoice_number) = web::block(move || {
-        invoice_service::generate_and_save_invoice(&pool, invoice_req.into_inner())
+        invoice_service::generate_and_save_invoice(&pool, invoice_req.into_inner(), &invoice_dir)
     })
     .await?
     .map_err(|e| {
@@ -276,6 +279,7 @@ async fn get_dashboard_metrics(
 #[get("/invoices/{id}/pdf")]
 async fn download_invoice_pdf(
     pool: web::Data<DbPool>,
+    config: web::Data<Config>,
     path: web::Path<i32>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
@@ -293,8 +297,9 @@ async fn download_invoice_pdf(
         })
     );
 
+    let invoice_dir = config.invoice_dir.clone();
     let (pdf_bytes, invoice_number) =
-        web::block(move || invoice_service::get_invoice_pdf(&pool, invoice_id))
+        web::block(move || invoice_service::get_invoice_pdf(&pool, invoice_id, &invoice_dir))
             .await?
             .map_err(|e| {
                 log::error!(
@@ -335,6 +340,7 @@ async fn download_invoice_pdf(
 #[delete("/invoices/{id}")]
 async fn delete_invoice(
     pool: web::Data<DbPool>,
+    config: web::Data<Config>,
     path: web::Path<i32>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
@@ -352,7 +358,8 @@ async fn delete_invoice(
         })
     );
 
-    web::block(move || invoice_service::delete_invoice(&pool, invoice_id))
+    let invoice_dir = config.invoice_dir.clone();
+    web::block(move || invoice_service::delete_invoice(&pool, invoice_id, &invoice_dir))
         .await?
         .map_err(|e| {
             log::error!(

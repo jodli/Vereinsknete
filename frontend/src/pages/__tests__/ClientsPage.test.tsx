@@ -5,7 +5,7 @@ import { server } from '../../test-utils/mocks/server';
 import { handlers } from '../../test-utils/mocks/handlers';
 import ClientsPage from '../ClientsPage';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 // Mock react-router-dom BEFORE importing component so hook is mocked inside component
 const mockNavigate = jest.fn();

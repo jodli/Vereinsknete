@@ -5,7 +5,7 @@ import { server } from '../../test-utils/mocks/server';
 import ProfilePage from '../ProfilePage';
 
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 describe('ProfilePage', () => {
   beforeEach(() => {

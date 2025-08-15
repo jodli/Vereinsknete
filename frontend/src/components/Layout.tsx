@@ -46,10 +46,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     const closeSidebar = () => setSidebarOpen(false);
 
     return (
-        <div className="flex h-screen bg-gray-50">
+        <div className="flex h-screen bg-gray-50 ha-contrast-optimized">
             {/* Mobile sidebar overlay */}
             <div
-                className={`fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden transition-opacity ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden transition-opacity ha-optimized-sidebar ${sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 onClick={closeSidebar}
                 data-testid="mobile-overlay"
                 aria-hidden={!sidebarOpen}
@@ -61,10 +61,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                 lg:translate-x-0
                 ${sidebarCollapsed ? 'lg:w-16' : 'lg:w-64'}
-                fixed lg:relative inset-y-0 left-0 z-50 w-64
+                fixed lg:relative inset-y-0 left-0 z-40 w-64
                 bg-white shadow-xl border-r border-gray-200
                 transition-all duration-300 ease-in-out
-                flex flex-col
+                flex flex-col ha-optimized-sidebar
+                sidebar-mobile-ha sidebar-xs-ha
             `}>
                 {/* Sidebar Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
@@ -197,8 +198,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
 
                 {/* Main content area */}
-                <main className="flex-1 overflow-auto bg-gray-50" role="main">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <main className="flex-1 overflow-auto bg-gray-50 ha-mobile-optimized" role="main">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 ha-responsive-padding content-mobile-ha">
                         {children}
                     </div>
                 </main>

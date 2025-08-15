@@ -2,7 +2,7 @@ import { rest } from 'msw';
 import { mockClients, mockSessions, mockInvoices, mockUserProfile, mockDashboardMetrics } from './mockData';
 import type { UserProfile, Client, SessionWithDuration } from '../../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../apiConfig';
 
 export const handlers = [
   // User Profile endpoints
