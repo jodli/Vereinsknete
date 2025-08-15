@@ -1,8 +1,7 @@
 #!/usr/bin/with-contenv bashio
 
-# VereinsKnete Home Assistant Add-on Startup Script
-# Implements configuration management, database initialization, and proper logging
-# Requirements: 3.1, 3.3, 5.4, 6.3
+# VereinsKnete Home Assistant Add-on Service Script for s6-overlay
+# This script runs as a service under s6-overlay supervision
 
 set -e
 
@@ -221,83 +220,34 @@ perform_health_checks() {
     log_info "Health checks completed successfully"
 }
 
-# Function to handle graceful shutdown
-cleanup() {
-    local exit_code=$?
-    log_info "Received shutdown signal, cleaning up..."
-    
-    # Kill the application if it's running
-    if [[ -n "$APP_PID" ]]; then
-        log_info "Stopping VereinsKnete application (PID: $APP_PID)..."
-        kill -TERM "$APP_PID" 2>/dev/null || true
-        
-        # Wait for graceful shutdown
-        local count=0
-        while kill -0 "$APP_PID" 2>/dev/null && [[ $count -lt 30 ]]; do
-            sleep 1
-            ((count++))
-        done
-        
-        # Force kill if still running
-        if kill -0 "$APP_PID" 2>/dev/null; then
-            log_warn "Application did not shut down gracefully, forcing termination"
-            kill -KILL "$APP_PID" 2>/dev/null || true
-        fi
-    fi
-    
-    log_info "Cleanup completed"
-    exit $exit_code
-}
+# Main initialization and startup
+log_info "Starting VereinsKnete Home Assistant Add-on v1.0.0"
+log_info "=================================================="
 
-# Set up signal handlers for graceful shutdown
-trap cleanup SIGTERM SIGINT SIGQUIT
+# Step 1: Read configuration from Home Assistant
+read_configuration
 
-# Main startup sequence
-main() {
-    log_info "Starting VereinsKnete Home Assistant Add-on v1.0.0"
-    log_info "=================================================="
-    
-    # Step 1: Read configuration from Home Assistant
-    read_configuration
-    
-    # Step 2: Create directory structure for persistent data storage
-    create_directory_structure
-    
-    # Step 3: Setup environment variables for Rust application
-    setup_environment_variables
-    
-    # Step 4: Initialize database and run migrations
-    initialize_database
-    
-    # Step 5: Perform pre-startup health checks
-    perform_health_checks
-    
-    # Step 6: Start the application
-    log_info "Starting VereinsKnete application..."
-    log_info "Listening on http://$HOST:$PORT"
-    log_info "Database: $DATABASE_URL"
-    log_info "Invoice storage: $INVOICE_STORAGE_PATH"
-    log_info "Log level: $LOG_LEVEL"
-    
-    # Start the application in the background to capture PID
-    /usr/local/bin/vereinsknete &
-    APP_PID=$!
-    
-    log_info "VereinsKnete started successfully (PID: $APP_PID)"
-    log_info "Add-on is ready for use through Home Assistant ingress"
-    
-    # Wait for the application to finish
-    wait $APP_PID
-    local exit_code=$?
-    
-    if [[ $exit_code -eq 0 ]]; then
-        log_info "VereinsKnete application exited normally"
-    else
-        log_error "VereinsKnete application exited with code: $exit_code"
-    fi
-    
-    exit $exit_code
-}
+# Step 2: Create directory structure for persistent data storage
+create_directory_structure
 
-# Start the main function
-main "$@"
+# Step 3: Setup environment variables for Rust application
+setup_environment_variables
+
+# Step 4: Initialize database and run migrations
+initialize_database
+
+# Step 5: Perform pre-startup health checks
+perform_health_checks
+
+# Step 6: Start the application
+log_info "Starting VereinsKnete application..."
+log_info "Listening on http://$HOST:$PORT"
+log_info "Database: $DATABASE_URL"
+log_info "Invoice storage: $INVOICE_STORAGE_PATH"
+log_info "Log level: $LOG_LEVEL"
+
+log_info "VereinsKnete service starting..."
+log_info "Add-on is ready for use through Home Assistant ingress"
+
+# Execute the application directly - s6-overlay will handle process supervision
+exec /usr/local/bin/vereinsknete

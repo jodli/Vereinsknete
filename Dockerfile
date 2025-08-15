@@ -92,27 +92,25 @@ RUN apk add --no-cache \
     && apk upgrade --no-cache \
     && rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
-# Create application user for security (non-root execution)
-RUN addgroup -g 1000 vereinsknete && \
-    adduser -D -s /bin/bash -u 1000 -G vereinsknete vereinsknete
-
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/static /data /share && \
-    chown -R vereinsknete:vereinsknete /app /data /share && \
     chmod 755 /app /data /share
 
 # Copy binaries from build stages
 # Migrations are now embedded in the binary, no need to copy them separately
-COPY --from=rust-builder --chown=vereinsknete:vereinsknete \
+COPY --from=rust-builder \
     /backend/target/release/backend /usr/local/bin/vereinsknete
 
 # Copy frontend build
-COPY --from=frontend-builder --chown=vereinsknete:vereinsknete \
+COPY --from=frontend-builder \
     /frontend/build /app/static
 
-# Copy startup script (will be created in next task)
-COPY --chown=vereinsknete:vereinsknete run.sh /usr/local/bin/run.sh
-RUN chmod +x /usr/local/bin/run.sh
+# Create s6-overlay service directory structure
+RUN mkdir -p /etc/services.d/vereinsknete
+
+# Copy s6-overlay service script
+COPY --chown=root:root run.sh /etc/services.d/vereinsknete/run
+RUN chmod +x /etc/services.d/vereinsknete/run
 
 # Set proper file permissions for security
 RUN chmod +x /usr/local/bin/vereinsknete
@@ -123,14 +121,12 @@ EXPOSE 8080
 # Set environment variables for Home Assistant add-on
 ENV RUST_LOG=info \
     RUST_BACKTRACE=1 \
-    PATH="/usr/local/bin:$PATH"
+    PATH="/usr/local/bin:$PATH" \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2
 
 # Health check for Home Assistant Supervisor
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/api/health || exit 1
-
-# Use non-root user for security
-USER vereinsknete
 
 # Labels for Home Assistant add-on metadata
 LABEL \
@@ -145,5 +141,5 @@ LABEL \
     org.opencontainers.image.vendor="VereinsKnete" \
     org.opencontainers.image.licenses="MIT"
 
-# Start the application
-CMD ["/usr/local/bin/run.sh"]
+# Don't set USER - s6-overlay needs to run as root initially
+# The service script will handle user switching if needed
