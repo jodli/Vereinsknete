@@ -1,9 +1,11 @@
 use actix_web::{test, web, App};
 use backend::{
+    config::Config,
     handlers,
     middleware::{RequestIdMiddleware, SecurityHeadersMiddleware},
     DbPool,
 };
+use std::path::PathBuf;
 
 pub fn create_test_app(
     pool: DbPool,
@@ -16,10 +18,22 @@ pub fn create_test_app(
         InitError = (),
     >,
 > {
+    // Create a test config
+    let test_config = Config {
+        database_url: "test.db".to_string(),
+        port: 8080,
+        host: "localhost".to_string(),
+        static_dir: None,
+        invoice_dir: PathBuf::from("test_invoices"),
+        log_level: "info".to_string(),
+        env_mode: "dev".to_string(),
+    };
+
     App::new()
         .wrap(RequestIdMiddleware)
         .wrap(SecurityHeadersMiddleware)
         .app_data(web::Data::new(pool))
+        .app_data(web::Data::new(test_config))
         .configure(handlers::health::config)
         .service(
             web::scope("/api")
