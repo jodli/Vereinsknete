@@ -23,20 +23,24 @@ async fn main() -> std::io::Result<()> {
 
     // Initialize the logger with the configured log level
     env_logger::init_from_env(env_logger::Env::new().default_filter_or(&config.log_level));
-    
+
     log::info!("Starting VereinsKnete v{}", env!("CARGO_PKG_VERSION"));
     log::info!("Configuration: {:?}", config);
 
     // Create invoice directory if it doesn't exist
     if let Err(e) = std_fs::create_dir_all(&config.invoice_dir) {
-        log::error!("Failed to create invoice directory {:?}: {}", config.invoice_dir, e);
+        log::error!(
+            "Failed to create invoice directory {:?}: {}",
+            config.invoice_dir,
+            e
+        );
         return Err(std::io::Error::other(e));
     }
     log::info!("Invoice directory: {:?}", config.invoice_dir);
 
     // Set up database connection pool
     log::info!("Using database: {}", config.database_url);
-    
+
     // Create database directory if it doesn't exist (for SQLite files)
     if let Some(parent) = std::path::Path::new(&config.database_url).parent() {
         if let Err(e) = std_fs::create_dir_all(parent) {
@@ -59,18 +63,15 @@ async fn main() -> std::io::Result<()> {
     // Run database migrations
     log::info!("Running database migrations...");
     {
-        let mut conn = pool
-            .get()
-            .map_err(|e| {
-                log::error!("Failed to get database connection for migrations: {}", e);
-                std::io::Error::other(e)
-            })?;
-        
-        conn.run_pending_migrations(MIGRATIONS)
-            .map_err(|e| {
-                log::error!("Failed to run database migrations: {}", e);
-                std::io::Error::other(e)
-            })?;
+        let mut conn = pool.get().map_err(|e| {
+            log::error!("Failed to get database connection for migrations: {}", e);
+            std::io::Error::other(e)
+        })?;
+
+        conn.run_pending_migrations(MIGRATIONS).map_err(|e| {
+            log::error!("Failed to run database migrations: {}", e);
+            std::io::Error::other(e)
+        })?;
         log::info!("Database migrations completed successfully");
     }
 
@@ -90,7 +91,7 @@ async fn main() -> std::io::Result<()> {
 
     // Clone config for use in the server closure
     let config_clone = config.clone();
-    
+
     // Create the HTTP server
     let server = HttpServer::new(move || {
         // Configure CORS for add-on compatibility
@@ -135,7 +136,7 @@ async fn main() -> std::io::Result<()> {
                 app = app.service(
                     fs::Files::new("/", static_dir)
                         .index_file("index.html")
-                        .prefer_utf8(true)
+                        .prefer_utf8(true),
                 );
             }
         }
@@ -146,7 +147,7 @@ async fn main() -> std::io::Result<()> {
 
     // Set up graceful shutdown with signal handling
     let server_handle = server.run();
-    
+
     tokio::select! {
         result = server_handle => {
             match result {

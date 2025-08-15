@@ -559,7 +559,11 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
 ///
 /// # Returns
 /// * `Result<(Vec<u8>, String)>` - PDF bytes and invoice number or error
-pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32, invoice_dir: &std::path::Path) -> Result<(Vec<u8>, String)> {
+pub fn get_invoice_pdf(
+    pool: &DbPool,
+    invoice_id: i32,
+    invoice_dir: &std::path::Path,
+) -> Result<(Vec<u8>, String)> {
     use crate::schema::invoices;
 
     // Validate input
@@ -601,8 +605,8 @@ pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32, invoice_dir: &std::path::
     }
 
     // Read the PDF file
-    let pdf_bytes = fs::read(&pdf_path)
-        .context(format!("Failed to read PDF file: {}", pdf_path.display()))?;
+    let pdf_bytes =
+        fs::read(&pdf_path).context(format!("Failed to read PDF file: {}", pdf_path.display()))?;
 
     log::debug!("Successfully read PDF file: {} bytes", pdf_bytes.len());
 
@@ -624,7 +628,8 @@ pub fn delete_invoice(pool: &DbPool, invoice_id: i32, invoice_dir: &std::path::P
     let pdf_filename = format!("invoice_{}.pdf", invoice.invoice_number);
     let pdf_path = invoice_dir.join(&pdf_filename);
     if pdf_path.exists() {
-        fs::remove_file(&pdf_path).context(format!("Failed to delete PDF file: {}", pdf_path.display()))?;
+        fs::remove_file(&pdf_path)
+            .context(format!("Failed to delete PDF file: {}", pdf_path.display()))?;
     }
 
     // Delete the invoice record from database
@@ -777,7 +782,8 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 12, 31).unwrap(),
             language: None,
         };
-        let (_pdf2, _id2, number2) = generate_and_save_invoice(&pool, req2, temp_dir.path()).unwrap();
+        let (_pdf2, _id2, number2) =
+            generate_and_save_invoice(&pool, req2, temp_dir.path()).unwrap();
         assert!(number2.ends_with("0002"));
         assert_eq!(list_invoices(&pool).len(), 2);
     }

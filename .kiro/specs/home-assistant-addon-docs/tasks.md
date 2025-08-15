@@ -23,7 +23,7 @@
   - Add proper logging and error handling for startup process
   - _Requirements: 3.1, 3.3, 5.4, 6.3_
 
-- [ ] 4. Modify Rust backend for add-on compatibility
+- [x] 4. Modify Rust backend for add-on compatibility
   - Update main.rs to accept command-line arguments for configuration
   - Implement configurable database path and static file serving directory
   - Add graceful shutdown signal handling for container lifecycle
@@ -31,7 +31,7 @@
   - Ensure API endpoints work correctly with ingress proxy routing
   - _Requirements: 2.1, 5.1, 6.1, 9.4_
 
-- [ ] 5. Configure React frontend for ingress integration
+- [x] 5. Configure React frontend for ingress integration
   - Update build configuration to generate optimized static files
   - Ensure API calls use relative URLs for ingress proxy compatibility
   - Test responsive design for Home Assistant interface integration
@@ -39,14 +39,14 @@
   - Optimize bundle size and loading performance for add-on environment
   - _Requirements: 2.1, 9.3, 9.5, 10.2_
 
-- [ ] 6. Implement build configuration for multi-architecture support
+- [x] 6. Implement build configuration for multi-architecture support
   - Create build.yaml with architecture-specific build configurations
   - Set up proper base image references for each supported architecture
   - Configure build arguments and environment variables for cross-compilation
   - Test build process for all target architectures (aarch64 and amd64)
   - _Requirements: 4.1, 4.2, 4.4_
 
-- [ ] 7. Set up automated CI/CD pipeline for container publishing
+- [x] 7. Set up automated CI/CD pipeline for container publishing
   - Create GitHub Actions workflow for automated building and publishing
   - Configure multi-architecture builds using Docker Buildx
   - Set up GitHub Container Registry integration for image publishing
@@ -62,7 +62,7 @@
   - Include screenshots and usage examples for the web interface
   - _Requirements: 8.1, 8.2, 8.3, 8.5_
 
-- [ ] 9. Implement data persistence and backup integration
+- [x] 9. Implement data persistence and backup integration
   - Configure proper volume mapping for SQLite database persistence
   - Set up invoice storage directory with proper permissions
   - Ensure data survives add-on updates and container restarts
@@ -70,7 +70,7 @@
   - Verify integration with Home Assistant's backup system
   - _Requirements: 5.1, 5.2, 5.3, 5.5_
 
-- [ ] 10. Add comprehensive logging and monitoring capabilities
+- [x] 10. Add comprehensive logging and monitoring capabilities
   - Implement structured logging with configurable log levels
   - Add startup, shutdown, and configuration change event logging
   - Create error logging with appropriate detail for troubleshooting
@@ -78,21 +78,14 @@
   - Add health check endpoints for monitoring application status
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 11. Create local development and testing environment
-  - Set up VS Code devcontainer configuration for add-on development
-  - Create local testing scripts for build verification
-  - Implement integration testing with Home Assistant devcontainer
-  - Add automated testing for configuration validation
-  - Create performance testing scripts for container optimization
+- [ ] 11. Create local development and testing environment for Raspberry Pi 5
+  - Create local add-on testing scripts for direct installation on Home Assistant
+  - Set up local build verification for ARM64 architecture (Raspberry Pi 5)
+  - Create configuration validation scripts for add-on options testing
+  - Implement local add-on repository structure for sideloading
+  - Add performance monitoring scripts for Raspberry Pi resource constraints
+  - Create troubleshooting and debugging guides for local testing
   - _Requirements: 4.5, 7.5_
-
-- [ ] 12. Implement security hardening and validation
-  - Configure AppArmor profile for container security
-  - Implement input validation for all configuration options
-  - Add security scanning to CI/CD pipeline
-  - Ensure minimal required permissions and no privileged access
-  - Test ingress integration security and session management
-  - _Requirements: 2.2, 2.4, 3.2, 3.4_
 
 - [ ] 13. Create add-on repository structure for distribution
   - Set up GitHub repository with proper add-on repository structure
