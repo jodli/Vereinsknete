@@ -4,10 +4,10 @@ VereinsKnete supports development and production environments with automatic con
 
 ## Environments
 
-| Environment | Database | Frontend | Backend | Logging |
-|-------------|----------|----------|---------|---------|
-| **Development** | `vereinsknete.db` | Dev server (:3000) | API only (:8080) | Debug |
-| **Production** | `data/vereinsknete.db` | Static files | API + Static (:8080) | Info |
+| Environment | Database | Frontend | Backend | Logging | Migrations |
+|-------------|----------|----------|---------|---------|------------|
+| **Development** | `vereinsknete.db` | Dev server (:3000) | API only (:8080) | Debug | Auto |
+| **Production** | `data/vereinsknete.db` | Static files | API + Static (:8080) | Info | Auto |
 
 ## Quick Commands
 
@@ -41,9 +41,14 @@ The backend automatically selects the appropriate environment file, and the fron
 
 ### Backend
 - `RUST_ENV` - `development` or `production`
-- `DATABASE_URL` - SQLite database path
+- `DATABASE_URL` - SQLite database path (automatically created if not exists)
 - `RUST_LOG` - Logging level
 - `PORT` - Server port (default: 8080)
+
+### Database Management
+- **Automatic Migrations**: Database schema is automatically created and updated on application startup
+- **No Manual Setup**: Database file and tables are created automatically if they don't exist
+- **Migration Embedding**: All migrations are embedded in the binary for reliable deployment
 
 ### Frontend  
 - `REACT_APP_API_URL` - Backend API endpoint

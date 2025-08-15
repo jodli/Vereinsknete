@@ -34,12 +34,13 @@ COPY backend/src ./src
 COPY backend/migrations ./migrations
 COPY backend/diesel.toml ./
 
+# Note: Migrations are embedded in the binary at compile time
+# and will run automatically when the application starts
+
 # Build the release binary with optimizations
+# Migrations are now embedded in the binary, no need for separate diesel CLI
 RUN cargo build --release && \
     strip target/release/backend
-
-# Install diesel CLI for database migrations
-RUN cargo install diesel_cli --no-default-features --features sqlite-bundled
 
 # Node.js build stage - optimized for production
 FROM node:${NODE_VERSION}-alpine AS frontend-builder
@@ -101,12 +102,9 @@ RUN mkdir -p /app/static /data /share && \
     chmod 755 /app /data /share
 
 # Copy binaries from build stages
+# Migrations are now embedded in the binary, no need to copy them separately
 COPY --from=rust-builder --chown=vereinsknete:vereinsknete \
     /backend/target/release/backend /usr/local/bin/vereinsknete
-COPY --from=rust-builder --chown=vereinsknete:vereinsknete \
-    /usr/local/cargo/bin/diesel /usr/local/bin/diesel
-COPY --from=rust-builder --chown=vereinsknete:vereinsknete \
-    /backend/migrations /app/migrations
 
 # Copy frontend build
 COPY --from=frontend-builder --chown=vereinsknete:vereinsknete \
@@ -117,7 +115,7 @@ COPY --chown=vereinsknete:vereinsknete run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh
 
 # Set proper file permissions for security
-RUN chmod +x /usr/local/bin/vereinsknete /usr/local/bin/diesel
+RUN chmod +x /usr/local/bin/vereinsknete
 
 # Expose the application port
 EXPOSE 8080

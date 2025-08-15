@@ -3,6 +3,7 @@ use actix_files as fs;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::sqlite::SqliteConnection;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use dotenvy::dotenv;
 use std::env;
 use std::path::Path;
@@ -19,6 +20,9 @@ use backend::{handlers, middleware};
 use middleware::{RequestIdMiddleware, SecurityHeadersMiddleware};
 
 pub type DbPool = r2d2::Pool<ConnectionManager<SqliteConnection>>;
+
+// Embed migrations at compile time
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 #[derive(Debug, Clone)]
 pub enum AppEnv {
@@ -84,6 +88,17 @@ async fn main() -> std::io::Result<()> {
         .connection_timeout(Duration::from_secs(30))
         .build(manager)
         .expect("Failed to create pool");
+
+    // Run database migrations
+    log::info!("Running database migrations...");
+    {
+        let mut conn = pool
+            .get()
+            .expect("Failed to get database connection for migrations");
+        conn.run_pending_migrations(MIGRATIONS)
+            .expect("Failed to run database migrations");
+        log::info!("Database migrations completed successfully");
+    }
 
     // Set the bind target (IP address and port) from environment variables
     let host = env::var("HOST").unwrap_or_else(|_| "0.0.0.0".to_string());

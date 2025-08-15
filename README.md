@@ -23,7 +23,7 @@ A modern web application for freelance service providers to track billable hours
 - Rust (1.70+) and Cargo
 - Node.js (18+) and npm
 - SQLite and libsqlite3-dev
-- Diesel CLI: `cargo install diesel_cli --no-default-features --features sqlite`
+- Diesel CLI (optional, only needed for creating new migrations): `cargo install diesel_cli --no-default-features --features sqlite`
 
 ### Development Setup
 
@@ -43,13 +43,15 @@ The `dev.sh` script starts both backend (`:8080`) and frontend (`:3000`) servers
 ```bash
 # Backend
 cd backend
-diesel setup && diesel migration run
+# Database migrations now run automatically on startup
 cargo run
 
 # Frontend (new terminal)
 cd frontend
 npm install && npm start
 ```
+
+> **Note**: Database migrations are now handled automatically when the application starts. The application will create the database file and run all pending migrations on first startup.
 
 ## 🐳 Docker
 
@@ -60,6 +62,29 @@ docker-compose up -d
 # Production
 docker build -t vereinsknete .
 docker run -p 8080:8080 -v $(pwd)/data:/app/data vereinsknete
+```
+
+> **Note**: When running in Docker, database migrations are handled automatically. The application will create the database and run all migrations on container startup.
+
+## 🗄️ Database Management
+
+VereinsKnete uses SQLite with automatic database migrations:
+
+- **Automatic Setup**: Database and tables are created automatically on first startup
+- **Migration Handling**: All pending migrations run automatically when the application starts
+- **No Manual Setup Required**: Simply run `cargo run` and the database will be ready
+- **Development**: Database file is created at `backend/vereinsknete.db`
+- **Production**: Database location is configurable via `DATABASE_URL` environment variable
+
+### Creating New Migrations (Development Only)
+
+```bash
+cd backend
+# Create a new migration (requires Diesel CLI)
+diesel migration generate migration_name
+
+# Edit the generated up.sql and down.sql files
+# Migrations will be applied automatically on next startup
 ```
 
 ## 🧪 Testing
