@@ -53,6 +53,20 @@ npm install && npm start
 
 > **Note**: Database migrations are now handled automatically when the application starts. The application will create the database file and run all pending migrations on first startup.
 
+## 🏠 Home Assistant Add-on
+
+VereinsKnete is available as a Home Assistant add-on for seamless integration with your smart home setup:
+
+- **Ingress Integration**: Access through Home Assistant's interface without separate authentication
+- **Automatic Setup**: No manual configuration required
+- **Responsive Design**: Optimized for Home Assistant's mobile and desktop interfaces
+- **Secure Access**: Uses Home Assistant's authentication and ingress proxy
+
+### Installation
+1. Add the VereinsKnete add-on repository to Home Assistant
+2. Install the VereinsKnete add-on
+3. Start the add-on and access it through the Home Assistant sidebar
+
 ## 🐳 Docker
 
 ```bash
@@ -62,6 +76,9 @@ docker-compose up -d
 # Production
 docker build -t vereinsknete .
 docker run -p 8080:8080 -v $(pwd)/data:/app/data vereinsknete
+
+# Home Assistant Add-on
+# Built automatically via GitHub Actions when tags are pushed
 ```
 
 > **Note**: When running in Docker, database migrations are handled automatically. The application will create the database and run all migrations on container startup.

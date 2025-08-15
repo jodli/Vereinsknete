@@ -4,7 +4,7 @@ import { rest } from 'msw';
 import { server } from '../../test-utils/mocks/server';
 import SessionsPage from '../SessionsPage';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 // Mock react-router-dom before importing component
 const mockNavigate = jest.fn();

@@ -4,10 +4,11 @@ VereinsKnete supports development and production environments with automatic con
 
 ## Environments
 
-| Environment | Database | Frontend | Backend | Logging | Migrations |
-|-------------|----------|----------|---------|---------|------------|
-| **Development** | `vereinsknete.db` | Dev server (:3000) | API only (:8080) | Debug | Auto |
-| **Production** | `data/vereinsknete.db` | Static files | API + Static (:8080) | Info | Auto |
+| Environment | Database | Frontend | Backend | Logging | Migrations | Notes |
+|-------------|----------|----------|---------|---------|------------|-------|
+| **Development** | `vereinsknete.db` | Dev server (:3000) | API only (:8080) | Debug | Auto | Local development |
+| **Production** | `data/vereinsknete.db` | Static files | API + Static (:8080) | Info | Auto | Standalone deployment |
+| **Home Assistant** | `/data/vereinsknete.db` | Static files | API + Static (:8080) | Info | Auto | Ingress integration |
 
 ## Quick Commands
 
@@ -44,6 +45,7 @@ The backend automatically selects the appropriate environment file, and the fron
 - `DATABASE_URL` - SQLite database path (automatically created if not exists)
 - `RUST_LOG` - Logging level
 - `PORT` - Server port (default: 8080)
+- `HOST` - Server host (default: 0.0.0.0 for Home Assistant compatibility)
 
 ### Database Management
 - **Automatic Migrations**: Database schema is automatically created and updated on application startup
@@ -51,8 +53,32 @@ The backend automatically selects the appropriate environment file, and the fron
 - **Migration Embedding**: All migrations are embedded in the binary for reliable deployment
 
 ### Frontend  
-- `REACT_APP_API_URL` - Backend API endpoint
-- `GENERATE_SOURCEMAP` - Source map generation
+- `REACT_APP_API_URL` - Backend API endpoint (uses relative URLs in production for ingress compatibility)
+- `GENERATE_SOURCEMAP` - Source map generation (disabled in production for smaller bundle size)
+- `INLINE_RUNTIME_CHUNK` - Runtime chunk inlining (disabled for Home Assistant compatibility)
+
+## Home Assistant Integration
+
+### Ingress Configuration
+The application is optimized for Home Assistant's ingress proxy system:
+
+- **Relative URLs**: All API calls use relative paths in production (`/api/*`)
+- **No Authentication**: Relies on Home Assistant's authentication system
+- **Responsive Design**: Optimized for Home Assistant's interface constraints
+- **Bundle Optimization**: Minimized bundle size for faster loading in add-on environment
+
+### Build Configuration
+For Home Assistant add-on builds, use the optimized build command:
+
+```bash
+cd frontend
+npm run build:addon  # Optimized build for Home Assistant
+```
+
+This build configuration:
+- Disables source maps to reduce bundle size
+- Uses relative API URLs for ingress compatibility
+- Optimizes chunk splitting for add-on environment
 
 ## Local Overrides
 
