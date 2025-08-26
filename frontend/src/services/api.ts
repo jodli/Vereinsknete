@@ -14,7 +14,11 @@ import {
     DashboardQuery
 } from '../types';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+// Use relative URLs for Home Assistant ingress compatibility
+// In development, use localhost, in production use relative paths for ingress proxy
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Relative URL for ingress proxy
+  : (process.env.REACT_APP_API_URL || 'http://localhost:8080/api');
 
 // User Profile API calls
 export const getUserProfile = async (): Promise<UserProfile | null> => {

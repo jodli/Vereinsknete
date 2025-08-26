@@ -22,7 +22,7 @@ import {
 } from '../api';
 import { mockClients, mockSessions, mockInvoices, mockUserProfile, mockDashboardMetrics } from '../../test-utils/mocks/mockData';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 // Global MSW server is started in setupTests.ts (avoid duplicate setup here)
 // We still import rest to override handlers per test using server.use (server is global)

@@ -5,7 +5,7 @@ import { setupServer } from 'msw/node';
 import { mockSessions, mockClients } from '../../test-utils/mocks/mockData';
 import SessionFormPage from '../SessionFormPage';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 // Local router mocks (must precede component import)
 const mockNavigate = jest.fn();

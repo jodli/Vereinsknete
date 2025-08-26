@@ -14,12 +14,14 @@ use std::fs;
 /// # Arguments
 /// * `pool` - Database connection pool
 /// * `invoice_req` - Invoice generation request with client ID and date range
+/// * `invoice_dir` - Directory to save invoice PDFs
 ///
 /// # Returns
 /// * `Result<(Vec<u8>, i32, String)>` - PDF bytes, invoice ID, and invoice number or error
 pub fn generate_and_save_invoice(
     pool: &DbPool,
     invoice_req: InvoiceRequest,
+    invoice_dir: &std::path::Path,
 ) -> Result<(Vec<u8>, i32, String)> {
     // Business logic validation
     if invoice_req.client_id <= 0 {
@@ -182,13 +184,13 @@ pub fn generate_and_save_invoice(
 
     // Save PDF to file
     let pdf_filename = format!("invoice_{}.pdf", invoice_number_str);
-    let pdf_path_str = format!("invoices/{}", pdf_filename);
+    let pdf_path = invoice_dir.join(&pdf_filename);
 
     // Create directory if it doesn't exist
-    std::fs::create_dir_all("invoices").context("Failed to create invoices directory")?;
-    std::fs::write(&pdf_path_str, &pdf_bytes).context("Failed to save PDF file")?;
+    std::fs::create_dir_all(invoice_dir).context("Failed to create invoices directory")?;
+    std::fs::write(&pdf_path, &pdf_bytes).context("Failed to save PDF file")?;
 
-    log::debug!("Saved PDF to: {}", pdf_path_str);
+    log::debug!("Saved PDF to: {}", pdf_path.display());
 
     // Calculate due date (30 days from today)
     let due_date_str = (Utc::now() + chrono::Duration::days(30))
@@ -201,7 +203,7 @@ pub fn generate_and_save_invoice(
         client_id: invoice_req.client_id,
         date: Utc::now().format("%Y-%m-%d").to_string(),
         total_amount: total_amount_calc,
-        pdf_path: pdf_path_str.clone(),
+        pdf_path: pdf_path.to_string_lossy().to_string(),
         status: "created".to_string(),
         due_date: Some(due_date_str),
         year: current_year,
@@ -553,10 +555,15 @@ pub fn get_dashboard_metrics(pool: &DbPool, query: DashboardQuery) -> Result<Das
 /// # Arguments
 /// * `pool` - Database connection pool
 /// * `invoice_id` - ID of the invoice
+/// * `invoice_dir` - Directory where invoice PDFs are stored
 ///
 /// # Returns
 /// * `Result<(Vec<u8>, String)>` - PDF bytes and invoice number or error
-pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, String)> {
+pub fn get_invoice_pdf(
+    pool: &DbPool,
+    invoice_id: i32,
+    invoice_dir: &std::path::Path,
+) -> Result<(Vec<u8>, String)> {
     use crate::schema::invoices;
 
     // Validate input
@@ -577,32 +584,36 @@ pub fn get_invoice_pdf(pool: &DbPool, invoice_id: i32) -> Result<(Vec<u8>, Strin
         .context("Failed to query invoice")?
         .context("Invoice not found")?;
 
+    // Construct the expected PDF path based on invoice number and directory
+    let pdf_filename = format!("invoice_{}.pdf", invoice.invoice_number);
+    let pdf_path = invoice_dir.join(&pdf_filename);
+
     log::debug!(
-        "Found invoice {}, PDF path: {}",
+        "Looking for PDF for invoice {}: {}",
         invoice.invoice_number,
-        invoice.pdf_path
+        pdf_path.display()
     );
 
     // Check if PDF file exists
-    if !std::path::Path::new(&invoice.pdf_path).exists() {
+    if !pdf_path.exists() {
         log::error!(
             "PDF file not found for invoice {}: {}",
             invoice.invoice_number,
-            invoice.pdf_path
+            pdf_path.display()
         );
         anyhow::bail!("PDF file not found");
     }
 
     // Read the PDF file
-    let pdf_bytes = fs::read(&invoice.pdf_path)
-        .context(format!("Failed to read PDF file: {}", invoice.pdf_path))?;
+    let pdf_bytes =
+        fs::read(&pdf_path).context(format!("Failed to read PDF file: {}", pdf_path.display()))?;
 
     log::debug!("Successfully read PDF file: {} bytes", pdf_bytes.len());
 
     Ok((pdf_bytes, invoice.invoice_number))
 }
 
-pub fn delete_invoice(pool: &DbPool, invoice_id: i32) -> Result<()> {
+pub fn delete_invoice(pool: &DbPool, invoice_id: i32, invoice_dir: &std::path::Path) -> Result<()> {
     use crate::schema::invoices;
 
     let mut conn = pool.get().expect("Failed to get DB connection");
@@ -614,9 +625,11 @@ pub fn delete_invoice(pool: &DbPool, invoice_id: i32) -> Result<()> {
         .context("Failed to get invoice")?;
 
     // Delete the PDF file if it exists
-    let pdf_path = format!("invoices/invoice_{}.pdf", invoice.invoice_number);
-    if std::path::Path::new(&pdf_path).exists() {
-        fs::remove_file(&pdf_path).context(format!("Failed to delete PDF file: {}", pdf_path))?;
+    let pdf_filename = format!("invoice_{}.pdf", invoice.invoice_number);
+    let pdf_path = invoice_dir.join(&pdf_filename);
+    if pdf_path.exists() {
+        fs::remove_file(&pdf_path)
+            .context(format!("Failed to delete PDF file: {}", pdf_path.display()))?;
     }
 
     // Delete the invoice record from database
@@ -633,6 +646,7 @@ mod tests {
     use chrono::{NaiveDate, Utc};
     use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
     use std::sync::atomic::{AtomicU32, Ordering};
+    use tempfile;
 
     const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
     static DB_COUNTER: AtomicU32 = AtomicU32::new(0);
@@ -748,6 +762,7 @@ mod tests {
     #[test]
     fn generate_invoice_success_and_sequence() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 100.0);
         insert_session(&pool, client_id, "2025-01-10", "09:00", "11:00"); // 2h -> 200
@@ -757,7 +772,7 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
             language: None,
         };
-        let (_pdf, _id, number) = generate_and_save_invoice(&pool, req).unwrap();
+        let (_pdf, _id, number) = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap();
         assert!(number.ends_with("0001"));
         // Second invoice same year increments sequence
         insert_session(&pool, client_id, "2025-01-15", "10:00", "11:00");
@@ -767,7 +782,8 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 12, 31).unwrap(),
             language: None,
         };
-        let (_pdf2, _id2, number2) = generate_and_save_invoice(&pool, req2).unwrap();
+        let (_pdf2, _id2, number2) =
+            generate_and_save_invoice(&pool, req2, temp_dir.path()).unwrap();
         assert!(number2.ends_with("0002"));
         assert_eq!(list_invoices(&pool).len(), 2);
     }
@@ -775,6 +791,7 @@ mod tests {
     #[test]
     fn generate_invoice_no_sessions_fails() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 100.0);
         let req = InvoiceRequest {
@@ -783,13 +800,14 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 2, 28).unwrap(),
             language: None,
         };
-        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        let err = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap_err();
         assert!(err.to_string().contains("No sessions"));
     }
 
     #[test]
     fn generate_invoice_invalid_date_range_fails() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 100.0);
         let req = InvoiceRequest {
@@ -798,7 +816,7 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 3, 1).unwrap(),
             language: None,
         };
-        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        let err = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap_err();
         assert!(err
             .to_string()
             .contains("End date must be after start date"));
@@ -807,6 +825,7 @@ mod tests {
     #[test]
     fn generate_invoice_invalid_rate_fails() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 0.0); // invalid hourly rate (<=0)
         insert_session(&pool, client_id, "2025-01-10", "09:00", "10:00");
@@ -816,13 +835,14 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
             language: None,
         };
-        let err = generate_and_save_invoice(&pool, req).unwrap_err();
+        let err = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap_err();
         assert!(err.to_string().contains("invalid hourly rate"));
     }
 
     #[test]
     fn update_invoice_status_flow_and_validation() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 100.0);
         insert_session(&pool, client_id, "2025-01-10", "09:00", "11:00");
@@ -832,7 +852,7 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
             language: None,
         };
-        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req).unwrap();
+        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap();
         // Invalid status
         let bad = update_invoice_status(
             &pool,
@@ -880,6 +900,7 @@ mod tests {
     #[test]
     fn dashboard_metrics_basic() {
         let pool = setup_pool();
+        let temp_dir = tempfile::tempdir().unwrap();
         insert_profile(&pool);
         let client_id = insert_client(&pool, "Acme", 100.0);
         insert_session(&pool, client_id, "2025-01-10", "09:00", "10:00"); // 1h -> 100
@@ -889,7 +910,7 @@ mod tests {
             end_date: NaiveDate::from_ymd_opt(2025, 1, 31).unwrap(),
             language: None,
         };
-        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req).unwrap();
+        let (_pdf, id, _num) = generate_and_save_invoice(&pool, req, temp_dir.path()).unwrap();
         // Mark as paid so revenue counts
         update_invoice_status(
             &pool,

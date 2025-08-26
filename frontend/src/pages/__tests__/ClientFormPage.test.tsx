@@ -5,7 +5,7 @@ import { setupServer } from 'msw/node';
 import ClientFormPage from '../ClientFormPage';
 import { mockClients } from '../../test-utils/mocks/mockData';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+import { API_URL } from '../../test-utils/apiConfig';
 
 // Mock react-router-dom
 const mockNavigate = jest.fn();
