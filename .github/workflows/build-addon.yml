@@ -84,6 +84,28 @@ jobs:
             BUILD_FROM=${{ steps.platform.outputs.base_image }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # Optimize for network reliability
+          outputs: type=registry,push=true
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
+
+      # Retry on failure for ARM64 builds (common due to emulation issues)
+      - name: Retry build on failure (${{ matrix.arch }})
+        if: failure() && matrix.arch == 'aarch64'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: ${{ steps.platform.outputs.platform }}
+          tags: ${{ steps.meta.outputs.tags }}-${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BUILD_FROM=${{ steps.platform.outputs.base_image }}
+          cache-from: type=gha
+          no-cache: true  # Skip cache on retry to avoid cached failures
+          outputs: type=registry,push=true
+        env:
+          BUILDX_NO_DEFAULT_ATTESTATIONS: 1
 
   manifest:
     name: Create multi-arch manifests (branches only)

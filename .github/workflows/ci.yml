@@ -35,13 +35,7 @@ jobs:
       with:
         workspaces: backend
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libsqlite3-dev pkg-config
 
-    - name: Install Diesel CLI
-      run: cargo install diesel_cli --no-default-features --features sqlite
 
     - name: Check Rust formatting
       working-directory: ./backend

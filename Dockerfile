@@ -15,7 +15,6 @@ WORKDIR /backend
 # Install build dependencies for Rust compilation
 RUN apk add --no-cache \
     musl-dev \
-    sqlite-dev \
     pkgconfig \
     openssl-dev \
     && rm -rf /var/cache/apk/*
@@ -34,24 +33,24 @@ COPY backend/src ./src
 COPY backend/migrations ./migrations
 COPY backend/diesel.toml ./
 
-# Note: Migrations are embedded in the binary at compile time
-# and will run automatically when the application starts
-
 # Build the release binary with optimizations
-# Migrations are now embedded in the binary, no need for separate diesel CLI
 RUN cargo build --release && \
     strip target/release/backend
 
-# Node.js build stage - optimized for production
+# Node.js build stage - optimized for production with better network handling
 FROM node:${NODE_VERSION}-alpine AS frontend-builder
 WORKDIR /frontend
 
-# Install build dependencies
+# Install build dependencies and networking tools
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    && rm -rf /var/cache/apk/*
+    ca-certificates \
+    curl \
+    && rm -rf /var/cache/apk/* \
+    && update-ca-certificates \
+    && npm install -g npm@latest
 
 # Copy package files and install dependencies
 COPY frontend/package*.json ./
@@ -81,28 +80,29 @@ FROM $BUILD_FROM
 
 # Install runtime dependencies with security updates
 RUN apk add --no-cache \
-    sqlite \
-    sqlite-libs \
     libgcc \
     libstdc++ \
     ca-certificates \
     tzdata \
     bash \
     wget \
-    && apk upgrade --no-cache \
     && rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
+
+# Create application user for security (non-root execution)
+RUN addgroup -g 1000 vereinsknete && \
+    adduser -D -s /bin/bash -u 1000 -G vereinsknete vereinsknete
 
 # Create necessary directories with proper permissions
 RUN mkdir -p /app/static /data /share && \
+    chown -R vereinsknete:vereinsknete /app /data /share && \
     chmod 755 /app /data /share
 
 # Copy binaries from build stages
-# Migrations are now embedded in the binary, no need to copy them separately
-COPY --from=rust-builder \
+COPY --from=rust-builder --chown=vereinsknete:vereinsknete \
     /backend/target/release/backend /usr/local/bin/vereinsknete
 
 # Copy frontend build
-COPY --from=frontend-builder \
+COPY --from=frontend-builder --chown=vereinsknete:vereinsknete \
     /frontend/build /app/static
 
 # Create s6-overlay service directory structure
