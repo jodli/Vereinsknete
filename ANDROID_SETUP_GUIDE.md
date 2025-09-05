@@ -137,9 +137,9 @@ cp -r ../Vereinsknete/prototype .
 Once Android Studio project is set up:
 
 ### Day 1-2: Foundation
-- [ ] Create Room database entities (UserProfile, Studio, YogaClass)
-- [ ] Set up Hilt dependency injection
-- [ ] Create base theme with yoga colors
+- [x] Create Room database entities (UserProfile, Studio, YogaClass)
+- [x] Set up Hilt dependency injection
+- [x] Create base theme with yoga colors
 
 ### Day 3-4: Onboarding
 - [ ] Create onboarding screens with Compose
