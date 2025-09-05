@@ -118,10 +118,10 @@ app/
 **Goal**: Easier class entry and management
 
 #### Sprint 2.1: Templates & Quick Entry (2 days)
-- [ ] Create recurring class templates
-- [ ] Quick add from template
-- [ ] Auto-fill last used values
-- [ ] Default 1.25 hour duration
+- [x] Create recurring class templates
+- [x] Quick add from template
+- [x] Auto-fill last used values
+- [x] Default 1.25 hour duration
 
 #### Sprint 2.2: Better Cancellation Handling (2 days)
 - [ ] Cancel/reschedule classes
@@ -187,8 +187,11 @@ app/
 
 #### 3.4 Fix Bugs
 - [ ] User profile is missing tax ID, bank details, etc.
+- [ ] Add a way to change the user profile
 - [ ] When creating manual classes, you can't change the date
 - [ ] Change away from destructive migrations for the database
+- [ ] The date selection does not work in the EditClassDialog
+- [ ] The BulkCancelDialog can't be triggered
 
 ---
 

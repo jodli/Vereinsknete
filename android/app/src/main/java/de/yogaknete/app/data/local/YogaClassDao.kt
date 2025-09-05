@@ -32,6 +32,9 @@ interface YogaClassDao {
     
     @Query("UPDATE yoga_classes SET status = :status WHERE id = :id")
     suspend fun updateClassStatus(id: Long, status: ClassStatus)
+
+    @Query("UPDATE yoga_classes SET status = :status WHERE id IN (:ids)")
+    suspend fun updateClassesStatus(ids: List<Long>, status: ClassStatus)
     
     @Query("SELECT * FROM yoga_classes WHERE id = :id")
     suspend fun getClassById(id: Long): YogaClass?

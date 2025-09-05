@@ -1,5 +1,6 @@
 package de.yogaknete.app.presentation.screens.week
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +8,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,14 +27,17 @@ import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
+import de.yogaknete.app.presentation.screens.templates.QuickAddDialog
 import kotlinx.datetime.*
 
 @Composable
 fun WeekViewScreen(
     onNavigateToInvoice: () -> Unit = {},
+    onNavigateToTemplates: () -> Unit = {},
     viewModel: WeekViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val isPastWeek = remember(state.currentWeekEnd) { DateUtils.isPast(state.currentWeekEnd) }
     
     Scaffold(
         topBar = {
@@ -39,7 +46,10 @@ fun WeekViewScreen(
                 weekEnd = state.currentWeekEnd,
                 onPreviousWeek = { viewModel.navigateToPreviousWeek() },
                 onNextWeek = { viewModel.navigateToNextWeek() },
-                onToday = { viewModel.navigateToToday() }
+                onToday = { viewModel.navigateToToday() },
+                onNavigateToTemplates = onNavigateToTemplates,
+                isPastWeek = isPastWeek,
+                onBulkCancel = { viewModel.showBulkCancelDialog() }
             )
         },
         floatingActionButton = {
@@ -79,13 +89,16 @@ fun WeekViewScreen(
                     item {
                         DayHeader(
                             date = date,
-                            isToday = DateUtils.isToday(date)
+                            isToday = DateUtils.isToday(date),
+                            onQuickAdd = { viewModel.showQuickAddDialogForDate(date) }
                         )
                     }
                     
                     if (dayClasses.isEmpty()) {
                         item {
-                            EmptyDayCard()
+                            EmptyDayCard(
+                                onClick = { viewModel.showQuickAddDialogForDate(date) }
+                            )
                         }
                     } else {
                         items(dayClasses) { yogaClass ->
@@ -106,10 +119,29 @@ fun WeekViewScreen(
         AddClassDialog(
             studios = state.studios,
             weekDays = state.weekDays,
+            templates = state.templates,
             onDismiss = { viewModel.hideAddClassDialog() },
             onConfirm = { studioId, title, date, startHour, startMinute, endHour, endMinute ->
                 viewModel.addClass(studioId, title, date, startHour, startMinute, endHour, endMinute)
             }
+        )
+    }
+    
+    // Quick add dialog (templates)
+    val quickAddDate = state.quickAddDate
+    if (state.showQuickAddDialog && quickAddDate != null) {
+        QuickAddDialog(
+            date = quickAddDate,
+            templates = state.templates,
+            onTemplateSelected = { template, startOverride, durationOverride ->
+                viewModel.createClassFromTemplate(
+                    template = template,
+                    date = quickAddDate,
+                    startTimeOverride = startOverride,
+                    durationOverride = durationOverride
+                )
+            },
+            onDismiss = { viewModel.hideQuickAddDialog() }
         )
     }
     
@@ -121,7 +153,39 @@ fun WeekViewScreen(
             onDismiss = { viewModel.clearSelectedClass() },
             onMarkCompleted = { viewModel.markClassAsCompleted(selectedClass) },
             onMarkCancelled = { viewModel.markClassAsCancelled(selectedClass) },
+            onEdit = { viewModel.showEditClassDialog(selectedClass) },
             onDelete = { viewModel.deleteClass(selectedClass) }
+        )
+    }
+
+    // Bulk cancel dialog
+    if (state.showBulkCancelDialog) {
+        val weekClasses = remember(state.classes) { state.classes.values.flatten() }
+        BulkCancelDialog(
+            classes = weekClasses,
+            studios = state.studios,
+            onDismiss = { viewModel.hideBulkCancelDialog() },
+            onConfirm = { ids -> viewModel.bulkCancelClasses(ids) }
+        )
+    }
+
+    // Edit/reschedule dialog
+    if (state.showEditClassDialog && state.selectedClass != null) {
+        val cls = state.selectedClass!!
+        EditClassDialog(
+            yogaClass = cls,
+            studios = state.studios,
+            onDismiss = { viewModel.hideEditClassDialog() },
+            onConfirm = { date, startHour, startMinute, endHour, endMinute ->
+                viewModel.updateClassSchedule(
+                    yogaClassId = cls.id,
+                    newDate = date,
+                    startHour = startHour,
+                    startMinute = startMinute,
+                    endHour = endHour,
+                    endMinute = endMinute
+                )
+            }
         )
     }
 }
@@ -133,8 +197,12 @@ private fun WeekViewTopBar(
     weekEnd: LocalDate,
     onPreviousWeek: () -> Unit,
     onNextWeek: () -> Unit,
-    onToday: () -> Unit
+    onToday: () -> Unit,
+    onNavigateToTemplates: () -> Unit,
+    isPastWeek: Boolean,
+    onBulkCancel: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     TopAppBar(
         title = {
             Column(
@@ -155,7 +223,7 @@ private fun WeekViewTopBar(
         navigationIcon = {
             IconButton(onClick = onPreviousWeek) {
                 Icon(
-                    imageVector = Icons.Default.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Vorherige Woche"
                 )
             }
@@ -163,7 +231,7 @@ private fun WeekViewTopBar(
         actions = {
             IconButton(onClick = onNextWeek) {
                 Icon(
-                    imageVector = Icons.Default.ArrowForward,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "Nächste Woche"
                 )
             }
@@ -172,6 +240,47 @@ private fun WeekViewTopBar(
                     imageVector = Icons.Default.Home,
                     contentDescription = "Heute"
                 )
+            }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Mehr Optionen"
+                    )
+                }
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Vorlagen verwalten") },
+                        onClick = {
+                            showMenu = false
+                            onNavigateToTemplates()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.List,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    if (isPastWeek) {
+                        DropdownMenuItem(
+                            text = { Text("Massenstorno (Woche)") },
+                            onClick = {
+                                showMenu = false
+                                onBulkCancel()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Clear,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -221,7 +330,7 @@ private fun WeekSummaryCard(
                 )
             ) {
                 Icon(
-                    imageVector = Icons.Default.List,
+                    imageVector = Icons.AutoMirrored.Filled.List,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )
@@ -235,7 +344,8 @@ private fun WeekSummaryCard(
 @Composable
 private fun DayHeader(
     date: LocalDate,
-    isToday: Boolean
+    isToday: Boolean,
+    onQuickAdd: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -262,15 +372,25 @@ private fun DayHeader(
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = onQuickAdd) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Schnell hinzufügen"
+            )
+        }
     }
 }
 
 @Composable
-private fun EmptyDayCard() {
+private fun EmptyDayCard(
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp),
+            .height(60.dp)
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
         )
@@ -295,17 +415,23 @@ private fun YogaClassCard(
     onClick: () -> Unit
 ) {
     val statusIcon = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> Icons.Default.CheckCircle
+        ClassStatus.SCHEDULED -> null
         ClassStatus.COMPLETED -> Icons.Default.CheckCircle
         ClassStatus.CANCELLED -> Icons.Default.Clear
     }
     
     val statusColor = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.primary
+        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
         ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
     }
-    
+
+    val borderColor = when (yogaClass.status) {
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
+        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,7 +439,8 @@ private fun YogaClassCard(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        )
+        ),
+        border = BorderStroke(1.dp, borderColor)
     ) {
         Row(
             modifier = Modifier
@@ -321,31 +448,45 @@ private fun YogaClassCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = statusIcon,
-                contentDescription = null,
-                tint = statusColor,
-                modifier = Modifier.size(24.dp)
-            )
-            
-            Spacer(modifier = Modifier.width(16.dp))
+            if (statusIcon != null) {
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            } else {
+                // For scheduled classes, show a simple circle/dot
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .background(
+                            color = statusColor,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime),
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
                 )
                 
                 Text(
                     text = studio?.name ?: "Unbekanntes Studio",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
                 )
                 
                 Text(
                     text = yogaClass.title,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 
                 if (yogaClass.status != ClassStatus.SCHEDULED) {
@@ -363,7 +504,7 @@ private fun YogaClassCard(
             
             if (yogaClass.status == ClassStatus.SCHEDULED) {
                 Text(
-                    text = "Antippen zum Abhaken",
+                    text = "Antippen für Aktionen",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )

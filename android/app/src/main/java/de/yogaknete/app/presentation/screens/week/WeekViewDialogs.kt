@@ -1,5 +1,6 @@
 package de.yogaknete.app.presentation.screens.week
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,13 +14,20 @@ import de.yogaknete.app.core.utils.DateUtils
 import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
+import de.yogaknete.app.data.local.entities.ClassTemplate
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddClassDialog(
     studios: List<Studio>,
     weekDays: List<LocalDate>,
+    templates: List<ClassTemplate>,
     onDismiss: () -> Unit,
     onConfirm: (studioId: Long, title: String, date: LocalDate, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int) -> Unit
 ) {
@@ -31,6 +39,8 @@ fun AddClassDialog(
     var endHour by remember { mutableStateOf(18) }
     var endMinute by remember { mutableStateOf(45) }
     var expanded by remember { mutableStateOf(false) }
+    var templateExpanded by remember { mutableStateOf(false) }
+    var selectedTemplate: ClassTemplate? by remember { mutableStateOf(null) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -77,6 +87,23 @@ fun AddClassDialog(
                         }
                     }
                 }
+                
+                // Optional: Template selection
+                TemplateSelector(
+                    selectedDate = selectedDate,
+                    templates = templates,
+                    selectedTemplate = selectedTemplate,
+                    onTemplateSelected = { tmpl ->
+                        selectedTemplate = tmpl
+                        // apply template values
+                        selectedStudioId = tmpl.studioId
+                        title = tmpl.className
+                        startHour = tmpl.startTime.hour
+                        startMinute = tmpl.startTime.minute
+                        endHour = tmpl.endTime.hour
+                        endMinute = tmpl.endTime.minute
+                    }
+                )
                 
                 // Title input
                 OutlinedTextField(
@@ -147,6 +174,7 @@ fun ClassActionDialog(
     onDismiss: () -> Unit,
     onMarkCompleted: () -> Unit,
     onMarkCancelled: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     AlertDialog(
@@ -243,6 +271,33 @@ fun ClassActionDialog(
                                 )
                             }
                         }
+                        
+                        // Edit/Reschedule button
+                        Card(
+                            onClick = onEdit,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Text(
+                                    text = "📝 Bearbeiten/Verschieben",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                        }
                     }
                 } else {
                     // Show current status
@@ -294,4 +349,461 @@ fun ClassActionDialog(
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TemplateSelector(
+    selectedDate: LocalDate,
+    templates: List<ClassTemplate>,
+    selectedTemplate: ClassTemplate?,
+    onTemplateSelected: (ClassTemplate) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val dayTemplates = remember(selectedDate, templates) {
+        templates.filter { it.isActive && it.dayOfWeek == selectedDate.dayOfWeek }
+    }
+    val otherTemplates = remember(selectedDate, templates) {
+        templates.filter { it.isActive && it.dayOfWeek != selectedDate.dayOfWeek }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Vorlage (optional)",
+            style = MaterialTheme.typography.labelLarge
+        )
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            OutlinedTextField(
+                value = selectedTemplate?.name ?: "Keine Vorlage",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Vorlage auswählen") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor()
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                if (dayTemplates.isNotEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Empfohlen für ${getDayName(selectedDate.dayOfWeek)}", fontWeight = FontWeight.Bold) },
+                        onClick = { },
+                        enabled = false
+                    )
+                    dayTemplates.forEach { tmpl ->
+                        DropdownMenuItem(
+                            text = { Text("${tmpl.name} (${formatTime(tmpl.startTime)})") },
+                            onClick = {
+                                onTemplateSelected(tmpl)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+                if (otherTemplates.isNotEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Andere Vorlagen", fontWeight = FontWeight.Bold) },
+                        onClick = { },
+                        enabled = false
+                    )
+                    otherTemplates.forEach { tmpl ->
+                        DropdownMenuItem(
+                            text = { Text("${tmpl.name} (${getDayName(tmpl.dayOfWeek)})") },
+                            onClick = {
+                                onTemplateSelected(tmpl)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+                if (dayTemplates.isEmpty() && otherTemplates.isEmpty()) {
+                    DropdownMenuItem(
+                        text = { Text("Keine Vorlagen verfügbar") },
+                        onClick = { expanded = false },
+                        enabled = false
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun getDayName(dayOfWeek: DayOfWeek): String {
+    return when (dayOfWeek) {
+        DayOfWeek.MONDAY -> "Montag"
+        DayOfWeek.TUESDAY -> "Dienstag"
+        DayOfWeek.WEDNESDAY -> "Mittwoch"
+        DayOfWeek.THURSDAY -> "Donnerstag"
+        DayOfWeek.FRIDAY -> "Freitag"
+        DayOfWeek.SATURDAY -> "Samstag"
+        DayOfWeek.SUNDAY -> "Sonntag"
+    }
+}
+
+private fun formatTime(time: LocalTime): String {
+    return "${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BulkCancelDialog(
+    classes: List<YogaClass>,
+    studios: List<Studio>,
+    onDismiss: () -> Unit,
+    onConfirm: (List<Long>) -> Unit
+) {
+    var selectedIds by remember { mutableStateOf(setOf<Long>()) }
+    val scheduledClasses = remember(classes) {
+        classes.filter { it.status == ClassStatus.SCHEDULED }
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Massenstorno",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = "Wähle die Kurse aus, die storniert werden sollen:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                if (scheduledClasses.isEmpty()) {
+                    Text(
+                        text = "Keine geplanten Kurse in dieser Woche.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                } else {
+                    // Select/Deselect all
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "${selectedIds.size} von ${scheduledClasses.size} ausgewählt",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        TextButton(
+                            onClick = {
+                                selectedIds = if (selectedIds.size == scheduledClasses.size) {
+                                    emptySet()
+                                } else {
+                                    scheduledClasses.map { it.id }.toSet()
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = if (selectedIds.size == scheduledClasses.size) "Keine auswählen" else "Alle auswählen"
+                            )
+                        }
+                    }
+                    
+                    Divider()
+                    
+                    // List of classes
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, false),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        scheduledClasses.forEach { yogaClass ->
+                            val studio = studios.find { it.id == yogaClass.studioId }
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedIds = if (selectedIds.contains(yogaClass.id)) {
+                                            selectedIds - yogaClass.id
+                                        } else {
+                                            selectedIds + yogaClass.id
+                                        }
+                                    },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (selectedIds.contains(yogaClass.id))
+                                        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                                    else MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedIds.contains(yogaClass.id),
+                                        onCheckedChange = { checked ->
+                                            selectedIds = if (checked) {
+                                                selectedIds + yogaClass.id
+                                            } else {
+                                                selectedIds - yogaClass.id
+                                            }
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = DateUtils.formatDayDate(yogaClass.startTime.date),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "${DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime)} • ${studio?.name ?: "Unbekannt"}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        Text(
+                                            text = yogaClass.title,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (selectedIds.isNotEmpty()) {
+                        onConfirm(selectedIds.toList())
+                    }
+                },
+                enabled = selectedIds.isNotEmpty()
+            ) {
+                Text("Stornieren (${selectedIds.size})")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Abbrechen")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditClassDialog(
+    yogaClass: YogaClass,
+    studios: List<Studio>,
+    onDismiss: () -> Unit,
+    onConfirm: (date: LocalDate, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int) -> Unit
+) {
+    var selectedDate by remember { mutableStateOf(yogaClass.startTime.date) }
+    var startHour by remember { mutableStateOf(yogaClass.startTime.hour) }
+    var startMinute by remember { mutableStateOf(yogaClass.startTime.minute) }
+    var endHour by remember { mutableStateOf(yogaClass.endTime.hour) }
+    var endMinute by remember { mutableStateOf(yogaClass.endTime.minute) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    
+    val studio = studios.find { it.id == yogaClass.studioId }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Kurs bearbeiten",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Show current class info
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = studio?.name ?: "Unbekanntes Studio",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = yogaClass.title,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+                
+                // Date selection
+                OutlinedTextField(
+                    value = DateUtils.formatDayDate(selectedDate),
+                    onValueChange = { },
+                    label = { Text("Datum") },
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Datum auswählen"
+                        )
+                    }
+                )
+                
+                // Time inputs
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Startzeit",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = startHour.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { h ->
+                                        if (h in 0..23) startHour = h
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Std") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = startMinute.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { m ->
+                                        if (m in 0..59) startMinute = m
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Min") },
+                                singleLine = true
+                            )
+                        }
+                    }
+                    
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Endzeit",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = endHour.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { h ->
+                                        if (h in 0..23) endHour = h
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Std") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = endMinute.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { m ->
+                                        if (m in 0..59) endMinute = m
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Min") },
+                                singleLine = true
+                            )
+                        }
+                    }
+                }
+                
+                // Duration display
+                val duration = calculateDuration(startHour, startMinute, endHour, endMinute)
+                if (duration > 0) {
+                    Text(
+                        text = "Dauer: ${String.format("%.2f", duration).replace(".", ",")} Stunden",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(selectedDate, startHour, startMinute, endHour, endMinute)
+                }
+            ) {
+                Text("Speichern")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Abbrechen")
+            }
+        }
+    )
+    
+    // Date picker dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate.toEpochDays() * 24 * 60 * 60 * 1000L
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val instant = Instant.fromEpochMilliseconds(millis)
+                            val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
+                            selectedDate = localDateTime.date
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Abbrechen")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+private fun calculateDuration(startHour: Int, startMinute: Int, endHour: Int, endMinute: Int): Double {
+    val startMinutes = startHour * 60 + startMinute
+    val endMinutes = endHour * 60 + endMinute
+    val durationMinutes = if (endMinutes > startMinutes) {
+        endMinutes - startMinutes
+    } else {
+        0
+    }
+    return durationMinutes / 60.0
 }
