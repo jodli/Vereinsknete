@@ -142,10 +142,10 @@ Once Android Studio project is set up:
 - [x] Create base theme with yoga colors
 
 ### Day 3-4: Onboarding
-- [ ] Create onboarding screens with Compose
-- [ ] User profile setup form
-- [ ] Studio addition screen
-- [ ] Save to database
+- [x] Create onboarding screens with Compose
+- [x] User profile setup form
+- [x] Studio addition screen
+- [x] Save to database
 
 ### Day 5: Week View
 - [ ] Basic week view layout

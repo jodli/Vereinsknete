@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
-import de.yogaknete.app.presentation.screens.onboarding.WelcomeScreen
+import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -15,9 +15,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             YogaKneteTheme {
-                WelcomeScreen(
-                    onContinue = {
-                        // TODO: Navigate to next onboarding screen
+                OnboardingFlow(
+                    onOnboardingComplete = {
+                        // TODO: Navigate to main app (Week View)
                     }
                 )
             }
