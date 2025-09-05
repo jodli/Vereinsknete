@@ -5,12 +5,21 @@ Basic test suite for a private yoga class management app. Tests are kept minimal
 
 ## Test Files
 
-### 1. **FunctionalitySummaryTest.kt**
+### Core Functionality Tests
+
+#### 1. **FunctionalitySummaryTest.kt**
 - Documents all implemented functionality
 - Acts as a living specification
 - Confirms feature presence
 
-### 2. **EntityTests.kt** 
+#### 2. **WeekViewFunctionalityTest.kt** *(NEW)*
+- Documents Week View features
+- Verifies calendar functionality
+- Confirms class management works
+
+### Unit Tests
+
+#### 3. **EntityTests.kt** 
 - Tests data model creation
 - Verifies default values
 - Documents entity structure:
@@ -18,15 +27,25 @@ Basic test suite for a private yoga class management app. Tests are kept minimal
   - `Studio` - Yoga studios/clubs
   - `YogaClass` - Individual yoga sessions
 
-### 3. **RepositoryTests.kt**
+#### 4. **RepositoryTests.kt**
 - Tests repository implementations
 - Uses mockk for DAO mocking
 - Verifies data flow
 
-### 4. **OnboardingViewModelTest.kt**
+#### 5. **OnboardingViewModelTest.kt**
 - Tests onboarding business logic
 - Verifies profile and studio saving
 - Uses coroutines test utilities
+
+#### 6. **WeekViewModelTest.kt** *(NEW)*
+- Tests week navigation logic
+- Verifies class addition and status updates
+- Tests total calculations
+
+#### 7. **DateUtilsTest.kt** *(NEW)*
+- Tests date/time utilities
+- Verifies German formatting
+- Tests week calculations
 
 ## Running Tests
 
