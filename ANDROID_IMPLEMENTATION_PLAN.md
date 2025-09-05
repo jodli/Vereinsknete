@@ -147,7 +147,7 @@ data class ClassTemplate(
 
 data class Invoice(
     val id: Long = 0,
-    val invoiceNumber: String,  // "2024-11-001" auto-generated
+    val invoiceNumber: String,  // "2025-0003" auto-generated
     val studioId: Long,
     val month: YearMonth,
     val classes: List<YogaClass>,
