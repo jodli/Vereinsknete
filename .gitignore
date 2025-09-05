@@ -52,6 +52,7 @@ Thumbs.db
 
 # Android Studio captures folder
 captures/
+screenshot.png
 
 # External native build folder generated in Android Studio
 .externalNativeBuild/
