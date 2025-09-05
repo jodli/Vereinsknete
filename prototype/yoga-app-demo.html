@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>YogaKnete - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .phone-container {
+            width: 100%;
+            max-width: 390px;
+            background: #f0f0f0;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .phone-screen {
+            background: white;
+            border-radius: 30px;
+            min-height: 700px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            min-height: 700px;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .week-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .week-nav button {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .class-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #ddd;
+        }
+
+        .class-card:active {
+            transform: scale(0.98);
+        }
+
+        .class-card.completed {
+            border-left-color: #4caf50;
+            background: #f1f8e9;
+        }
+
+        .class-card.cancelled {
+            border-left-color: #f44336;
+            background: #ffebee;
+            opacity: 0.7;
+        }
+
+        .day-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .class-time {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .class-client {
+            font-size: 16px;
+            color: #555;
+            margin-top: 5px;
+        }
+
+        .class-name {
+            font-size: 14px;
+            color: #888;
+            margin-top: 3px;
+        }
+
+        .status-icon {
+            font-size: 24px;
+        }
+
+        .bottom-bar {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .stats {
+            text-align: center;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 350px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .modal-btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .modal-btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .class-details {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .class-details div {
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .class-details .label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Invoice Screen */
+        .invoice-option {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .invoice-option:active {
+            transform: scale(0.98);
+            border-color: #667eea;
+        }
+
+        .invoice-client {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .invoice-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        /* Success Screen */
+        .success-icon {
+            font-size: 80px;
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .success-message {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .success-details {
+            background: #f8f8f8;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        /* Responsive */
+        @media (max-width: 430px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+            .phone-container {
+                border-radius: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            .phone-screen {
+                border-radius: 0;
+                min-height: 100vh;
+            }
+            .screen {
+                min-height: 100vh;
+            }
+        }
+
+        /* Welcome Screen */
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .welcome-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .demo-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone-container">
+        <div class="phone-screen">
+            <!-- Welcome Screen -->
+            <div id="welcome" class="screen active">
+                <div class="header">
+                    <h1>YogaKnete Demo</h1>
+                </div>
+                <div class="content welcome-content">
+                    <div class="welcome-icon">🧘‍♀️</div>
+                    <div class="welcome-title">Hallo Maria!</div>
+                    <div class="welcome-subtitle">
+                        Das ist eine Demo deiner neuen Yoga-App.<br>
+                        Viel einfacher als die alte Web-Version!
+                    </div>
+                    <div class="demo-note">
+                        <strong>Demo-Hinweis:</strong><br>
+                        Klicke dich durch die App um zu sehen, wie einfach das Tracking deiner Kurse wird!
+                    </div>
+                    <button class="btn" onclick="showScreen('week')">Demo starten →</button>
+                </div>
+            </div>
+
+            <!-- Week View Screen -->
+            <div id="week" class="screen">
+                <div class="header">
+                    <h1>Diese Woche</h1>
+                    <div class="week-nav">
+                        <button>←</button>
+                        <span>4. - 10. November</span>
+                        <button>→</button>
+                    </div>
+                </div>
+                
+                <div class="content">
+                    <div class="stats">
+                        <div class="stats-row">
+                            <div class="stat">
+                                <div class="stat-value">4</div>
+                                <div class="stat-label">Kurse diese Woche</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">5h</div>
+                                <div class="stat-label">Gesamt</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-value">157,50€</div>
+                                <div class="stat-label">Verdienst</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="monday-class" class="class-card" onclick="showClassModal('monday')">
+                        <div class="day-label">MONTAG, 4. NOV</div>
+                        <div class="class-time">
+                            <span class="status-icon">⭕</span>
+                            <span>17:30 - 18:45</span>
+                        </div>
+                        <div class="class-client">TSV München</div>
+                        <div class="class-name">Hatha Yoga</div>
+                    </div>
+
+                    <div class="class-card" onclick="showClassModal('tuesday')">
+                        <div class="day-label">DIENSTAG, 5. NOV</div>
+                        <div class="class-time">
+                            <span class="status-icon">⭕</span>
+                            <span>19:00 - 20:15</span>
+                        </div>
+                        <div class="class-client">SV Neuhausen</div>
+                        <div class="class-name">Yoga für Anfänger</div>
+                    </div>
+
+                    <div class="class-card" onclick="showClassModal('wednesday')">
+                        <div class="day-label">MITTWOCH, 6. NOV</div>
+                        <div class="class-time">
+                            <span class="status-icon">⭕</span>
+                            <span>18:00 - 19:15</span>
+                        </div>
+                        <div class="class-client">FC Sportfreunde</div>
+                        <div class="class-name">Rücken-Yoga</div>
+                    </div>
+
+                    <div class="class-card" onclick="showClassModal('thursday')">
+                        <div class="day-label">DONNERSTAG, 7. NOV</div>
+                        <div class="class-time">
+                            <span class="status-icon">⭕</span>
+                            <span>17:30 - 18:45</span>
+                        </div>
+                        <div class="class-client">TSV München</div>
+                        <div class="class-name">Hatha Yoga</div>
+                    </div>
+                </div>
+
+                <div class="bottom-bar">
+                    <button class="btn" onclick="showScreen('invoice')">💰 Rechnung erstellen</button>
+                    <button class="btn btn-secondary">+ Zusätzlicher Kurs</button>
+                </div>
+            </div>
+
+            <!-- Invoice Selection Screen -->
+            <div id="invoice" class="screen">
+                <div class="header">
+                    <h1>Rechnung erstellen</h1>
+                </div>
+                
+                <div class="content">
+                    <div style="margin-bottom: 20px; text-align: center; color: #666;">
+                        Wähle einen Verein für die Oktober-Rechnung:
+                    </div>
+
+                    <div class="invoice-option" onclick="showInvoicePreview('TSV München')">
+                        <div class="invoice-client">TSV München</div>
+                        <div class="invoice-details">
+                            <span>8 Kurse im Oktober</span>
+                            <span>10 Stunden</span>
+                        </div>
+                        <div class="invoice-amount">315,00 €</div>
+                    </div>
+
+                    <div class="invoice-option" onclick="showInvoicePreview('SV Neuhausen')">
+                        <div class="invoice-client">SV Neuhausen</div>
+                        <div class="invoice-details">
+                            <span>4 Kurse im Oktober</span>
+                            <span>5 Stunden</span>
+                        </div>
+                        <div class="invoice-amount">157,50 €</div>
+                    </div>
+
+                    <div class="invoice-option" onclick="showInvoicePreview('FC Sportfreunde')">
+                        <div class="invoice-client">FC Sportfreunde</div>
+                        <div class="invoice-details">
+                            <span>4 Kurse im Oktober</span>
+                            <span>5 Stunden</span>
+                        </div>
+                        <div class="invoice-amount">157,50 €</div>
+                    </div>
+                </div>
+
+                <div class="bottom-bar">
+                    <button class="btn btn-secondary" onclick="showScreen('week')">← Zurück</button>
+                </div>
+            </div>
+
+            <!-- Success Screen -->
+            <div id="success" class="screen">
+                <div class="header">
+                    <h1>Erfolg!</h1>
+                </div>
+                
+                <div class="content">
+                    <div class="success-icon">✅</div>
+                    <div class="success-message">Kurs wurde als durchgeführt markiert!</div>
+                    
+                    <div class="success-details">
+                        <div style="margin-bottom: 10px;"><strong>TSV München</strong></div>
+                        <div style="margin-bottom: 5px;">Montag, 4. November 2024</div>
+                        <div style="margin-bottom: 5px;">17:30 - 18:45 Uhr</div>
+                        <div style="margin-bottom: 10px;">1,25 Stunden hinzugefügt</div>
+                        <div style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 10px;">
+                            <strong>November-Fortschritt:</strong><br>
+                            2 von 8 Kursen (2,5 Std. = 78,75€)
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bottom-bar">
+                    <button class="btn" onclick="showCompletedWeek()">Zur Wochenansicht</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Class Modal -->
+    <div id="classModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Kurs abschließen?</div>
+            <div class="modal-body">
+                <div class="class-details">
+                    <div><span class="label">Verein:</span> <span id="modalClient">TSV München</span></div>
+                    <div><span class="label">Datum:</span> <span id="modalDate">Montag, 4. Nov</span></div>
+                    <div><span class="label">Zeit:</span> <span id="modalTime">17:30 - 18:45</span></div>
+                    <div><span class="label">Dauer:</span> 1,25 Stunden</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-success" onclick="markCompleted()">✅ Durchgeführt</button>
+                <button class="modal-btn modal-btn-danger" onclick="markCancelled()">🚫 Ausgefallen</button>
+            </div>
+            <div class="modal-buttons" style="margin-top: 10px;">
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Preview Modal -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Rechnung Vorschau</div>
+            <div class="modal-body">
+                <div class="class-details">
+                    <div><span class="label">An:</span> <span id="invoiceClient">TSV München</span></div>
+                    <div><span class="label">Zeitraum:</span> Oktober 2024</div>
+                    <div><span class="label">Kurse:</span> 8</div>
+                    <div><span class="label">Stunden:</span> 10</div>
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+                        <span class="label">Betrag:</span> <strong style="color: #667eea; font-size: 20px;">315,00 €</strong>
+                    </div>
+                </div>
+                <div style="background: #e8f5e9; padding: 10px; border-radius: 8px; margin-top: 15px; text-align: center; color: #2e7d32;">
+                    📱 Die echte App würde jetzt ein PDF erstellen und WhatsApp öffnen!
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-success" onclick="closeInvoiceModal()">📄 PDF erstellen</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeInvoiceModal()">Zurück</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentClass = null;
+
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            // Show selected screen
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showClassModal(day) {
+            currentClass = day;
+            const modal = document.getElementById('classModal');
+            
+            // Update modal content based on day
+            const classData = {
+                'monday': { client: 'TSV München', date: 'Montag, 4. Nov', time: '17:30 - 18:45' },
+                'tuesday': { client: 'SV Neuhausen', date: 'Dienstag, 5. Nov', time: '19:00 - 20:15' },
+                'wednesday': { client: 'FC Sportfreunde', date: 'Mittwoch, 6. Nov', time: '18:00 - 19:15' },
+                'thursday': { client: 'TSV München', date: 'Donnerstag, 7. Nov', time: '17:30 - 18:45' }
+            };
+            
+            const data = classData[day];
+            document.getElementById('modalClient').textContent = data.client;
+            document.getElementById('modalDate').textContent = data.date;
+            document.getElementById('modalTime').textContent = data.time;
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('classModal').classList.remove('active');
+        }
+
+        function markCompleted() {
+            closeModal();
+            showScreen('success');
+        }
+
+        function markCancelled() {
+            closeModal();
+            alert('Kurs wurde als ausgefallen markiert');
+        }
+
+        function showCompletedWeek() {
+            showScreen('week');
+            // Update the Monday class to show as completed
+            const mondayCard = document.getElementById('monday-class');
+            mondayCard.classList.add('completed');
+            mondayCard.querySelector('.status-icon').textContent = '✅';
+        }
+
+        function showInvoicePreview(client) {
+            document.getElementById('invoiceClient').textContent = client;
+            document.getElementById('invoiceModal').classList.add('active');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoiceModal').classList.remove('active');
+        }
+
+        // Add swipe functionality for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) {
+                // Swiped left - could navigate to next week
+                console.log('Swiped left');
+            }
+            if (touchEndX > touchStartX + 50) {
+                // Swiped right - could navigate to previous week
+                console.log('Swiped right');
+            }
+        }
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+    </script>
+</body>
+</html>
