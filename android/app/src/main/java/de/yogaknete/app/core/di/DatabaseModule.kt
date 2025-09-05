@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.yogaknete.app.data.local.*
+import de.yogaknete.app.data.local.dao.ClassTemplateDao
 import javax.inject.Singleton
 
 @Module
@@ -23,7 +24,9 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        )
+        .fallbackToDestructiveMigration() // For development - consider proper migration for production
+        .build()
     }
     
     @Provides
@@ -39,5 +42,10 @@ object DatabaseModule {
     @Provides
     fun provideYogaClassDao(database: AppDatabase): YogaClassDao {
         return database.yogaClassDao()
+    }
+    
+    @Provides
+    fun provideClassTemplateDao(database: AppDatabase): ClassTemplateDao {
+        return database.classTemplateDao()
     }
 }

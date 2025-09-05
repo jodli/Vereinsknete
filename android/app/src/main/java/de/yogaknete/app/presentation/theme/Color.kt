@@ -13,6 +13,7 @@ val YogaPurpleGrey40 = Color(0xFF512DA8)  // Rich purple
 val YogaAccent40 = Color(0xFF388E3C)  // Dark green accent
 
 // Additional yoga colors
+val YogaPurple = Color(0xFF9C27B0)  // Standard purple for highlights
 val YogaBackground = Color(0xFFF3E5F5)  // Very light purple background
 val YogaSurface = Color(0xFFFFFFFF)  // White surface
 val YogaOnSurface = Color(0xFF1D1B20)  // Dark text on surface

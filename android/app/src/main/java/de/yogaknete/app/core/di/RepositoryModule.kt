@@ -6,8 +6,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import de.yogaknete.app.data.repository.UserProfileRepositoryImpl
 import de.yogaknete.app.data.repository.StudioRepositoryImpl
+import de.yogaknete.app.data.repository.ClassTemplateRepositoryImpl
+import de.yogaknete.app.data.repository.YogaClassRepositoryImpl
 import de.yogaknete.app.domain.repository.UserProfileRepository
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.repository.ClassTemplateRepository
+import de.yogaknete.app.domain.repository.YogaClassRepository
 import javax.inject.Singleton
 
 @Module
@@ -25,4 +29,16 @@ abstract class RepositoryModule {
     abstract fun bindStudioRepository(
         studioRepositoryImpl: StudioRepositoryImpl
     ): StudioRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindClassTemplateRepository(
+        classTemplateRepositoryImpl: ClassTemplateRepositoryImpl
+    ): ClassTemplateRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindYogaClassRepository(
+        yogaClassRepositoryImpl: YogaClassRepositoryImpl
+    ): YogaClassRepository
 }
