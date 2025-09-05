@@ -5,6 +5,7 @@ import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +25,7 @@ class WeekViewModelTest {
     
     private lateinit var yogaClassDao: YogaClassDao
     private lateinit var studioRepository: StudioRepository
+    private lateinit var classTemplateRepository: ClassTemplateRepository
     private lateinit var viewModel: WeekViewModel
     private val testDispatcher = StandardTestDispatcher()
     
@@ -32,10 +34,12 @@ class WeekViewModelTest {
         Dispatchers.setMain(testDispatcher)
         yogaClassDao = mockk()
         studioRepository = mockk()
+        classTemplateRepository = mockk()
         
         // Default mocks
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(emptyList())
         every { studioRepository.getAllActiveStudios() } returns flowOf(emptyList())
+        every { classTemplateRepository.getAllActiveTemplates() } returns flowOf(emptyList())
     }
     
     @After
@@ -45,7 +49,7 @@ class WeekViewModelTest {
     
     @Test
     fun `initial state has current week dates`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         
         val state = viewModel.state.value
         
@@ -61,7 +65,7 @@ class WeekViewModelTest {
     
     @Test
     fun `navigateToPreviousWeek moves back 7 days`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         val initialStart = viewModel.state.value.currentWeekStart
         
         viewModel.navigateToPreviousWeek()
@@ -76,7 +80,7 @@ class WeekViewModelTest {
     
     @Test
     fun `navigateToNextWeek moves forward 7 days`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         val initialStart = viewModel.state.value.currentWeekStart
         
         viewModel.navigateToNextWeek()
@@ -93,7 +97,7 @@ class WeekViewModelTest {
     fun `addClass creates yoga class with correct data`() = runTest {
         coEvery { yogaClassDao.insertClass(any()) } returns 1L
         
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         
         viewModel.addClass(
             studioId = 1L,
@@ -124,7 +128,7 @@ class WeekViewModelTest {
     fun `markClassAsCompleted updates status`() = runTest {
         coEvery { yogaClassDao.updateClassStatus(any(), any()) } just Runs
         
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         
         val testClass = YogaClass(
             id = 42L,
@@ -177,7 +181,7 @@ class WeekViewModelTest {
         
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(classes)
         
-        viewModel = WeekViewModel(yogaClassDao, studioRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
         advanceUntilIdle()
         
         val state = viewModel.state.value

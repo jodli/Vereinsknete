@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import de.yogaknete.app.presentation.screens.week.WeekViewScreen
+import de.yogaknete.app.presentation.screens.templates.TemplateManagementScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             YogaKneteTheme {
                 var showOnboarding by remember { mutableStateOf(true) }
+                var currentScreen by remember { mutableStateOf("week") }
                 
                 if (showOnboarding) {
                     OnboardingFlow(
@@ -26,11 +28,25 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    WeekViewScreen(
-                        onNavigateToInvoice = {
-                            // TODO: Navigate to invoice screen
+                    when (currentScreen) {
+                        "week" -> {
+                            WeekViewScreen(
+                                onNavigateToInvoice = {
+                                    // TODO: Navigate to invoice screen
+                                },
+                                onNavigateToTemplates = {
+                                    currentScreen = "templates"
+                                }
+                            )
                         }
-                    )
+                        "templates" -> {
+                            TemplateManagementScreen(
+                                onNavigateBack = {
+                                    currentScreen = "week"
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
