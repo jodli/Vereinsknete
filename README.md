@@ -1,104 +1,91 @@
-# 💰 VereinsKnete
+# 🧘‍♀️ YogaKnete - Simple Yoga Class Tracker & Invoice Generator
 
-A modern web application for freelance service providers to track billable hours and generate professional invoices. Built with Rust and React. 🏃‍♂️💼
+## 📱 Android App for Yoga Instructors
 
-## ✨ Features
+**YogaKnete** is a simplified Android app designed specifically for yoga instructors to track their classes and generate professional invoices with minimal effort. Built with modern Android technologies and a focus on user experience.
 
-- 👤 User profile management with multilingual support (German/English)
-- 🤝 Client management with full CRUD operations
-- ⏱️ Session tracking with time logging
-- 📄 Professional PDF invoice generation
-- 📊 Dashboard with overview metrics
-- 📱 Responsive design for all devices
+## ✨ Key Features
 
-## 🛠️ Tech Stack
+- **Quick Class Entry**: Log a class in under 10 seconds with smart templates
+- **Week View**: See all your classes at a glance with color-coded status
+- **Flexible Cancellations**: Edit or cancel classes even from past weeks  
+- **Professional Invoices**: Generate PDF invoices with all required German tax information
+- **Studio Management**: Add unlimited studios with individual hourly rates
+- **WhatsApp Integration**: Share invoices directly via WhatsApp or email
+- **Offline-First**: Everything works without internet connection
+- **German Language**: Fully localized for German users
 
-- **Backend**: Rust + Actix-web + Diesel ORM + SQLite
-- **Frontend**: React 19 + TypeScript + Tailwind CSS
-- **Testing**: Comprehensive test coverage for both frontend and backend
+## 🚀 Project Status
 
-## 🚀 Quick Start
+**Currently in Development** - Following an incremental 4-week roadmap:
+- Week 1: Basic class tracking ✅ (In Progress)
+- Week 2: Templates & better UX
+- Week 3: Invoice generation
+- Week 4: Polish & production ready
 
-### Prerequisites
-- Rust (1.70+) and Cargo
-- Node.js (18+) and npm
-- SQLite and libsqlite3-dev
-- Diesel CLI: `cargo install diesel_cli --no-default-features --features sqlite`
+## 🛠️ Technology Stack
 
-### Development Setup
-
-```bash
-# Clone and setup
-git clone <repository-url>
-cd VereinsKnete
-
-# Install dependencies and start development servers
-./dev.sh
-```
-
-The `dev.sh` script starts both backend (`:8080`) and frontend (`:3000`) servers in tmux.
-
-### Manual Setup
-
-```bash
-# Backend
-cd backend
-diesel setup && diesel migration run
-cargo run
-
-# Frontend (new terminal)
-cd frontend
-npm install && npm start
-```
-
-## 🐳 Docker
-
-```bash
-# Development
-docker-compose up -d
-
-# Production
-docker build -t vereinsknete .
-docker run -p 8080:8080 -v $(pwd)/data:/app/data vereinsknete
-```
-
-## 🧪 Testing
-
-```bash
-# Frontend tests
-cd frontend && npm test
-
-# Backend tests  
-cd backend && cargo test
-```
-
-## 📁 Project Structure
-
-```
-VereinsKnete/
-├── backend/           # Rust backend (Actix-web + Diesel + SQLite)
-│   ├── src/
-│   │   ├── handlers/  # API endpoints
-│   │   ├── models/    # Data models
-│   │   ├── services/  # Business logic
-│   │   └── main.rs
-│   └── migrations/    # Database migrations
-├── frontend/          # React frontend (TypeScript + Tailwind)
-│   └── src/
-│       ├── components/ # UI components
-│       ├── pages/     # Page components
-│       ├── services/  # API integration
-│       └── i18n/      # Translations
-├── specs/             # Project documentation
-└── dev.sh            # Development startup script
-```
+- **Language**: Kotlin
+- **UI Framework**: Jetpack Compose  
+- **Database**: Room (SQLite)
+- **Architecture**: MVVM with Clean Architecture
+- **PDF Generation**: iText7
+- **Design**: Material Design 3 (Material You)
+- **DI**: Hilt
+- **Testing**: JUnit, MockK, Compose UI Testing
 
 ## 📚 Documentation
 
-- **[ENVIRONMENT.md](ENVIRONMENT.md)** - Environment configuration and deployment
-- **[specs/](specs/)** - Technical specifications and requirements
-- **Development Guidelines** - See `.kiro/steering/` for frontend and backend patterns
+- [Implementation Plan](ANDROID_IMPLEMENTATION_PLAN.md) - Detailed technical architecture
+- [Incremental Roadmap](ANDROID_INCREMENTAL_ROADMAP.md) - Week-by-week development plan
+- [Test Strategy](ANDROID_TEST_PLAN.md) - Comprehensive testing approach
+- [Mockups (German)](MOCKUPS_DEUTSCH.md) - UI mockups and workflows
+- [Analysis](ANDROID_PORT_ANALYSIS.md) - Original web app analysis and learnings
+
+## 🎯 Design Goals
+
+1. **Simplicity First**: Focused on one user's specific workflow
+2. **Mobile-Optimized**: Designed for one-thumb operation
+3. **Fast Data Entry**: Templates and smart defaults
+4. **Professional Output**: Clean, compliant German invoices
+5. **Reliability**: Offline-first with automatic backups
+
+## 🚦 Getting Started
+
+### Prerequisites
+- Android Studio Hedgehog or later
+- JDK 17
+- Android SDK 34
+- Kotlin 1.9+
+
+### Building the Project
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/YogaKnete.git
+cd YogaKnete/android
+
+# Build with Gradle
+gradle build
+
+# Run tests
+gradle test
+
+# Install on device
+gradle installDebug
+```
+
+## 📱 Demo
+
+Check out the [interactive HTML prototype](prototype/yoga-app-demo.html) to see the user flow in action.
+
+## 🤝 Contributing
+
+This is currently a personal project, but suggestions and feedback are welcome!
+
+## 📄 License
+
+MIT License - Feel free to use this code for your own projects.
 
 ---
 
-**VereinsKnete** - Simple freelance time tracking and invoicing 💰
+*Built with ❤️ for yoga instructors who just want to focus on teaching*
