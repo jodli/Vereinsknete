@@ -45,26 +45,27 @@ class OnboardingViewModel @Inject constructor(
     }
     
     fun completeOnboarding(
-        userName: String,
-        userHourlyRate: Double,
+        userProfile: UserProfile,
         studios: List<StudioInput>
     ) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Save user profile
-                val userProfile = UserProfile(
-                    name = userName,
-                    defaultHourlyRate = userHourlyRate,
-                    isOnboardingComplete = true
-                )
-                userProfileRepository.saveUserProfile(userProfile)
+                // Save user profile with onboarding complete flag
+                val completeProfile = userProfile.copy(isOnboardingComplete = true)
+                userProfileRepository.saveUserProfile(completeProfile)
                 
                 // Save studios
                 if (studios.isNotEmpty()) {
                     val studioEntities = studios.map { studioInput ->
                         Studio(
                             name = studioInput.name,
+                            contactPerson = studioInput.contactPerson,
+                            email = studioInput.email,
+                            phone = studioInput.phone,
+                            street = studioInput.street,
+                            postalCode = studioInput.postalCode,
+                            city = studioInput.city,
                             hourlyRate = studioInput.hourlyRate
                         )
                     }

@@ -4,12 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +27,12 @@ import de.yogaknete.app.presentation.theme.YogaKneteTheme
 
 data class StudioInput(
     val name: String,
+    val contactPerson: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val street: String = "",
+    val postalCode: String = "",
+    val city: String = "",
     val hourlyRate: Double
 )
 
@@ -34,51 +44,67 @@ fun StudioAdditionScreen(
 ) {
     var studios by remember { mutableStateOf(listOf<StudioInput>()) }
     var studioName by remember { mutableStateOf("") }
+    var contactPerson by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var street by remember { mutableStateOf("") }
+    var postalCode by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
     var studioRateText by remember { mutableStateOf(defaultHourlyRate.toString().replace(".", ",")) }
     var nameError by remember { mutableStateOf(false) }
     var rateError by remember { mutableStateOf(false) }
+    
+    var showExpandedForm by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+            .background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        // Header
-        Icon(
-            imageVector = Icons.Default.Home,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "Deine Yoga-Studios",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "Füge die Vereine oder Studios hinzu, in denen du Yoga-Kurse gibst",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Add studio form
-        Card(
+        // Scrollable content area
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // Header
+            Icon(
+                imageVector = Icons.Default.Home,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text(
+                text = "Deine Yoga-Studios",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Text(
+                text = "Füge die Vereine oder Studios hinzu, in denen du Yoga-Kurse gibst",
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Add studio form
+            Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -153,6 +179,118 @@ fun StudioAdditionScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                // Toggle for additional fields
+                TextButton(
+                    onClick = { showExpandedForm = !showExpandedForm },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (showExpandedForm) "Weniger Felder" else "Kontaktdaten hinzufügen (optional)"
+                    )
+                }
+                
+                if (showExpandedForm) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Contact person
+                    OutlinedTextField(
+                        value = contactPerson,
+                        onValueChange = { contactPerson = it },
+                        label = { Text("Ansprechpartner") },
+                        placeholder = { Text("z.B. Max Mustermann") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Email
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("E-Mail") },
+                        placeholder = { Text("studio@example.de") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Email,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Phone
+                    OutlinedTextField(
+                        value = phone,
+                        onValueChange = { phone = it },
+                        label = { Text("Telefon") },
+                        placeholder = { Text("+49 123 456789") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Phone,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Address
+                    OutlinedTextField(
+                        value = street,
+                        onValueChange = { street = it },
+                        label = { Text("Straße und Hausnummer") },
+                        placeholder = { Text("Yogastraße 1") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = postalCode,
+                            onValueChange = { postalCode = it },
+                            label = { Text("PLZ") },
+                            modifier = Modifier.weight(0.3f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        )
+                        
+                        OutlinedTextField(
+                            value = city,
+                            onValueChange = { city = it },
+                            label = { Text("Stadt") },
+                            modifier = Modifier.weight(0.7f),
+                            singleLine = true
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 Button(
                     onClick = {
                         val trimmedName = studioName.trim()
@@ -162,9 +300,26 @@ fun StudioAdditionScreen(
                         rateError = hourlyRate == null || hourlyRate <= 0
                         
                         if (!nameError && !rateError) {
-                            studios = studios + StudioInput(trimmedName, hourlyRate!!)
+                            studios = studios + StudioInput(
+                                name = trimmedName,
+                                contactPerson = contactPerson.trim(),
+                                email = email.trim(),
+                                phone = phone.trim(),
+                                street = street.trim(),
+                                postalCode = postalCode.trim(),
+                                city = city.trim(),
+                                hourlyRate = hourlyRate!!
+                            )
+                            // Reset fields
                             studioName = ""
+                            contactPerson = ""
+                            email = ""
+                            phone = ""
+                            street = ""
+                            postalCode = ""
+                            city = ""
                             studioRateText = defaultHourlyRate.toString().replace(".", ",")
+                            showExpandedForm = false
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
@@ -183,40 +338,38 @@ fun StudioAdditionScreen(
             }
         }
         
-        if (studios.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            Text(
-                text = "Deine Studios (${studios.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(studios) { studio ->
+            if (studios.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                Text(
+                    text = "Deine Studios (${studios.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Display studios without LazyColumn since we're already in a scrollable container
+                studios.forEach { studio ->
                     StudioItem(
                         studio = studio,
                         onDelete = {
                             studios = studios - studio
                         }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
+            
+            Spacer(modifier = Modifier.height(16.dp))
         }
         
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Buttons
+        // Buttons at the bottom (outside scrollable area)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedButton(
@@ -236,8 +389,6 @@ fun StudioAdditionScreen(
                 Text(if (studios.isEmpty()) "Überspringen" else "Fertig (${studios.size})")
             }
         }
-        
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

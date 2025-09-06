@@ -164,10 +164,10 @@ app/
 - [ ] Professional black & white invoice template
 - [ ] Include sender info (from user profile)
 - [ ] Include receiver info (studio contact person)
-- [ ] Auto-generate invoice number (YYYY-MM-XXX)
+- [ ] Auto-generate invoice number (YYYY-XXX, current year and ongoing number for this year, e.g. 2025-002)
 - [ ] List all completed classes with dates
 - [ ] Show hours, hourly rate, total amount
-- [ ] Add bank transfer details at bottom
+- [ ] Add bank transfer details (from user profile) at bottom
 - [ ] PDF generation with iText7 or Android Print
 
 #### Sprint 3.3 Sharing Integration (2 days)

@@ -2,10 +2,15 @@ package de.yogaknete.app.presentation.screens.onboarding
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,22 +20,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.yogaknete.app.domain.model.UserProfile
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
 
 @Composable
 fun UserProfileSetupScreen(
-    onContinue: (name: String, hourlyRate: Double) -> Unit,
+    onContinue: (UserProfile) -> Unit,
     onBack: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    var street by remember { mutableStateOf("") }
+    var postalCode by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var taxId by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var bankName by remember { mutableStateOf("") }
+    var iban by remember { mutableStateOf("") }
+    var bic by remember { mutableStateOf("") }
     var hourlyRateText by remember { mutableStateOf("") }
+    
     var nameError by remember { mutableStateOf(false) }
     var rateError by remember { mutableStateOf(false) }
+    var taxIdError by remember { mutableStateOf(false) }
+    var ibanError by remember { mutableStateOf(false) }
+    
+    val scrollState = rememberScrollState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -93,6 +114,173 @@ fun UserProfileSetupScreen(
             )
         )
         
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Address fields
+        Text(
+            text = "Adresse",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+        
+        OutlinedTextField(
+            value = street,
+            onValueChange = { street = it },
+            label = { Text("Straße und Hausnummer") },
+            placeholder = { Text("z.B. Yogastraße 42") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Home,
+                    contentDescription = null
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = postalCode,
+                onValueChange = { postalCode = it },
+                label = { Text("PLZ") },
+                placeholder = { Text("12345") },
+                modifier = Modifier.weight(0.3f),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+            
+            OutlinedTextField(
+                value = city,
+                onValueChange = { city = it },
+                label = { Text("Stadt") },
+                placeholder = { Text("Berlin") },
+                modifier = Modifier.weight(0.7f),
+                singleLine = true
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Tax ID
+        OutlinedTextField(
+            value = taxId,
+            onValueChange = { 
+                taxId = it
+                taxIdError = false
+            },
+            label = { Text("Steuernummer / USt-IdNr") },
+            placeholder = { Text("z.B. DE123456789") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = taxIdError,
+            supportingText = if (taxIdError) {
+                { Text("Bitte gib deine Steuernummer ein") }
+            } else {
+                { Text("Erforderlich für Rechnungen") }
+            },
+            singleLine = true
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Contact fields
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("E-Mail (optional)") },
+            placeholder = { Text("maria@yoga.de") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Email,
+                    contentDescription = null
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        OutlinedTextField(
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Telefon (optional)") },
+            placeholder = { Text("+49 123 456789") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Phone,
+                    contentDescription = null
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Bank details
+        Text(
+            text = "Bankverbindung",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+        
+        OutlinedTextField(
+            value = bankName,
+            onValueChange = { bankName = it },
+            label = { Text("Bank") },
+            placeholder = { Text("z.B. Sparkasse Berlin") },
+            leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null
+                        )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        OutlinedTextField(
+            value = iban,
+            onValueChange = { 
+                iban = it.uppercase()
+                ibanError = false
+            },
+            label = { Text("IBAN") },
+            placeholder = { Text("DE89 3704 0044 0532 0130 00") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = ibanError,
+            supportingText = if (ibanError) {
+                { Text("Bitte gib eine gültige IBAN ein") }
+            } else {
+                { Text("Erforderlich für Überweisungen") }
+            },
+            singleLine = true
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        OutlinedTextField(
+            value = bic,
+            onValueChange = { bic = it.uppercase() },
+            label = { Text("BIC (optional)") },
+            placeholder = { Text("COBADEFFXXX") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        
         Spacer(modifier = Modifier.height(24.dp))
         
         // Hourly rate input
@@ -125,7 +313,7 @@ fun UserProfileSetupScreen(
             )
         )
         
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(32.dp))
         
         // Buttons
         Row(
@@ -144,12 +332,30 @@ fun UserProfileSetupScreen(
                     // Validate inputs
                     val trimmedName = name.trim()
                     val hourlyRate = hourlyRateText.replace(",", ".").toDoubleOrNull()
+                    val trimmedTaxId = taxId.trim()
+                    val trimmedIban = iban.replace(" ", "").trim()
                     
                     nameError = trimmedName.isEmpty()
                     rateError = hourlyRate == null || hourlyRate <= 0
+                    taxIdError = trimmedTaxId.isEmpty()
+                    ibanError = trimmedIban.isEmpty() || trimmedIban.length < 15
                     
-                    if (!nameError && !rateError) {
-                        onContinue(trimmedName, hourlyRate!!)
+                    if (!nameError && !rateError && !taxIdError && !ibanError) {
+                        val profile = UserProfile(
+                            name = trimmedName,
+                            street = street.trim(),
+                            postalCode = postalCode.trim(),
+                            city = city.trim(),
+                            taxId = trimmedTaxId,
+                            phone = phone.trim(),
+                            email = email.trim(),
+                            bankName = bankName.trim(),
+                            iban = trimmedIban,
+                            bic = bic.trim().uppercase(),
+                            defaultHourlyRate = hourlyRate!!,
+                            isOnboardingComplete = false
+                        )
+                        onContinue(profile)
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -170,7 +376,7 @@ fun UserProfileSetupScreen(
 fun UserProfileSetupScreenPreview() {
     YogaKneteTheme {
         UserProfileSetupScreen(
-            onContinue = { _, _ -> },
+            onContinue = { _ -> },
             onBack = { }
         )
     }
