@@ -45,6 +45,7 @@ fun AddClassDialog(
     var expanded by remember { mutableStateOf(false) }
     var templateExpanded by remember { mutableStateOf(false) }
     var selectedTemplate: ClassTemplate? by remember { mutableStateOf(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -118,29 +119,97 @@ fun AddClassDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                // Date selection (simplified - could be improved)
-                Text(
-                    text = "Tag: ${DateUtils.formatDayDate(selectedDate)}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                // Date selection with date picker
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true }
+                ) {
+                    OutlinedTextField(
+                        value = DateUtils.formatDayDate(selectedDate),
+                        onValueChange = { },
+                        label = { Text("Datum") },
+                        readOnly = true,
+                        enabled = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showDatePicker = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = "Datum auswählen"
+                                )
+                            }
+                        }
+                    )
+                }
                 
-                // Time inputs (simplified)
+                // Time inputs
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    OutlinedTextField(
-                        value = String.format("%02d:%02d", startHour, startMinute),
-                        onValueChange = { },
-                        label = { Text("Von") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Startzeit",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = startHour.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { h ->
+                                        if (h in 0..23) startHour = h
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Std") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = startMinute.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { m ->
+                                        if (m in 0..59) startMinute = m
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Min") },
+                                singleLine = true
+                            )
+                        }
+                    }
                     
-                    OutlinedTextField(
-                        value = String.format("%02d:%02d", endHour, endMinute),
-                        onValueChange = { },
-                        label = { Text("Bis") },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Endzeit",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            OutlinedTextField(
+                                value = endHour.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { h ->
+                                        if (h in 0..23) endHour = h
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Std") },
+                                singleLine = true
+                            )
+                            OutlinedTextField(
+                                value = endMinute.toString().padStart(2, '0'),
+                                onValueChange = { value ->
+                                    value.toIntOrNull()?.let { m ->
+                                        if (m in 0..59) endMinute = m
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                label = { Text("Min") },
+                                singleLine = true
+                            )
+                        }
+                    }
                 }
             }
         },
@@ -169,6 +238,37 @@ fun AddClassDialog(
             }
         }
     )
+    
+    // Date picker dialog
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = selectedDate.toEpochDays() * 24 * 60 * 60 * 1000L
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val instant = Instant.fromEpochMilliseconds(millis)
+                            val localDateTime = instant.toLocalDateTime(TimeZone.UTC)
+                            selectedDate = localDateTime.date
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Abbrechen")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 }
 
 @Composable
@@ -659,21 +759,30 @@ fun EditClassDialog(
                 }
                 
                 // Date selection
-                OutlinedTextField(
-                    value = DateUtils.formatDayDate(selectedDate),
-                    onValueChange = { },
-                    label = { Text("Datum") },
-                    readOnly = true,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showDatePicker = true },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Datum auswählen"
-                        )
-                    }
-                )
+                        .clickable { showDatePicker = true }
+                ) {
+                    OutlinedTextField(
+                        value = DateUtils.formatDayDate(selectedDate),
+                        onValueChange = { },
+                        label = { Text("Datum") },
+                        readOnly = true,
+                        enabled = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            IconButton(
+                                onClick = { showDatePicker = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.DateRange,
+                                    contentDescription = "Datum auswählen"
+                                )
+                            }
+                        }
+                    )
+                }
                 
                 // Time inputs
                 Row(
