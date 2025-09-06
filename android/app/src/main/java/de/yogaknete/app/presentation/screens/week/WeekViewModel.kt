@@ -16,6 +16,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import javax.inject.Inject
 
+private fun Month.days(year: Int): Int = when (this) {
+    Month.FEBRUARY -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
+    Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
+    else -> 31
+}
+
 data class WeekViewState(
     val currentWeekStart: LocalDate = DateUtils.getWeekStart(),
     val currentWeekEnd: LocalDate = DateUtils.getWeekEnd(),
@@ -25,13 +31,23 @@ data class WeekViewState(
     val templates: List<ClassTemplate> = emptyList(),
     val totalClassesThisWeek: Int = 0,
     val totalHoursThisWeek: Double = 0.0,
+    val earningsPerStudio: Map<Long, Double> = emptyMap(), // Studio ID to earnings
+    val totalEarningsThisWeek: Double = 0.0,
     val isLoading: Boolean = false,
     val showAddClassDialog: Boolean = false,
     val showQuickAddDialog: Boolean = false,
     val quickAddDate: LocalDate? = null,
     val selectedClass: YogaClass? = null,
     val showBulkCancelDialog: Boolean = false,
-    val showEditClassDialog: Boolean = false
+    val showEditClassDialog: Boolean = false,
+    val showWeekStats: Boolean = false,
+    val showMonthlyStats: Boolean = false,
+    val monthlyStatsMonth: Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).monthNumber,
+    val monthlyStatsYear: Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).year,
+    val monthlyTotalClasses: Int = 0,
+    val monthlyTotalHours: Double = 0.0,
+    val monthlyTotalEarnings: Double = 0.0,
+    val monthlyEarningsPerStudio: Map<Long, Double> = emptyMap()
 )
 
 @HiltViewModel
@@ -66,17 +82,30 @@ class WeekViewModel @Inject constructor(
                         yogaClass.startTime.date
                     }
                     
-                    // Calculate totals
-                    val totalClasses = classList.count { it.status != ClassStatus.CANCELLED }
-                    val totalHours = classList
-                        .filter { it.status != ClassStatus.CANCELLED }
-                        .sumOf { it.durationHours }
+                    // Calculate totals - only count COMPLETED classes for statistics
+                    val completedClasses = classList.filter { it.status == ClassStatus.COMPLETED }
+                    val totalClasses = completedClasses.size
+                    val totalHours = completedClasses.sumOf { it.durationHours }
+                    
+                    // Calculate earnings per studio
+                    val studios = _state.value.studios
+                    val earningsPerStudio = completedClasses
+                        .groupBy { it.studioId }
+                        .mapValues { (studioId, classes) ->
+                            val studio = studios.find { it.id == studioId }
+                            val hourlyRate = studio?.hourlyRate ?: 0.0
+                            classes.sumOf { it.durationHours * hourlyRate }
+                        }
+                    
+                    val totalEarnings = earningsPerStudio.values.sum()
                     
                     _state.update { currentState ->
                         currentState.copy(
                             classes = classesByDate,
                             totalClassesThisWeek = totalClasses,
-                            totalHoursThisWeek = totalHours
+                            totalHoursThisWeek = totalHours,
+                            earningsPerStudio = earningsPerStudio,
+                            totalEarningsThisWeek = totalEarnings
                         )
                     }
                 }
@@ -302,5 +331,68 @@ class WeekViewModel @Inject constructor(
             yogaClassDao.insertClass(newClass)
             hideQuickAddDialog()
         }
+    }
+    
+    fun showWeekStats() {
+        _state.update { it.copy(showWeekStats = true) }
+    }
+    
+    fun hideWeekStats() {
+        _state.update { it.copy(showWeekStats = false) }
+    }
+    
+    fun loadMonthlyStats(
+        month: Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).monthNumber,
+        year: Int = Clock.System.todayIn(TimeZone.currentSystemDefault()).year
+    ) {
+        viewModelScope.launch {
+            // Get first and last day of the month
+            val firstDay = LocalDate(year, month, 1)
+            val lastDay = LocalDate(year, month, firstDay.month.days(year))
+            
+            val startDateTime = firstDay.atTime(0, 0)
+            val endDateTime = lastDay.atTime(23, 59)
+            
+            yogaClassDao.getClassesInRange(startDateTime, endDateTime)
+                .first() // Get first emission for the calculation
+                .let { classList ->
+                    val completedClasses = classList.filter { it.status == ClassStatus.COMPLETED }
+                    val totalClasses = completedClasses.size
+                    val totalHours = completedClasses.sumOf { it.durationHours }
+                    
+                    // Calculate earnings per studio
+                    val studios = _state.value.studios
+                    val earningsPerStudio = completedClasses
+                        .groupBy { it.studioId }
+                        .mapValues { (studioId, classes) ->
+                            val studio = studios.find { it.id == studioId }
+                            val hourlyRate = studio?.hourlyRate ?: 0.0
+                            classes.sumOf { it.durationHours * hourlyRate }
+                        }
+                    
+                    val totalEarnings = earningsPerStudio.values.sum()
+                    
+                    // Update state with monthly stats
+                    _state.update {
+                        it.copy(
+                            monthlyStatsMonth = month,
+                            monthlyStatsYear = year,
+                            monthlyTotalClasses = totalClasses,
+                            monthlyTotalHours = totalHours,
+                            monthlyTotalEarnings = totalEarnings,
+                            monthlyEarningsPerStudio = earningsPerStudio,
+                            showMonthlyStats = true
+                        )
+                    }
+                }
+        }
+    }
+    
+    fun showMonthlyStats() {
+        loadMonthlyStats()
+    }
+    
+    fun hideMonthlyStats() {
+        _state.update { it.copy(showMonthlyStats = false) }
     }
 }

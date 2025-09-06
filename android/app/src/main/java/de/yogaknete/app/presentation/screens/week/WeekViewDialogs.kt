@@ -3,12 +3,16 @@ package de.yogaknete.app.presentation.screens.week
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.yogaknete.app.core.utils.DateUtils
 import de.yogaknete.app.domain.model.ClassStatus
@@ -806,4 +810,337 @@ private fun calculateDuration(startHour: Int, startMinute: Int, endHour: Int, en
         0
     }
     return durationMinutes / 60.0
+}
+
+@Composable
+fun WeekStatsDialog(
+    weekStart: LocalDate,
+    weekEnd: LocalDate,
+    totalClasses: Int,
+    totalHours: Double,
+    totalEarnings: Double,
+    earningsPerStudio: Map<Long, Double>,
+    studios: List<Studio>,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Wochenstatistik",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Week range
+                Text(
+                    text = DateUtils.formatWeekRange(weekStart, weekEnd),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                
+                // Summary card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Erledigte Kurse:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = "$totalClasses",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Gesamt Stunden:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = String.format("%.2f", totalHours).replace(".", ","),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        HorizontalDivider()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Gesamt Verdienst:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                
+                // Earnings per studio
+                if (earningsPerStudio.isNotEmpty()) {
+                    Text(
+                        text = "Verdienst pro Studio",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        earningsPerStudio.forEach { (studioId, earnings) ->
+                            val studio = studios.find { it.id == studioId }
+                            if (studio != null && earnings > 0) {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surface
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = studio.name,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                            Text(
+                                                text = "€${studio.hourlyRate}/Stunde",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                        Text(
+                                            text = "€ ${String.format("%.2f", earnings).replace(".", ",")}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Noch keine erledigten Kurse diese Woche.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+@Composable
+fun MonthlyStatsDialog(
+    month: Int,
+    year: Int,
+    totalClasses: Int,
+    totalHours: Double,
+    totalEarnings: Double,
+    earningsPerStudio: Map<Long, Double>,
+    studios: List<Studio>,
+    onDismiss: () -> Unit,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit
+) {
+    val monthName = when (month) {
+        1 -> "Januar"
+        2 -> "Februar"
+        3 -> "März"
+        4 -> "April"
+        5 -> "Mai"
+        6 -> "Juni"
+        7 -> "Juli"
+        8 -> "August"
+        9 -> "September"
+        10 -> "Oktober"
+        11 -> "November"
+        12 -> "Dezember"
+        else -> ""
+    }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPreviousMonth) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Vorheriger Monat"
+                    )
+                }
+                Text(
+                    text = "$monthName $year",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                IconButton(onClick = onNextMonth) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Nächster Monat"
+                    )
+                }
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Summary card
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Erledigte Kurse:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = "$totalClasses",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Gesamt Stunden:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = String.format("%.2f", totalHours).replace(".", ","),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        HorizontalDivider()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Monats-Verdienst:", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")}",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+                
+                // Earnings per studio
+                if (earningsPerStudio.isNotEmpty()) {
+                    Text(
+                        text = "Verdienst pro Studio",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f, false)
+                    ) {
+                        earningsPerStudio
+                            .toList()
+                            .sortedByDescending { it.second }
+                            .forEach { (studioId, earnings) ->
+                                val studio = studios.find { it.id == studioId }
+                                if (studio != null && earnings > 0) {
+                                    Card(
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.surface
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = studio.name,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                // Calculate and show number of hours for this studio
+                                                val hours = earnings / studio.hourlyRate
+                                                Text(
+                                                    text = "${String.format("%.2f", hours).replace(".", ",")} Stunden • €${studio.hourlyRate}/Std",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                                )
+                                            }
+                                            Text(
+                                                text = "€ ${String.format("%.2f", earnings).replace(".", ",")}",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.secondary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                    }
+                } else {
+                    Text(
+                        text = "Noch keine erledigten Kurse in diesem Monat.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                // Comparison with previous month (optional future feature)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Schließen")
+            }
+        }
+    )
 }

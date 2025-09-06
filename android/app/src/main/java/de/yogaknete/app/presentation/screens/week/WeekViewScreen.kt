@@ -48,8 +48,9 @@ fun WeekViewScreen(
                 onNextWeek = { viewModel.navigateToNextWeek() },
                 onToday = { viewModel.navigateToToday() },
                 onNavigateToTemplates = onNavigateToTemplates,
-                isPastWeek = isPastWeek,
-                onBulkCancel = { viewModel.showBulkCancelDialog() }
+                isPastWeek = state.currentWeekEnd < Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                onBulkCancel = { viewModel.showBulkCancelDialog() },
+                onShowMonthlyStats = { viewModel.showMonthlyStats() }
             )
         },
         floatingActionButton = {
@@ -74,7 +75,9 @@ fun WeekViewScreen(
             WeekSummaryCard(
                 totalClasses = state.totalClassesThisWeek,
                 totalHours = state.totalHoursThisWeek,
-                onCreateInvoice = onNavigateToInvoice
+                totalEarnings = state.totalEarningsThisWeek,
+                onCreateInvoice = onNavigateToInvoice,
+                onShowStats = { viewModel.showWeekStats() }
             )
             
             // Classes list
@@ -188,6 +191,44 @@ fun WeekViewScreen(
             }
         )
     }
+    
+    // Week statistics dialog
+    if (state.showWeekStats) {
+        WeekStatsDialog(
+            weekStart = state.currentWeekStart,
+            weekEnd = state.currentWeekEnd,
+            totalClasses = state.totalClassesThisWeek,
+            totalHours = state.totalHoursThisWeek,
+            totalEarnings = state.totalEarningsThisWeek,
+            earningsPerStudio = state.earningsPerStudio,
+            studios = state.studios,
+            onDismiss = { viewModel.hideWeekStats() }
+        )
+    }
+    
+    // Monthly statistics dialog
+    if (state.showMonthlyStats) {
+        MonthlyStatsDialog(
+            month = state.monthlyStatsMonth,
+            year = state.monthlyStatsYear,
+            totalClasses = state.monthlyTotalClasses,
+            totalHours = state.monthlyTotalHours,
+            totalEarnings = state.monthlyTotalEarnings,
+            earningsPerStudio = state.monthlyEarningsPerStudio,
+            studios = state.studios,
+            onDismiss = { viewModel.hideMonthlyStats() },
+            onPreviousMonth = {
+                val newMonth = if (state.monthlyStatsMonth == 1) 12 else state.monthlyStatsMonth - 1
+                val newYear = if (state.monthlyStatsMonth == 1) state.monthlyStatsYear - 1 else state.monthlyStatsYear
+                viewModel.loadMonthlyStats(newMonth, newYear)
+            },
+            onNextMonth = {
+                val newMonth = if (state.monthlyStatsMonth == 12) 1 else state.monthlyStatsMonth + 1
+                val newYear = if (state.monthlyStatsMonth == 12) state.monthlyStatsYear + 1 else state.monthlyStatsYear
+                viewModel.loadMonthlyStats(newMonth, newYear)
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -200,7 +241,8 @@ private fun WeekViewTopBar(
     onToday: () -> Unit,
     onNavigateToTemplates: () -> Unit,
     isPastWeek: Boolean,
-    onBulkCancel: () -> Unit
+    onBulkCancel: () -> Unit,
+    onShowMonthlyStats: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
     TopAppBar(
@@ -253,6 +295,19 @@ private fun WeekViewTopBar(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
+                        text = { Text("Monatsübersicht") },
+                        onClick = {
+                            showMenu = false
+                            onShowMonthlyStats()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
                         text = { Text("Vorlagen verwalten") },
                         onClick = {
                             showMenu = false
@@ -293,50 +348,73 @@ private fun WeekViewTopBar(
 private fun WeekSummaryCard(
     totalClasses: Int,
     totalHours: Double,
-    onCreateInvoice: () -> Unit
+    totalEarnings: Double,
+    onCreateInvoice: () -> Unit,
+    onShowStats: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .clickable { onShowStats() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            Column {
-                Text(
-                    text = "$totalClasses Kurse diese Woche",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "${String.format("%.2f", totalHours).replace(".", ",")} Stunden gesamt",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (totalClasses > 0) "$totalClasses erledigte Kurse" else "Keine erledigten Kurse",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    if (totalClasses > 0) {
+                        Text(
+                            text = "${String.format("%.2f", totalHours).replace(".", ",")} Stunden",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")} Verdienst",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
+                Button(
+                    onClick = onCreateInvoice,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Rechnung")
+                }
             }
             
-            Button(
-                onClick = onCreateInvoice,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.List,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Rechnung")
-            }
+            // Hint for more details
+            Text(
+                text = "Tippe für Details",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

@@ -124,10 +124,10 @@ app/
 - [x] Default 1.25 hour duration
 
 #### Sprint 2.2: Better Cancellation Handling (2 days)
-- [ ] Cancel/reschedule classes
-- [ ] Bulk cancel for past weeks
-- [ ] Edit classes in past weeks
-- [ ] Visual indicators for status
+- [x] Cancel/reschedule classes
+- [x] Bulk cancel for past weeks
+- [x] Edit classes in past weeks
+- [x] Visual indicators for status
 
 #### Sprint 2.3: Week Statistics (1 day)
 - [ ] Calculate weekly hours
