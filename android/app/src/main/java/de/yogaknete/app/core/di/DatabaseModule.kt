@@ -48,4 +48,9 @@ object DatabaseModule {
     fun provideClassTemplateDao(database: AppDatabase): ClassTemplateDao {
         return database.classTemplateDao()
     }
+    
+    @Provides
+    fun provideInvoiceDao(database: AppDatabase): InvoiceDao {
+        return database.invoiceDao()
+    }
 }

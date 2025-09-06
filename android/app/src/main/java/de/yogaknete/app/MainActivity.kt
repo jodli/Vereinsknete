@@ -9,6 +9,10 @@ import de.yogaknete.app.presentation.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import de.yogaknete.app.presentation.screens.week.WeekViewScreen
 import de.yogaknete.app.presentation.screens.templates.TemplateManagementScreen
+import de.yogaknete.app.presentation.screens.invoice.InvoiceListScreen
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -18,8 +22,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             YogaKneteTheme {
+                val navController = rememberNavController()
                 var showOnboarding by remember { mutableStateOf(true) }
-                var currentScreen by remember { mutableStateOf("week") }
                 
                 if (showOnboarding) {
                     OnboardingFlow(
@@ -28,23 +32,35 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    when (currentScreen) {
-                        "week" -> {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "week"
+                    ) {
+                        composable("week") {
                             WeekViewScreen(
                                 onNavigateToInvoice = {
-                                    // TODO: Navigate to invoice screen
+                                    navController.navigate("invoices")
                                 },
                                 onNavigateToTemplates = {
-                                    currentScreen = "templates"
+                                    navController.navigate("templates")
                                 }
                             )
                         }
-                        "templates" -> {
+                        composable("templates") {
                             TemplateManagementScreen(
                                 onNavigateBack = {
-                                    currentScreen = "week"
+                                    navController.navigateUp()
                                 }
                             )
+                        }
+                        composable("invoices") {
+                            InvoiceListScreen(
+                                navController = navController
+                            )
+                        }
+                        composable("invoice_detail/{invoiceId}") { backStackEntry ->
+                            // Placeholder for invoice detail/PDF generation screen (Sprint 3.2)
+                            // val invoiceId = backStackEntry.arguments?.getString("invoiceId")
                         }
                     }
                 }
