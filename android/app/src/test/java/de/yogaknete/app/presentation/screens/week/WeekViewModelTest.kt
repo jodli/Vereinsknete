@@ -166,7 +166,7 @@ class WeekViewModelTest {
                 startTime = LocalDateTime(2024, 11, 5, 19, 0),
                 endTime = LocalDateTime(2024, 11, 5, 20, 15),
                 durationHours = 1.25,
-                status = ClassStatus.SCHEDULED
+                status = ClassStatus.SCHEDULED // Should not count for statistics
             ),
             YogaClass(
                 id = 3,
@@ -176,6 +176,15 @@ class WeekViewModelTest {
                 endTime = LocalDateTime(2024, 11, 6, 19, 15),
                 durationHours = 1.25,
                 status = ClassStatus.CANCELLED // Should not count
+            ),
+            YogaClass(
+                id = 4,
+                studioId = 1,
+                title = "Class 4",
+                startTime = LocalDateTime(2024, 11, 7, 10, 0),
+                endTime = LocalDateTime(2024, 11, 7, 11, 30),
+                durationHours = 1.5,
+                status = ClassStatus.COMPLETED
             )
         )
         
@@ -186,10 +195,10 @@ class WeekViewModelTest {
         
         val state = viewModel.state.value
         
-        // Only 2 non-cancelled classes
+        // Only COMPLETED classes count for statistics (Class 1 and Class 4)
         assertEquals(2, state.totalClassesThisWeek)
         
-        // Total hours (2 * 1.25)
-        assertEquals(2.5, state.totalHoursThisWeek, 0.01)
+        // Total hours for completed classes (1.25 + 1.5 = 2.75)
+        assertEquals(2.75, state.totalHoursThisWeek, 0.01)
     }
 }
