@@ -130,22 +130,22 @@ app/
 - [x] Visual indicators for status
 
 #### Sprint 2.3: Week Statistics (1 day)
-- [ ] Calculate weekly hours
-- [ ] Show earnings per studio
-- [ ] Monthly overview stats
+- [x] Calculate weekly hours
+- [x] Show earnings per studio
+- [x] Monthly overview stats
 
 **Deliverable**: Fully functional class tracking
 
-### Phase 2: Invoice Generation (Week 3)
+### Phase 3: Invoice Generation (Week 3)
 **Goal**: Professional PDF invoices with sharing
 
-#### 2.1 Invoice List Screen (2 days)
+#### 3.1 Invoice List Screen (2 days)
 - [ ] Monthly invoice overview
 - [ ] Studio selection cards
 - [ ] Calculate hours and amounts
 - [ ] Show payment status
 
-#### 2.2 PDF Generation (3 days)
+#### 3.2 PDF Generation (3 days)
 - [ ] Professional black & white invoice template
 - [ ] Include sender info (from user profile)
 - [ ] Include receiver info (studio contact person)
@@ -155,7 +155,7 @@ app/
 - [ ] Add bank transfer details at bottom
 - [ ] PDF generation with iText7 or Android Print
 
-#### 2.3 Sharing Integration (2 days)
+#### 3.3 Sharing Integration (2 days)
 - [ ] WhatsApp sharing intent
 - [ ] Email attachment support
 - [ ] Save to device storage

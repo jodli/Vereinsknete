@@ -48,7 +48,7 @@ fun WeekViewScreen(
                 onNextWeek = { viewModel.navigateToNextWeek() },
                 onToday = { viewModel.navigateToToday() },
                 onNavigateToTemplates = onNavigateToTemplates,
-                isPastWeek = state.currentWeekEnd < Clock.System.todayIn(TimeZone.currentSystemDefault()),
+                isNotFutureWeek = state.currentWeekStart <= Clock.System.todayIn(TimeZone.currentSystemDefault()),
                 onBulkCancel = { viewModel.showBulkCancelDialog() },
                 onShowMonthlyStats = { viewModel.showMonthlyStats() }
             )
@@ -240,7 +240,7 @@ private fun WeekViewTopBar(
     onNextWeek: () -> Unit,
     onToday: () -> Unit,
     onNavigateToTemplates: () -> Unit,
-    isPastWeek: Boolean,
+    isNotFutureWeek: Boolean,
     onBulkCancel: () -> Unit,
     onShowMonthlyStats: () -> Unit
 ) {
@@ -320,7 +320,7 @@ private fun WeekViewTopBar(
                             )
                         }
                     )
-                    if (isPastWeek) {
+                    if (isNotFutureWeek) {
                         DropdownMenuItem(
                             text = { Text("Massenstorno (Woche)") },
                             onClick = {
@@ -493,21 +493,27 @@ private fun YogaClassCard(
     onClick: () -> Unit
 ) {
     val statusIcon = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> null
+        ClassStatus.SCHEDULED -> Icons.Default.PlayArrow
         ClassStatus.COMPLETED -> Icons.Default.CheckCircle
         ClassStatus.CANCELLED -> Icons.Default.Clear
     }
     
     val statusColor = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
         ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
         ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
     }
 
     val borderColor = when (yogaClass.status) {
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
         else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+    }
+    
+    val backgroundColor = when (yogaClass.status) {
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.1f)
+        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+        else -> MaterialTheme.colorScheme.surface
     }
 
     Card(
@@ -516,7 +522,7 @@ private fun YogaClassCard(
             .clip(RoundedCornerShape(8.dp))
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = backgroundColor
         ),
         border = BorderStroke(1.dp, borderColor)
     ) {
@@ -526,26 +532,13 @@ private fun YogaClassCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (statusIcon != null) {
-                Icon(
-                    imageVector = statusIcon,
-                    contentDescription = null,
-                    tint = statusColor,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            } else {
-                // For scheduled classes, show a simple circle/dot
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(
-                            color = statusColor,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-            }
+            Icon(
+                imageVector = statusIcon,
+                contentDescription = null,
+                tint = statusColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
                 Text(
