@@ -34,6 +34,7 @@ import kotlinx.datetime.*
 fun WeekViewScreen(
     onNavigateToInvoice: () -> Unit = {},
     onNavigateToTemplates: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     viewModel: WeekViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -48,6 +49,8 @@ fun WeekViewScreen(
                 onNextWeek = { viewModel.navigateToNextWeek() },
                 onToday = { viewModel.navigateToToday() },
                 onNavigateToTemplates = onNavigateToTemplates,
+                onNavigateToProfile = onNavigateToProfile,
+                onNavigateToInvoice = onNavigateToInvoice,
                 isNotFutureWeek = state.currentWeekStart <= Clock.System.todayIn(TimeZone.currentSystemDefault()),
                 onBulkCancel = { viewModel.showBulkCancelDialog() },
                 onShowMonthlyStats = { viewModel.showMonthlyStats() }
@@ -240,6 +243,8 @@ private fun WeekViewTopBar(
     onNextWeek: () -> Unit,
     onToday: () -> Unit,
     onNavigateToTemplates: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    onNavigateToInvoice: () -> Unit,
     isNotFutureWeek: Boolean,
     onBulkCancel: () -> Unit,
     onShowMonthlyStats: () -> Unit
@@ -294,6 +299,33 @@ private fun WeekViewTopBar(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
+                    DropdownMenuItem(
+                        text = { Text("Rechnungen") },
+                        onClick = {
+                            showMenu = false
+                            onNavigateToInvoice()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Mein Profil") },
+                        onClick = {
+                            showMenu = false
+                            onNavigateToProfile()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    Divider()
                     DropdownMenuItem(
                         text = { Text("Monatsübersicht") },
                         onClick = {

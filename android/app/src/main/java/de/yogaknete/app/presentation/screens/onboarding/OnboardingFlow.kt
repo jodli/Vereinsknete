@@ -2,6 +2,7 @@ package de.yogaknete.app.presentation.screens.onboarding
 
 import androidx.compose.runtime.*
 import androidx.hilt.navigation.compose.hiltViewModel
+import de.yogaknete.app.domain.model.UserProfile
 
 enum class OnboardingStep {
     WELCOME,
@@ -15,8 +16,7 @@ fun OnboardingFlow(
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     var currentStep by remember { mutableStateOf(OnboardingStep.WELCOME) }
-    var userName by remember { mutableStateOf("") }
-    var userHourlyRate by remember { mutableStateOf(0.0) }
+    var userProfile by remember { mutableStateOf<UserProfile?>(null) }
     
     val isLoading by viewModel.isLoading.collectAsState()
     val onboardingComplete by viewModel.onboardingComplete.collectAsState()
@@ -39,9 +39,8 @@ fun OnboardingFlow(
         
         OnboardingStep.USER_PROFILE -> {
             UserProfileSetupScreen(
-                onContinue = { name, hourlyRate ->
-                    userName = name
-                    userHourlyRate = hourlyRate
+                onContinue = { profile ->
+                    userProfile = profile
                     currentStep = OnboardingStep.STUDIOS
                 },
                 onBack = {
@@ -52,13 +51,14 @@ fun OnboardingFlow(
         
         OnboardingStep.STUDIOS -> {
             StudioAdditionScreen(
-                defaultHourlyRate = userHourlyRate,
+                defaultHourlyRate = userProfile?.defaultHourlyRate ?: 30.0,
                 onContinue = { studios ->
-                    viewModel.completeOnboarding(
-                        userName = userName,
-                        userHourlyRate = userHourlyRate,
-                        studios = studios
-                    )
+                    userProfile?.let { profile ->
+                        viewModel.completeOnboarding(
+                            userProfile = profile,
+                            studios = studios
+                        )
+                    }
                 },
                 onBack = {
                     currentStep = OnboardingStep.USER_PROFILE

@@ -8,6 +8,12 @@ data class Studio(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
+    val contactPerson: String = "",
+    val email: String = "",
+    val phone: String = "",
+    val street: String = "",
+    val postalCode: String = "",
+    val city: String = "",
     val hourlyRate: Double, // EUR per hour
     val isActive: Boolean = true
 )
