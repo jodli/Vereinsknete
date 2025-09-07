@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface StudioRepository {
     
+    fun getAllStudios(): Flow<List<Studio>>
+    
     fun getAllActiveStudios(): Flow<List<Studio>>
     
     suspend fun getStudioById(id: Long): Studio?

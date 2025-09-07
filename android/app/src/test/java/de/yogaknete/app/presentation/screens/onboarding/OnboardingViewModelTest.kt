@@ -58,13 +58,23 @@ class OnboardingViewModelTest {
         viewModel = OnboardingViewModel(userProfileRepository, studioRepository)
         
         val studios = listOf(
-            StudioInput("TSV München", 35.00),
-            StudioInput("SV Neuhausen", 31.50)
+            StudioInput(
+                name = "TSV München",
+                hourlyRate = 35.00
+            ),
+            StudioInput(
+                name = "SV Neuhausen",
+                hourlyRate = 31.50
+            )
+        )
+        
+        val userProfile = UserProfile(
+            name = "Maria Schmidt",
+            defaultHourlyRate = 31.50
         )
         
         viewModel.completeOnboarding(
-            userName = "Maria Schmidt",
-            userHourlyRate = 31.50,
+            userProfile = userProfile,
             studios = studios
         )
         
@@ -103,9 +113,13 @@ class OnboardingViewModelTest {
         
         viewModel = OnboardingViewModel(userProfileRepository, studioRepository)
         
+        val userProfile = UserProfile(
+            name = "Maria Schmidt",
+            defaultHourlyRate = 31.50
+        )
+        
         viewModel.completeOnboarding(
-            userName = "Maria Schmidt",
-            userHourlyRate = 31.50,
+            userProfile = userProfile,
             studios = emptyList()
         )
         

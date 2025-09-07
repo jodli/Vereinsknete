@@ -11,6 +11,7 @@ import de.yogaknete.app.presentation.screens.week.WeekViewScreen
 import de.yogaknete.app.presentation.screens.templates.TemplateManagementScreen
 import de.yogaknete.app.presentation.screens.invoice.InvoiceListScreen
 import de.yogaknete.app.presentation.screens.settings.UserProfileEditScreen
+import de.yogaknete.app.presentation.screens.studios.StudiosManagementScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -47,6 +48,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToProfile = {
                                     navController.navigate("profile_edit")
+                                },
+                                onNavigateToStudios = {
+                                    navController.navigate("studios")
                                 }
                             )
                         }
@@ -68,6 +72,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("profile_edit") {
                             UserProfileEditScreen(
+                                navController = navController
+                            )
+                        }
+                        composable("studios") {
+                            StudiosManagementScreen(
                                 navController = navController
                             )
                         }
