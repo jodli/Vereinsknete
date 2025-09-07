@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface StudioDao {
     
+    @Query("SELECT * FROM studios ORDER BY name ASC")
+    fun getAllStudios(): Flow<List<Studio>>
+    
     @Query("SELECT * FROM studios WHERE isActive = 1 ORDER BY name ASC")
     fun getAllActiveStudios(): Flow<List<Studio>>
     

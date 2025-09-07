@@ -12,6 +12,10 @@ class StudioRepositoryImpl @Inject constructor(
     private val studioDao: StudioDao
 ) : StudioRepository {
     
+    override fun getAllStudios(): Flow<List<Studio>> {
+        return studioDao.getAllStudios()
+    }
+    
     override fun getAllActiveStudios(): Flow<List<Studio>> {
         return studioDao.getAllActiveStudios()
     }

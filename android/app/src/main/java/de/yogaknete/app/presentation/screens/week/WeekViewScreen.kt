@@ -35,6 +35,7 @@ fun WeekViewScreen(
     onNavigateToInvoice: () -> Unit = {},
     onNavigateToTemplates: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
+    onNavigateToStudios: () -> Unit = {},
     viewModel: WeekViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -51,6 +52,7 @@ fun WeekViewScreen(
                 onNavigateToTemplates = onNavigateToTemplates,
                 onNavigateToProfile = onNavigateToProfile,
                 onNavigateToInvoice = onNavigateToInvoice,
+                onNavigateToStudios = onNavigateToStudios,
                 isNotFutureWeek = state.currentWeekStart <= Clock.System.todayIn(TimeZone.currentSystemDefault()),
                 onBulkCancel = { viewModel.showBulkCancelDialog() },
                 onShowMonthlyStats = { viewModel.showMonthlyStats() }
@@ -245,6 +247,7 @@ private fun WeekViewTopBar(
     onNavigateToTemplates: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToInvoice: () -> Unit,
+    onNavigateToStudios: () -> Unit,
     isNotFutureWeek: Boolean,
     onBulkCancel: () -> Unit,
     onShowMonthlyStats: () -> Unit
@@ -308,6 +311,19 @@ private fun WeekViewTopBar(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Studios verwalten") },
+                        onClick = {
+                            showMenu = false
+                            onNavigateToStudios()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Home,
                                 contentDescription = null
                             )
                         }
