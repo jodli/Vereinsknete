@@ -72,7 +72,7 @@ interface InvoiceDao {
         LEFT JOIN invoices i ON s.id = i.studioId 
             AND i.month = :month 
             AND i.year = :year
-        WHERE s.isActive = 1
+        WHERE s.isActive = 1 OR i.id IS NOT NULL
         GROUP BY s.id, s.name, s.hourlyRate, i.id, i.paymentStatus
         HAVING COUNT(yc.id) > 0 OR i.id IS NOT NULL
         ORDER BY s.name

@@ -6,12 +6,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -118,12 +119,17 @@ fun InvoiceListScreen(
                                     viewModel.updatePaymentStatus(id, status)
                                 }
                             },
-                            onGeneratePdf = {
-                                // Navigate to PDF generation (Sprint 3.2)
-                                summary.invoiceId?.let { id ->
-                                    navController.navigate("invoice_detail/$id")
+                                onGeneratePdf = {
+                                    // Navigate to invoice detail screen
+                                    summary.invoiceId?.let { id ->
+                                        navController.navigate("invoice_detail/$id")
+                                    }
+                                },
+                                onDeleteInvoice = {
+                                    summary.invoiceId?.let { id ->
+                                        viewModel.deleteInvoice(id)
+                                    }
                                 }
-                            }
                         )
                     }
                 }
@@ -250,7 +256,8 @@ private fun InvoiceSummaryCard(
     numberFormat: NumberFormat,
     onCreateInvoice: () -> Unit,
     onUpdatePaymentStatus: (PaymentStatus) -> Unit,
-    onGeneratePdf: () -> Unit
+    onGeneratePdf: () -> Unit,
+    onDeleteInvoice: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -363,7 +370,7 @@ private fun InvoiceSummaryCard(
                         }
                     }
                     
-                    // Generate PDF button
+                    // View invoice / Generate PDF button
                     Button(
                         onClick = onGeneratePdf,
                         modifier = Modifier.weight(1f)
@@ -374,8 +381,28 @@ private fun InvoiceSummaryCard(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("PDF generieren")
+                        Text("Rechnung anzeigen")
                     }
+                }
+            }
+            
+            // Delete button for existing invoices
+            if (summary.hasExistingInvoice) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onDeleteInvoice,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Rechnung löschen")
                 }
             }
         }

@@ -88,12 +88,19 @@ class WeekViewModel @Inject constructor(
                     val totalHours = completedClasses.sumOf { it.durationHours }
                     
                     // Calculate earnings per studio
-                    val studios = _state.value.studios
+                    // Fetch studio data for each unique studio ID to include inactive studios
+                    val studioIds = completedClasses.map { it.studioId }.distinct()
+                    val studiosMap = mutableMapOf<Long, Studio>()
+                    studioIds.forEach { studioId ->
+                        studioRepository.getStudioById(studioId)?.let { studio ->
+                            studiosMap[studioId] = studio
+                        }
+                    }
+                    
                     val earningsPerStudio = completedClasses
                         .groupBy { it.studioId }
                         .mapValues { (studioId, classes) ->
-                            val studio = studios.find { it.id == studioId }
-                            val hourlyRate = studio?.hourlyRate ?: 0.0
+                            val hourlyRate = studiosMap[studioId]?.hourlyRate ?: 0.0
                             classes.sumOf { it.durationHours * hourlyRate }
                         }
                     
@@ -117,6 +124,8 @@ class WeekViewModel @Inject constructor(
             studioRepository.getAllActiveStudios()
                 .collect { studioList ->
                     _state.update { it.copy(studios = studioList) }
+                    // Reload week to recalculate earnings with updated studios
+                    loadCurrentWeek()
                 }
         }
     }
@@ -361,12 +370,19 @@ class WeekViewModel @Inject constructor(
                     val totalHours = completedClasses.sumOf { it.durationHours }
                     
                     // Calculate earnings per studio
-                    val studios = _state.value.studios
+                    // Fetch studio data for each unique studio ID to include inactive studios
+                    val studioIds = completedClasses.map { it.studioId }.distinct()
+                    val studiosMap = mutableMapOf<Long, Studio>()
+                    studioIds.forEach { studioId ->
+                        studioRepository.getStudioById(studioId)?.let { studio ->
+                            studiosMap[studioId] = studio
+                        }
+                    }
+                    
                     val earningsPerStudio = completedClasses
                         .groupBy { it.studioId }
                         .mapValues { (studioId, classes) ->
-                            val studio = studios.find { it.id == studioId }
-                            val hourlyRate = studio?.hourlyRate ?: 0.0
+                            val hourlyRate = studiosMap[studioId]?.hourlyRate ?: 0.0
                             classes.sumOf { it.durationHours * hourlyRate }
                         }
                     
