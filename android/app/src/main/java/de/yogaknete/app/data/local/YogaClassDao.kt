@@ -38,4 +38,13 @@ interface YogaClassDao {
     
     @Query("SELECT * FROM yoga_classes WHERE id = :id")
     suspend fun getClassById(id: Long): YogaClass?
+    
+    @Query("""
+        SELECT * FROM yoga_classes 
+        WHERE studioId = :studioId 
+        AND CAST(strftime('%m', datetime(startTime)) AS INTEGER) = :month 
+        AND CAST(strftime('%Y', datetime(startTime)) AS INTEGER) = :year
+        ORDER BY startTime ASC
+    """)
+    suspend fun getClassesForStudioInMonth(studioId: Long, month: Int, year: Int): List<YogaClass>
 }

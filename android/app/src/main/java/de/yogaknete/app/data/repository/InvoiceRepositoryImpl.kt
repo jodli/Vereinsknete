@@ -76,13 +76,12 @@ class InvoiceRepositoryImpl @Inject constructor(
     }
     
     override suspend fun generateInvoiceNumber(year: Int, month: Int): String {
-        // Get the count of invoices for this month to generate sequential number
-        val monthCount = invoiceDao.getInvoiceCountForMonth(year, month)
-        val sequentialNumber = (monthCount + 1).toString().padStart(3, '0')
+        // Get the count of invoices for this year to generate sequential number
+        val yearCount = invoiceDao.getInvoiceCountForYear(year)
+        val sequentialNumber = (yearCount + 1).toString().padStart(3, '0')
         
-        // Format: YYYY-MM-XXX (e.g., 2024-03-001)
-        val monthStr = month.toString().padStart(2, '0')
-        return "$year-$monthStr-$sequentialNumber"
+        // Format: YYYY-XXX (e.g., 2025-005)
+        return "$year-$sequentialNumber"
     }
     
     override suspend fun invoiceExists(studioId: Long, month: Int, year: Int): Boolean {

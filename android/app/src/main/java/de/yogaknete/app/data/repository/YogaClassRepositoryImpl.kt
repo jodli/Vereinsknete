@@ -37,4 +37,8 @@ class YogaClassRepositoryImpl @Inject constructor(
     override suspend fun getClassById(id: Long): YogaClass? {
         return yogaClassDao.getClassById(id)
     }
+    
+    override suspend fun getClassesForInvoice(studioId: Long, month: Int, year: Int): List<YogaClass> {
+        return yogaClassDao.getClassesForStudioInMonth(studioId, month, year)
+    }
 }
