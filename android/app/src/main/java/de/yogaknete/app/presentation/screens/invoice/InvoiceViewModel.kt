@@ -196,6 +196,29 @@ class InvoiceViewModel @Inject constructor(
         }
     }
     
+    fun deleteInvoice(invoiceId: Long) {
+        viewModelScope.launch {
+            try {
+                val invoice = invoiceRepository.getInvoiceById(invoiceId)
+                if (invoice != null) {
+                    invoiceRepository.deleteInvoice(invoice)
+                    loadInvoiceSummaries()
+                    _uiState.update { 
+                        it.copy(error = null)
+                    }
+                } else {
+                    _uiState.update { 
+                        it.copy(error = "Rechnung nicht gefunden")
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(error = "Fehler beim Löschen der Rechnung: ${e.message}")
+                }
+            }
+        }
+    }
+    
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }

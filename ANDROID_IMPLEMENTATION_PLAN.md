@@ -206,13 +206,15 @@ app/
 
 #### 3.4 Fix Bugs
 
-- [ ] User profile is missing tax ID, bank details, etc.
-- [ ] Add a way to change the user profile
+- [x] User profile is missing tax ID, bank details, etc.
+- [x] Add a way to change the user profile
 - [x] When creating manual classes, you can't change the date
 - [ ] Change away from destructive migrations for the database
 - [x] The date selection does not work in the EditClassDialog
 - [x] The BulkCancelDialog can't be triggered
 - [x] invoice id is <year>-<increasing number per year>, e.g. 2025-005
+- [x] add a way to remove generated invoices
+- [x] also display invoices for inactive studios
 
 ---
 
