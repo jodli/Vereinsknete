@@ -164,6 +164,38 @@ class InvoiceViewModel @Inject constructor(
         }
     }
     
+    fun updateInvoice(summary: InvoiceSummary) {
+        viewModelScope.launch {
+            try {
+                if (summary.invoiceId == null) {
+                    _uiState.update { 
+                        it.copy(error = "Keine Rechnung zum Aktualisieren gefunden")
+                    }
+                    return@launch
+                }
+                
+                // Get the existing invoice
+                val existingInvoice = invoiceRepository.getInvoiceById(summary.invoiceId)
+                if (existingInvoice != null) {
+                    // Update with new totals
+                    val updatedInvoice = existingInvoice.copy(
+                        totalHours = summary.totalHours,
+                        totalAmount = summary.totalAmount
+                    )
+                    invoiceRepository.updateInvoice(updatedInvoice)
+                    
+                    // Reload summaries to reflect the update
+                    loadInvoiceSummaries()
+                }
+                
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(error = "Fehler beim Aktualisieren der Rechnung: ${e.message}")
+                }
+            }
+        }
+    }
+    
     fun clearError() {
         _uiState.update { it.copy(error = null) }
     }

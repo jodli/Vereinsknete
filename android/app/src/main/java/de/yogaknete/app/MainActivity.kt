@@ -10,6 +10,7 @@ import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import de.yogaknete.app.presentation.screens.week.WeekViewScreen
 import de.yogaknete.app.presentation.screens.templates.TemplateManagementScreen
 import de.yogaknete.app.presentation.screens.invoice.InvoiceListScreen
+import de.yogaknete.app.presentation.screens.invoice.InvoiceDetailScreen
 import de.yogaknete.app.presentation.screens.settings.UserProfileEditScreen
 import de.yogaknete.app.presentation.screens.studios.StudiosManagementScreen
 import androidx.navigation.compose.NavHost
@@ -67,8 +68,11 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("invoice_detail/{invoiceId}") { backStackEntry ->
-                            // Placeholder for invoice detail/PDF generation screen (Sprint 3.2)
-                            // val invoiceId = backStackEntry.arguments?.getString("invoiceId")
+                            val invoiceId = backStackEntry.arguments?.getString("invoiceId")?.toLongOrNull() ?: 0L
+                            InvoiceDetailScreen(
+                                navController = navController,
+                                invoiceId = invoiceId
+                            )
                         }
                         composable("profile_edit") {
                             UserProfileEditScreen(

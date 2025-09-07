@@ -161,14 +161,14 @@ app/
 
 #### Sprint 3.2 PDF Generation (3 days)
 
-- [ ] Professional black & white invoice template
-- [ ] Include sender info (from user profile)
-- [ ] Include receiver info (studio contact person)
-- [ ] Auto-generate invoice number (YYYY-XXX, current year and ongoing number for this year, e.g. 2025-002)
-- [ ] List all completed classes with dates
-- [ ] Show hours, hourly rate, total amount
-- [ ] Add bank transfer details (from user profile) at bottom
-- [ ] PDF generation with iText7 or Android Print
+- [x] Professional black & white invoice template
+- [x] Include sender info (from user profile)
+- [x] Include receiver info (studio contact person)
+- [x] Auto-generate invoice number (YYYY-XXX, current year and ongoing number for this year, e.g. 2025-002)
+- [x] List all completed classes with dates
+- [x] Show hours, hourly rate, total amount
+- [x] Add bank transfer details (from user profile) at bottom
+- [x] PDF generation with iText7 or Android Print
 
 #### Sprint 3.3 Sharing Integration (2 days)
 
@@ -212,6 +212,7 @@ app/
 - [ ] Change away from destructive migrations for the database
 - [x] The date selection does not work in the EditClassDialog
 - [x] The BulkCancelDialog can't be triggered
+- [x] invoice id is <year>-<increasing number per year>, e.g. 2025-005
 
 ---
 
