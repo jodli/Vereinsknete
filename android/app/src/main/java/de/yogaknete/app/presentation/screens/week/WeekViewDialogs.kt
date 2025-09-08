@@ -1,5 +1,6 @@
 package de.yogaknete.app.presentation.screens.week
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -293,149 +294,143 @@ fun ClassActionDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Action buttons
-                if (yogaClass.status == ClassStatus.SCHEDULED) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Always show all action buttons
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Mark as completed
+                    val isCompleted = yogaClass.status == ClassStatus.COMPLETED
+                    Card(
+                        onClick = onMarkCompleted,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isCompleted) 
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                            else 
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                        ),
+                        border = if (isCompleted) 
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.primary) 
+                        else null
                     ) {
-                        // Mark as completed
-                        Card(
-                            onClick = onMarkCompleted,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                            )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.CheckCircleOutline,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = "Durchgeführt",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        }
-                        
-                        // Mark as cancelled
-                        Card(
-                            onClick = onMarkCancelled,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+                            Icon(
+                                imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Outlined.CheckCircleOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
                             )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Cancel,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = "Ausgefallen",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        }
-                        
-                        // Edit/Reschedule button
-                        Card(
-                            onClick = onEdit,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = "Durchgeführt",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (isCompleted) FontWeight.Bold else FontWeight.Normal
                             )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                            if (isCompleted) {
+                                Spacer(modifier = Modifier.weight(1f))
                                 Icon(
-                                    imageVector = Icons.Default.Edit,
+                                    imageVector = Icons.Default.Check,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Text(
-                                    text = "Bearbeiten/Verschieben",
-                                    style = MaterialTheme.typography.titleMedium
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                     }
-                } else {
-                    // Show current status
+                    
+                    // Mark as cancelled
+                    val isCancelled = yogaClass.status == ClassStatus.CANCELLED
                     Card(
+                        onClick = onMarkCancelled,
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = when (yogaClass.status) {
-                                ClassStatus.COMPLETED -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
-                                ClassStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                                else -> MaterialTheme.colorScheme.surface
+                            containerColor = if (isCancelled)
+                                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+                            else
+                                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+                        ),
+                        border = if (isCancelled) 
+                            BorderStroke(2.dp, MaterialTheme.colorScheme.error) 
+                        else null
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Cancel,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = "Ausgefallen",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = if (isCancelled) FontWeight.Bold else FontWeight.Normal
+                            )
+                            if (isCancelled) {
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
+                        }
+                    }
+                    
+                    // Edit/Reschedule button
+                    Card(
+                        onClick = onEdit,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                         )
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = when (yogaClass.status) {
-                                    ClassStatus.COMPLETED -> Icons.Default.CheckCircle
-                                    ClassStatus.CANCELLED -> Icons.Default.Cancel
-                                    else -> Icons.Default.Schedule
-                                },
+                                imageVector = Icons.Default.Edit,
                                 contentDescription = null,
-                                tint = when (yogaClass.status) {
-                                    ClassStatus.COMPLETED -> MaterialTheme.colorScheme.primary
-                                    ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
-                                    else -> MaterialTheme.colorScheme.onSurface
-                                }
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
+                            Spacer(modifier = Modifier.width(16.dp))
                             Text(
-                                text = when (yogaClass.status) {
-                                    ClassStatus.COMPLETED -> "Kurs wurde durchgeführt"
-                                    ClassStatus.CANCELLED -> "Kurs ist ausgefallen"
-                                    else -> ""
-                                },
+                                text = "Bearbeiten/Verschieben",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
                     }
                     
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Delete option for non-scheduled classes
-                    TextButton(
-                        onClick = onDelete,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Löschen")
+                    // Delete option for completed or cancelled classes
+                    if (yogaClass.status != ClassStatus.SCHEDULED) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        TextButton(
+                            onClick = onDelete,
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Kurs löschen")
+                        }
                     }
                 }
             }
