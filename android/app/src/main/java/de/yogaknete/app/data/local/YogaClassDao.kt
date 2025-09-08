@@ -41,6 +41,15 @@ interface YogaClassDao {
     
     @Query("""
         SELECT * FROM yoga_classes 
+        WHERE date(startTime) = date(:startTime) 
+        AND time(startTime) = time(:startTime)
+        AND studioId = :studioId
+        LIMIT 1
+    """)
+    suspend fun getClassAtTime(startTime: LocalDateTime, studioId: Long): YogaClass?
+    
+    @Query("""
+        SELECT * FROM yoga_classes 
         WHERE studioId = :studioId 
         AND CAST(strftime('%m', datetime(startTime)) AS INTEGER) = :month 
         AND CAST(strftime('%Y', datetime(startTime)) AS INTEGER) = :year

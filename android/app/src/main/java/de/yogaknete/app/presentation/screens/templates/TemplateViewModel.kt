@@ -9,6 +9,7 @@ import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
 import de.yogaknete.app.domain.repository.YogaClassRepository
+import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
@@ -28,7 +29,8 @@ data class TemplateUiState(
 class TemplateViewModel @Inject constructor(
     private val templateRepository: ClassTemplateRepository,
     private val studioRepository: StudioRepository,
-    private val yogaClassRepository: YogaClassRepository
+    private val yogaClassRepository: YogaClassRepository,
+    private val autoScheduleManager: AutoScheduleManager
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(TemplateUiState())
@@ -102,6 +104,17 @@ class TemplateViewModel @Inject constructor(
         }
     }
     
+    fun toggleAutoSchedule(templateId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            templateRepository.updateAutoSchedule(templateId, enabled)
+            
+            // If enabling auto-schedule, immediately schedule upcoming classes
+            if (enabled) {
+                autoScheduleManager.autoScheduleOnTemplateEnabled(templateId)
+            }
+        }
+    }
+    
     fun showTemplateDialog(template: ClassTemplate? = null) {
         _uiState.update { 
             it.copy(
@@ -156,7 +169,9 @@ class TemplateViewModel @Inject constructor(
                 startTime = startDateTime,
                 endTime = endDateTime,
                 durationHours = duration,
-                status = de.yogaknete.app.domain.model.ClassStatus.SCHEDULED
+                status = de.yogaknete.app.domain.model.ClassStatus.SCHEDULED,
+                creationSource = de.yogaknete.app.domain.model.CreationSource.TEMPLATE,
+                sourceTemplateId = template.id
             )
             
             yogaClassRepository.addClass(yogaClass)

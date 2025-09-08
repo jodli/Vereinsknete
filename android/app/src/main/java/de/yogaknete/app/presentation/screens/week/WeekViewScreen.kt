@@ -23,9 +23,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import de.yogaknete.app.core.utils.DateUtils
-import de.yogaknete.app.domain.model.ClassStatus
-import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
+import de.yogaknete.app.domain.model.ClassStatus
+import de.yogaknete.app.domain.model.CreationSource
+import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.templates.QuickAddDialog
 import kotlinx.datetime.*
@@ -619,11 +620,30 @@ private fun YogaClassCard(
                     color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
                 )
                 
-                Text(
-                    text = yogaClass.title,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = yogaClass.title,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    
+                    // Show AUTO badge for auto-scheduled classes
+                    if (yogaClass.creationSource == CreationSource.AUTO) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        ) {
+                            Text(
+                                text = "AUTO",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
                 
                 if (yogaClass.status != ClassStatus.SCHEDULED) {
                     Text(

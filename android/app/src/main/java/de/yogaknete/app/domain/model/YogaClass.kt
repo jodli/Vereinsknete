@@ -27,7 +27,9 @@ data class YogaClass(
     val endTime: LocalDateTime,
     val durationHours: Double, // Calculated duration in hours
     val status: ClassStatus = ClassStatus.SCHEDULED,
-    val notes: String = ""
+    val notes: String = "",
+    val creationSource: CreationSource = CreationSource.MANUAL,
+    val sourceTemplateId: Long? = null // Link to template if auto-created or from template
 )
 
 @Serializable
@@ -35,4 +37,11 @@ enum class ClassStatus {
     SCHEDULED,      // Planned/upcoming
     COMPLETED,      // Successfully taught
     CANCELLED       // Cancelled/didn't happen
+}
+
+@Serializable
+enum class CreationSource {
+    MANUAL,         // User created directly
+    TEMPLATE,       // Created from template (quick-add)
+    AUTO           // Auto-scheduled from recurring template
 }

@@ -20,7 +20,7 @@ import de.yogaknete.app.data.local.dao.ClassTemplateDao
         ClassTemplate::class,
         Invoice::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 @TypeConverters(DateTimeConverters::class)

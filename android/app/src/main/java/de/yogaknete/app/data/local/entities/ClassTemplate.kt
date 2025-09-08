@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import de.yogaknete.app.domain.model.Studio
 import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Serializable
 
@@ -41,5 +42,7 @@ data class ClassTemplate(
     val startTime: LocalTime,
     val endTime: LocalTime,
     val duration: Double = 1.25, // Standard: 1.25 Stunden
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val autoSchedule: Boolean = false, // Automatisch wöchentlich erstellen
+    val lastScheduledDate: LocalDate? = null // Letzte automatisch erstellte Klasse
 )
