@@ -310,7 +310,7 @@ private fun TemplateCard(
             // Auto-schedule section (only if template is active)
             if (template.isActive) {
                 Spacer(modifier = Modifier.height(12.dp))
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.fillMaxWidth(),
                     thickness = 0.5.dp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)

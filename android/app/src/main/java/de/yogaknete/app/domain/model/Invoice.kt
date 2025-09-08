@@ -3,6 +3,7 @@ package de.yogaknete.app.domain.model
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import androidx.room.Index
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
@@ -20,6 +21,9 @@ import kotlinx.serialization.Serializable
             childColumns = ["studioId"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["studioId"])
     ]
 )
 data class Invoice(
