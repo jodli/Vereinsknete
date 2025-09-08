@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Euro
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -573,37 +575,71 @@ private fun DayHeader(
     isToday: Boolean,
     onQuickAdd: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = DateUtils.formatDayDate(date),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium,
-            color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isToday) 
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+            else 
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
         )
-        
-        if (isToday) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "HEUTE",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Day info with better visual hierarchy
+            Column {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = DateUtils.getDayOfWeekName(date.dayOfWeek),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
                     )
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        IconButton(onClick = onQuickAdd) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Schnell hinzufügen"
-            )
+                    
+                    if (isToday) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Text(
+                                text = "HEUTE",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                    }
+                }
+                
+                Text(
+                    text = DateUtils.formatShortDate(date),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            // Quick add button with better visual feedback
+            FilledTonalIconButton(
+                onClick = onQuickAdd,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Schnell hinzufügen"
+                )
+            }
         }
     }
 }
@@ -615,34 +651,34 @@ private fun EmptyDayCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
         )
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Icon(
-                    imageVector = Icons.Default.EventBusy,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Keine Kurse geplant",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Kurs hinzufügen",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
         }
     }
 }
@@ -660,21 +696,21 @@ private fun YogaClassCard(
     }
     
     val statusColor = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+        ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.primary
         ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
         ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
     }
 
     val borderColor = when (yogaClass.status) {
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
-        else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+        else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
     }
     
     val backgroundColor = when (yogaClass.status) {
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.1f)
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
-        else -> MaterialTheme.colorScheme.surface
+        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f)
+        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+        else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
     }
 
     Card(
@@ -702,35 +738,24 @@ private fun YogaClassCard(
             Spacer(modifier = Modifier.width(16.dp))
             
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface,
-                )
-                
-                Text(
-                    text = studio?.name ?: "Unbekanntes Studio",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
-                )
-                
+                // Primary info: Time and Class title
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = yogaClass.title,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                        modifier = Modifier.weight(1f, fill = false)
+                        text = DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
                     )
                     
                     // Show AUTO badge for auto-scheduled classes
                     if (yogaClass.creationSource == CreationSource.AUTO) {
-                        Spacer(modifier = Modifier.width(8.dp))
                         Badge(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         ) {
                             Text(
                                 text = "AUTO",
@@ -740,7 +765,37 @@ private fun YogaClassCard(
                     }
                 }
                 
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Class title with better prominence
+                Text(
+                    text = yogaClass.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurface
+                )
+                
+                // Studio info
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Business,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = studio?.name ?: "Unbekanntes Studio",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (yogaClass.status == ClassStatus.CANCELLED) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+                
+                // Status indicator for completed/cancelled classes
                 if (yogaClass.status != ClassStatus.SCHEDULED) {
+                    Spacer(modifier = Modifier.height(6.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -752,7 +807,7 @@ private fun YogaClassCard(
                                 else -> Icons.Default.Schedule
                             },
                             contentDescription = null,
-                            modifier = Modifier.size(14.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = statusColor
                         )
                         Text(
@@ -761,19 +816,26 @@ private fun YogaClassCard(
                                 ClassStatus.CANCELLED -> "Ausgefallen"
                                 else -> ""
                             },
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
                             color = statusColor
                         )
                     }
                 }
             }
             
+            // Action indicator for scheduled classes
             if (yogaClass.status == ClassStatus.SCHEDULED) {
-                Text(
-                    text = "Antippen für Aktionen",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowRight,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                    )
+                }
             }
         }
     }
