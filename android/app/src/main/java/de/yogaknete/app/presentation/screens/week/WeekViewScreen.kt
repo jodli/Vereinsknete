@@ -18,8 +18,12 @@ import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Euro
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.IconButtonDefaults
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.DatePeriod
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -90,6 +94,8 @@ fun WeekViewScreen(
         ) {
             // Week summary
             WeekSummaryCard(
+                weekStart = state.currentWeekStart,
+                weekEnd = state.currentWeekEnd,
                 totalClasses = state.totalClassesThisWeek,
                 totalHours = state.totalHoursThisWeek,
                 totalEarnings = state.totalEarningsThisWeek,
@@ -265,20 +271,53 @@ private fun WeekViewTopBar(
     onShowMonthlyStats: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    
+    // Determine if this is the current week
+    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    val isCurrentWeek = today >= weekStart && today <= weekEnd
+    val isLastWeek = weekEnd == DateUtils.getWeekStart(today).minus(DatePeriod(days = 1))
+    val isNextWeek = weekStart == DateUtils.getWeekEnd(today).plus(DatePeriod(days = 1))
+    
+    val weekTitle = when {
+        isCurrentWeek -> "Diese Woche"
+        isLastWeek -> "Letzte Woche"
+        isNextWeek -> "Nächste Woche"
+        weekStart.year != today.year -> "Kalenderwoche ${DateUtils.getWeekOfYear(weekStart)} • ${weekStart.year}"
+        else -> "Kalenderwoche ${DateUtils.getWeekOfYear(weekStart)}"
+    }
+    
     TopAppBar(
         title = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Diese Woche",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = weekTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    
+                    // Show "today" indicator for current week
+                    if (isCurrentWeek) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(
+                            imageVector = Icons.Default.FiberManualRecord,
+                            contentDescription = null,
+                            modifier = Modifier.size(8.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                
                 Text(
                     text = DateUtils.formatWeekRange(weekStart, weekEnd),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
         },
@@ -419,11 +458,17 @@ private fun WeekViewTopBar(
 
 @Composable
 private fun WeekSummaryCard(
+    weekStart: LocalDate,
+    weekEnd: LocalDate,
     totalClasses: Int,
     totalHours: Double,
     totalEarnings: Double,
     onShowStats: () -> Unit
 ) {
+    // Determine if this is the current week for dynamic title
+    val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+    val isCurrentWeek = today >= weekStart && today <= weekEnd
+    val summaryTitle = if (isCurrentWeek) "Wochenübersicht" else "Übersicht"
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -451,7 +496,7 @@ private fun WeekSummaryCard(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Wochenübersicht",
+                    text = summaryTitle,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
