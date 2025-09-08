@@ -19,7 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import de.yogaknete.app.data.local.entities.ClassTemplate
-import de.yogaknete.app.presentation.theme.YogaPurple
+import de.yogaknete.app.ui.theme.YogaPurple
 import de.yogaknete.app.presentation.components.TimePickerField
 import de.yogaknete.app.presentation.components.DurationPickerField
 import kotlinx.datetime.*

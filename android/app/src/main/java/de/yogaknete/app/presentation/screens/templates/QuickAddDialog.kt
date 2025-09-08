@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.presentation.components.TimePickerField
 import de.yogaknete.app.presentation.components.DurationPickerField
-import de.yogaknete.app.presentation.theme.YogaPurple
+import de.yogaknete.app.ui.theme.YogaPurple
 import kotlinx.datetime.*
 
 @Composable
