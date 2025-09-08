@@ -7,10 +7,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material3.*
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -24,6 +28,8 @@ import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.data.local.entities.ClassTemplate
+import de.yogaknete.app.presentation.components.TimeInputField
+import de.yogaknete.app.presentation.components.DurationInputField
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
@@ -46,12 +52,15 @@ fun AddClassDialog(
     var selectedDate by remember { mutableStateOf(weekDays.firstOrNull() ?: LocalDate(2024, 1, 1)) }
     var startHour by remember { mutableIntStateOf(17) }
     var startMinute by remember { mutableIntStateOf(30) }
-    var endHour by remember { mutableIntStateOf(18) }
-    var endMinute by remember { mutableIntStateOf(45) }
+    var durationMinutes by remember { mutableIntStateOf(75) } // Default: 1.25 hours = 75 minutes
     var expanded by remember { mutableStateOf(false) }
     var templateExpanded by remember { mutableStateOf(false) }
     var selectedTemplate: ClassTemplate? by remember { mutableStateOf(null) }
     var showDatePicker by remember { mutableStateOf(false) }
+    
+    // Calculate end time based on start time + duration
+    val endHour = (startHour * 60 + startMinute + durationMinutes) / 60
+    val endMinute = (startHour * 60 + startMinute + durationMinutes) % 60
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -111,8 +120,7 @@ fun AddClassDialog(
                         title = tmpl.className
                         startHour = tmpl.startTime.hour
                         startMinute = tmpl.startTime.minute
-                        endHour = tmpl.endTime.hour
-                        endMinute = tmpl.endTime.minute
+                        durationMinutes = (tmpl.duration * 60).toInt()
                     }
                 )
                 
@@ -151,72 +159,34 @@ fun AddClassDialog(
                     )
                 }
                 
-                // Time inputs
+                // Time and duration inputs
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Startzeit",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            OutlinedTextField(
-                                value = startHour.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { h ->
-                                        if (h in 0..23) startHour = h
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Std") },
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = startMinute.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { m ->
-                                        if (m in 0..59) startMinute = m
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Min") },
-                                singleLine = true
-                            )
-                        }
-                    }
+                    TimeInputField(
+                        label = "Startzeit",
+                        hour = startHour,
+                        minute = startMinute,
+                        onHourChange = { startHour = it },
+                        onMinuteChange = { startMinute = it },
+                        modifier = Modifier.weight(1f)
+                    )
                     
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Endzeit",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            OutlinedTextField(
-                                value = endHour.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { h ->
-                                        if (h in 0..23) endHour = h
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Std") },
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = endMinute.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { m ->
-                                        if (m in 0..59) endMinute = m
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Min") },
-                                singleLine = true
-                            )
-                        }
-                    }
+                    DurationInputField(
+                        label = "Dauer",
+                        durationMinutes = durationMinutes,
+                        onDurationChange = { durationMinutes = it },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
+                
+                // Show calculated end time
+                Text(
+                    text = "Endzeit: ${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(start = 16.dp)
+                )
             }
         },
         confirmButton = {
@@ -349,7 +319,7 @@ fun ClassActionDialog(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Text(
-                                    text = "✅ Durchgeführt",
+                                    text = "Durchgeführt",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
@@ -376,7 +346,7 @@ fun ClassActionDialog(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Text(
-                                    text = "🚫 Ausgefallen",
+                                    text = "Ausgefallen",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
@@ -403,7 +373,7 @@ fun ClassActionDialog(
                                 )
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Text(
-                                    text = "📝 Bearbeiten/Verschieben",
+                                    text = "Bearbeiten/Verschieben",
                                     style = MaterialTheme.typography.titleMedium
                                 )
                             }
@@ -421,15 +391,33 @@ fun ClassActionDialog(
                             }
                         )
                     ) {
-                        Text(
-                            text = when (yogaClass.status) {
-                                ClassStatus.COMPLETED -> "✅ Kurs wurde durchgeführt"
-                                ClassStatus.CANCELLED -> "🚫 Kurs ist ausgefallen"
-                                else -> ""
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = when (yogaClass.status) {
+                                    ClassStatus.COMPLETED -> Icons.Default.CheckCircle
+                                    ClassStatus.CANCELLED -> Icons.Default.Cancel
+                                    else -> Icons.Default.Schedule
+                                },
+                                contentDescription = null,
+                                tint = when (yogaClass.status) {
+                                    ClassStatus.COMPLETED -> MaterialTheme.colorScheme.primary
+                                    ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
+                                    else -> MaterialTheme.colorScheme.onSurface
+                                }
+                            )
+                            Text(
+                                text = when (yogaClass.status) {
+                                    ClassStatus.COMPLETED -> "Kurs wurde durchgeführt"
+                                    ClassStatus.CANCELLED -> "Kurs ist ausgefallen"
+                                    else -> ""
+                                },
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
                     }
                     
                     Spacer(modifier = Modifier.height(8.dp))
@@ -593,11 +581,24 @@ fun BulkCancelDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 if (scheduledClasses.isEmpty()) {
-                    Text(
-                        text = "Keine geplanten Kurse in dieser Woche.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EventBusy,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Keine geplanten Kurse in dieser Woche",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 } else {
                     // Select/Deselect all
                     Row(
@@ -722,9 +723,17 @@ fun EditClassDialog(
     var selectedDate by remember { mutableStateOf(yogaClass.startTime.date) }
     var startHour by remember { mutableIntStateOf(yogaClass.startTime.hour) }
     var startMinute by remember { mutableIntStateOf(yogaClass.startTime.minute) }
-    var endHour by remember { mutableIntStateOf(yogaClass.endTime.hour) }
-    var endMinute by remember { mutableIntStateOf(yogaClass.endTime.minute) }
+    val currentDurationMinutes = remember(yogaClass) {
+        val startMinutes = yogaClass.startTime.hour * 60 + yogaClass.startTime.minute
+        val endMinutes = yogaClass.endTime.hour * 60 + yogaClass.endTime.minute
+        endMinutes - startMinutes
+    }
+    var durationMinutes by remember { mutableIntStateOf(currentDurationMinutes) }
     var showDatePicker by remember { mutableStateOf(false) }
+    
+    // Calculate end time based on start time + duration
+    val endHour = (startHour * 60 + startMinute + durationMinutes) / 60
+    val endMinute = (startHour * 60 + startMinute + durationMinutes) % 60
     
     val studio = studios.find { it.id == yogaClass.studioId }
     
@@ -790,82 +799,34 @@ fun EditClassDialog(
                     )
                 }
                 
-                // Time inputs
+                // Time and duration inputs
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Startzeit",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            OutlinedTextField(
-                                value = startHour.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { h ->
-                                        if (h in 0..23) startHour = h
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Std") },
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = startMinute.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { m ->
-                                        if (m in 0..59) startMinute = m
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Min") },
-                                singleLine = true
-                            )
-                        }
-                    }
+                    TimeInputField(
+                        label = "Startzeit",
+                        hour = startHour,
+                        minute = startMinute,
+                        onHourChange = { startHour = it },
+                        onMinuteChange = { startMinute = it },
+                        modifier = Modifier.weight(1f)
+                    )
                     
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Endzeit",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            OutlinedTextField(
-                                value = endHour.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { h ->
-                                        if (h in 0..23) endHour = h
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Std") },
-                                singleLine = true
-                            )
-                            OutlinedTextField(
-                                value = endMinute.toString().padStart(2, '0'),
-                                onValueChange = { value ->
-                                    value.toIntOrNull()?.let { m ->
-                                        if (m in 0..59) endMinute = m
-                                    }
-                                },
-                                modifier = Modifier.weight(1f),
-                                label = { Text("Min") },
-                                singleLine = true
-                            )
-                        }
-                    }
-                }
-                
-                // Duration display
-                val duration = calculateDuration(startHour, startMinute, endHour, endMinute)
-                if (duration > 0) {
-                    Text(
-                        text = "Dauer: ${String.format(Locale.GERMAN, "%.2f", duration).replace(".", ",")} Stunden",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    DurationInputField(
+                        label = "Dauer",
+                        durationMinutes = durationMinutes,
+                        onDurationChange = { durationMinutes = it },
+                        modifier = Modifier.weight(1f)
                     )
                 }
+                
+                // Show calculated end time
+                Text(
+                    text = "Endzeit: ${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(start = 16.dp)
+                )
             }
         },
         confirmButton = {
@@ -1057,13 +1018,24 @@ fun WeekStatsDialog(
                         }
                     }
                 } else {
-                    Text(
-                        text = "Noch keine erledigten Kurse diese Woche.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center,
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EventBusy,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Noch keine erledigten Kurse diese Woche",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         },
@@ -1240,13 +1212,24 @@ fun MonthlyStatsDialog(
                             }
                     }
                 } else {
-                    Text(
-                        text = "Noch keine erledigten Kurse in diesem Monat.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                        textAlign = TextAlign.Center,
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.EventBusy,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Noch keine erledigten Kurse in diesem Monat",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
                 
                 // Comparison with previous month (optional future feature)
