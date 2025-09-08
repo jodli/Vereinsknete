@@ -13,6 +13,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.EventBusy
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Euro
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -86,7 +91,6 @@ fun WeekViewScreen(
                 totalClasses = state.totalClassesThisWeek,
                 totalHours = state.totalHoursThisWeek,
                 totalEarnings = state.totalEarningsThisWeek,
-                onCreateInvoice = onNavigateToInvoice,
                 onShowStats = { viewModel.showWeekStats() }
             )
             
@@ -416,7 +420,6 @@ private fun WeekSummaryCard(
     totalClasses: Int,
     totalHours: Double,
     totalEarnings: Double,
-    onCreateInvoice: () -> Unit,
     onShowStats: () -> Unit
 ) {
     Card(
@@ -433,56 +436,134 @@ private fun WeekSummaryCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Header with icon
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BarChart,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Wochenübersicht",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            if (totalClasses > 0) {
+                // Stats grid layout
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    // Classes stat
+                    StatItem(
+                        value = totalClasses.toString(),
+                        label = if (totalClasses == 1) "Kurs" else "Kurse",
+                        icon = Icons.Default.School,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Hours stat
+                    StatItem(
+                        value = String.format(Locale.GERMAN, "%.1f", totalHours).replace(".", ","),
+                        label = "Stunden",
+                        icon = Icons.Default.AccessTime,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Earnings stat
+                    StatItem(
+                        value = "€${String.format(Locale.GERMAN, "%.0f", totalEarnings).replace(".", ",")}",
+                        label = "Verdienst",
+                        icon = Icons.Default.Euro,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            } else {
+                // Empty state
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.EventBusy,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Noch keine erledigten Kurse diese Woche",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Action hint
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = if (totalClasses > 0) "$totalClasses erledigte Kurse" else "Keine erledigten Kurse",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    if (totalClasses > 0) {
-                        Text(
-                            text = "${String.format(Locale.GERMAN, "%.2f", totalHours).replace(".", ",")} Stunden",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "€ ${String.format(Locale.GERMAN, "%.2f", totalEarnings).replace(".", ",")} Verdienst",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                Text(
+                    text = "Tippe für detaillierte Statistiken",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
                 
-                Button(
-                    onClick = onCreateInvoice,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.List,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Rechnung")
-                }
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowRight,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
             }
-            
-            // Hint for more details
-            Text(
-                text = "Tippe für Details",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                modifier = Modifier.padding(top = 8.dp)
-            )
         }
+    }
+}
+
+@Composable
+private fun StatItem(
+    value: String,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = color.copy(alpha = 0.7f)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.7f)
+        )
     }
 }
 
