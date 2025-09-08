@@ -118,4 +118,17 @@ object DateUtils {
     fun formatShortDate(date: LocalDate): String {
         return "${date.dayOfMonth.toString().padStart(2, '0')}.${date.monthNumber.toString().padStart(2, '0')}."
     }
+    
+    /**
+     * Get week number of the year (ISO week)
+     */
+    fun getWeekOfYear(date: LocalDate): Int {
+        // Simple week calculation - could be improved with ISO week standards
+        val firstDayOfYear = LocalDate(date.year, 1, 1)
+        val firstWeekStart = getWeekStart(firstDayOfYear)
+        val currentWeekStart = getWeekStart(date)
+        
+        val daysDiff = currentWeekStart.toEpochDays() - firstWeekStart.toEpochDays()
+        return (daysDiff / 7).toInt() + 1
+    }
 }
