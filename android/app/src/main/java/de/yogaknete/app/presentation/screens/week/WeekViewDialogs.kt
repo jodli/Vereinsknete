@@ -12,6 +12,8 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +30,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,13 +41,13 @@ fun AddClassDialog(
     onDismiss: () -> Unit,
     onConfirm: (studioId: Long, title: String, date: LocalDate, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int) -> Unit
 ) {
-    var selectedStudioId by remember { mutableStateOf(studios.firstOrNull()?.id ?: 0L) }
+    var selectedStudioId by remember { mutableLongStateOf(studios.firstOrNull()?.id ?: 0L) }
     var title by remember { mutableStateOf("Hatha Yoga") }
     var selectedDate by remember { mutableStateOf(weekDays.firstOrNull() ?: LocalDate(2024, 1, 1)) }
-    var startHour by remember { mutableStateOf(17) }
-    var startMinute by remember { mutableStateOf(30) }
-    var endHour by remember { mutableStateOf(18) }
-    var endMinute by remember { mutableStateOf(45) }
+    var startHour by remember { mutableIntStateOf(17) }
+    var startMinute by remember { mutableIntStateOf(30) }
+    var endHour by remember { mutableIntStateOf(18) }
+    var endMinute by remember { mutableIntStateOf(45) }
     var expanded by remember { mutableStateOf(false) }
     var templateExpanded by remember { mutableStateOf(false) }
     var selectedTemplate: ClassTemplate? by remember { mutableStateOf(null) }
@@ -308,7 +311,7 @@ fun ClassActionDialog(
                 )
                 
                 Text(
-                    text = "${DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime)} (${String.format("%.2f", yogaClass.durationHours).replace(".", ",")} Std.)",
+                    text = "${DateUtils.formatTimeRange(yogaClass.startTime, yogaClass.endTime)} (${String.format(Locale.GERMAN, "%.2f", yogaClass.durationHours).replace(".", ",")} Std.)",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 
@@ -621,7 +624,7 @@ fun BulkCancelDialog(
                         }
                     }
                     
-                    Divider()
+                    HorizontalDivider()
                     
                     // List of classes
                     Column(
@@ -717,10 +720,10 @@ fun EditClassDialog(
     onConfirm: (date: LocalDate, startHour: Int, startMinute: Int, endHour: Int, endMinute: Int) -> Unit
 ) {
     var selectedDate by remember { mutableStateOf(yogaClass.startTime.date) }
-    var startHour by remember { mutableStateOf(yogaClass.startTime.hour) }
-    var startMinute by remember { mutableStateOf(yogaClass.startTime.minute) }
-    var endHour by remember { mutableStateOf(yogaClass.endTime.hour) }
-    var endMinute by remember { mutableStateOf(yogaClass.endTime.minute) }
+    var startHour by remember { mutableIntStateOf(yogaClass.startTime.hour) }
+    var startMinute by remember { mutableIntStateOf(yogaClass.startTime.minute) }
+    var endHour by remember { mutableIntStateOf(yogaClass.endTime.hour) }
+    var endMinute by remember { mutableIntStateOf(yogaClass.endTime.minute) }
     var showDatePicker by remember { mutableStateOf(false) }
     
     val studio = studios.find { it.id == yogaClass.studioId }
@@ -858,7 +861,7 @@ fun EditClassDialog(
                 val duration = calculateDuration(startHour, startMinute, endHour, endMinute)
                 if (duration > 0) {
                     Text(
-                        text = "Dauer: ${String.format("%.2f", duration).replace(".", ",")} Stunden",
+                        text = "Dauer: ${String.format(Locale.GERMAN, "%.2f", duration).replace(".", ",")} Stunden",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -982,7 +985,7 @@ fun WeekStatsDialog(
                         ) {
                             Text("Gesamt Stunden:", style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = String.format("%.2f", totalHours).replace(".", ","),
+                                text = String.format(Locale.GERMAN, "%.2f", totalHours).replace(".", ","),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -994,7 +997,7 @@ fun WeekStatsDialog(
                         ) {
                             Text("Gesamt Verdienst:", style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")}",
+                                text = "€ ${String.format(Locale.GERMAN, "%.2f", totalEarnings).replace(".", ",")}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -1043,7 +1046,7 @@ fun WeekStatsDialog(
                                             )
                                         }
                                         Text(
-                                            text = "€ ${String.format("%.2f", earnings).replace(".", ",")}",
+                                            text = "€ ${String.format(Locale.GERMAN, "%.2f", earnings).replace(".", ",")}",
                                             style = MaterialTheme.typography.bodyLarge,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.secondary
@@ -1159,7 +1162,7 @@ fun MonthlyStatsDialog(
                         ) {
                             Text("Gesamt Stunden:", style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = String.format("%.2f", totalHours).replace(".", ","),
+                                text = String.format(Locale.GERMAN, "%.2f", totalHours).replace(".", ","),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1171,7 +1174,7 @@ fun MonthlyStatsDialog(
                         ) {
                             Text("Monats-Verdienst:", style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")}",
+                                text = "€ ${String.format(Locale.GERMAN, "%.2f", totalEarnings).replace(".", ",")}",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
@@ -1220,13 +1223,13 @@ fun MonthlyStatsDialog(
                                                 // Calculate and show number of hours for this studio
                                                 val hours = earnings / studio.hourlyRate
                                                 Text(
-                                                    text = "${String.format("%.2f", hours).replace(".", ",")} Stunden • €${studio.hourlyRate}/Std",
+                                                    text = "${String.format(Locale.GERMAN, "%.2f", hours).replace(".", ",")} Stunden • €${studio.hourlyRate}/Std",
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                                                 )
                                             }
                                             Text(
-                                                text = "€ ${String.format("%.2f", earnings).replace(".", ",")}",
+                                                text = "€ ${String.format(Locale.GERMAN, "%.2f", earnings).replace(".", ",")}",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.secondary

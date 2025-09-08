@@ -296,7 +296,7 @@ private fun TemplateEditDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember(template) { mutableStateOf(template?.name ?: "") }
-    var selectedStudioId by remember(template) { mutableStateOf(template?.studioId ?: studios.firstOrNull()?.id ?: 0L) }
+    var selectedStudioId by remember(template) { mutableLongStateOf(template?.studioId ?: studios.firstOrNull()?.id ?: 0L) }
     var className by remember(template) { mutableStateOf(template?.className ?: "") }
     var selectedDayOfWeek by remember(template) { mutableStateOf(template?.dayOfWeek ?: DayOfWeek.MONDAY) }
     var startTime by remember(template) { mutableStateOf(template?.startTime ?: LocalTime(9, 0)) }
@@ -337,7 +337,7 @@ private fun TemplateEditDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+														.menuAnchor(MenuAnchorType.PrimaryNotEditable)
                     )
                     ExposedDropdownMenu(
                         expanded = expanded,
@@ -377,7 +377,7 @@ private fun TemplateEditDialog(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dayExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .menuAnchor()
+														.menuAnchor(MenuAnchorType.PrimaryNotEditable)
                     )
                     ExposedDropdownMenu(
                         expanded = dayExpanded,
