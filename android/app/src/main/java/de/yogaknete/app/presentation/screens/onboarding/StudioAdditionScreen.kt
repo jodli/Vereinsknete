@@ -8,12 +8,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.AddBusiness
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.ContactMail
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -75,7 +78,7 @@ fun StudioAdditionScreen(
             
             // Header
             Icon(
-                imageVector = Icons.Default.Home,
+                imageVector = Icons.Outlined.Store,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary
@@ -132,7 +135,7 @@ fun StudioAdditionScreen(
                     placeholder = { Text("z.B. TSV München") },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Home,
+                            imageVector = Icons.Outlined.Store,
                             contentDescription = null
                         )
                     },
@@ -160,7 +163,7 @@ fun StudioAdditionScreen(
                     placeholder = { Text("z.B. 31,50") },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = Icons.Outlined.AttachMoney,
                             contentDescription = null
                         )
                     },
@@ -200,7 +203,7 @@ fun StudioAdditionScreen(
                         placeholder = { Text("z.B. Max Mustermann") },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Person,
+                                imageVector = Icons.Outlined.ContactMail,
                                 contentDescription = null
                             )
                         },
@@ -328,7 +331,7 @@ fun StudioAdditionScreen(
                     )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        imageVector = Icons.Outlined.AddBusiness,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
@@ -410,7 +413,7 @@ private fun StudioItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.Home,
+                imageVector = Icons.Outlined.Store,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)

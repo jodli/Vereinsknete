@@ -7,6 +7,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.PostAdd
+import androidx.compose.material.icons.outlined.ToggleOn
+import androidx.compose.material.icons.outlined.ToggleOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,7 +49,7 @@ fun TemplateManagementScreen(
                 onClick = { viewModel.showTemplateDialog() },
                 containerColor = YogaPurple
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Neue Vorlage")
+                Icon(Icons.Outlined.PostAdd, contentDescription = "Neue Vorlage")
             }
         }
     ) { paddingValues ->
@@ -114,7 +118,7 @@ private fun EmptyTemplatesView(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            Icons.Default.Info,
+            Icons.Outlined.ContentCopy,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -138,7 +142,7 @@ private fun EmptyTemplatesView(
                 containerColor = YogaPurple
             )
         ) {
-            Icon(Icons.Default.Add, contentDescription = null)
+            Icon(Icons.Outlined.PostAdd, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Erste Vorlage erstellen")
         }
@@ -233,9 +237,9 @@ private fun TemplateCard(
                 IconButton(onClick = onToggleActive) {
                     Icon(
                         imageVector = if (template.isActive) {
-                            Icons.Default.Check
+                            Icons.Outlined.ToggleOn
                         } else {
-                            Icons.Default.Close
+                            Icons.Outlined.ToggleOff
                         },
                         contentDescription = if (template.isActive) "Deaktivieren" else "Aktivieren",
                         tint = if (template.isActive) {

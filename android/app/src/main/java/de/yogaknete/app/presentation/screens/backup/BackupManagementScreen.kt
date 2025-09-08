@@ -10,12 +10,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.FolderZip
-import androidx.compose.material.icons.filled.Upload
-import androidx.compose.material.icons.filled.FileOpen
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.outlined.DataObject
+import androidx.compose.material.icons.outlined.FolderZip
+import androidx.compose.material.icons.outlined.FileUpload
+import androidx.compose.material.icons.outlined.FolderOpen
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.outlined.CloudDownload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -202,7 +204,7 @@ private fun ExportSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Share,
+                    Icons.Outlined.Share,
                     contentDescription = null,
                     tint = YogaPurple
                 )
@@ -235,7 +237,7 @@ private fun ExportSection(
                         containerColor = YogaPurple
                     )
                 ) {
-                    Icon(Icons.Default.Code, contentDescription = null)
+                    Icon(Icons.Outlined.DataObject, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("JSON")
                 }
@@ -245,7 +247,7 @@ private fun ExportSection(
                     modifier = Modifier.weight(1f),
                     enabled = false // ZIP not implemented yet
                 ) {
-                    Icon(Icons.Default.FolderZip, contentDescription = null)
+                    Icon(Icons.Outlined.FolderZip, contentDescription = null)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("ZIP")
                 }
@@ -282,7 +284,7 @@ private fun ImportSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Upload,
+                    Icons.Outlined.CloudDownload,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.secondary
                 )
@@ -308,7 +310,7 @@ private fun ImportSection(
                 onClick = onSelectFile,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.FileOpen, contentDescription = null)
+                Icon(Icons.Outlined.FolderOpen, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Datei auswählen")
             }
@@ -348,14 +350,14 @@ private fun InfoSection() {
             Spacer(modifier = Modifier.height(12.dp))
             
             InfoItem(
-                icon = Icons.Default.CloudUpload,
+                icon = Icons.Outlined.CloudUpload,
                 text = "Backups werden im Downloads-Ordner gespeichert. Du kannst sie manuell in Google Drive oder andere Cloud-Dienste hochladen."
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
             InfoItem(
-                icon = Icons.Default.Timer,
+                icon = Icons.Outlined.Schedule,
                 text = "Erstelle regelmäßig Backups, besonders vor größeren Änderungen oder am Monatsende nach der Rechnungserstellung."
             )
             
