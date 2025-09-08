@@ -34,4 +34,10 @@ interface ClassTemplateDao {
     
     @Query("UPDATE class_templates SET isActive = :isActive WHERE id = :id")
     suspend fun setTemplateActive(id: Long, isActive: Boolean)
+    
+    @Query("SELECT * FROM class_templates")
+    suspend fun getAllTemplatesOnce(): List<ClassTemplate>
+    
+    @Query("DELETE FROM class_templates")
+    suspend fun deleteAllTemplates()
 }

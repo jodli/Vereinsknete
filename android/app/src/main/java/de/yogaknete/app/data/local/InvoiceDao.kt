@@ -97,4 +97,10 @@ interface InvoiceDao {
      */
     @Query("SELECT COUNT(*) > 0 FROM invoices WHERE invoiceNumber = :invoiceNumber")
     suspend fun invoiceNumberExists(invoiceNumber: String): Boolean
+    
+    @Query("SELECT * FROM invoices")
+    suspend fun getAllInvoicesOnce(): List<Invoice>
+    
+    @Query("DELETE FROM invoices")
+    suspend fun deleteAllInvoices()
 }

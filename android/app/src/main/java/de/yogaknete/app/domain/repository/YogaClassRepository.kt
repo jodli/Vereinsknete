@@ -12,4 +12,7 @@ interface YogaClassRepository {
     suspend fun deleteClass(yogaClass: YogaClass)
     suspend fun getClassById(id: Long): YogaClass?
     suspend fun getClassesForInvoice(studioId: Long, month: Int, year: Int): List<YogaClass>
+    suspend fun getAllClassesOnce(): List<YogaClass>
+    suspend fun insertClass(yogaClass: YogaClass): Long
+    suspend fun deleteAllClasses()
 }

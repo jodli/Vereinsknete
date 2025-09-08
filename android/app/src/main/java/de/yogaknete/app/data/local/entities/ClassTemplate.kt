@@ -7,11 +7,13 @@ import androidx.room.PrimaryKey
 import de.yogaknete.app.domain.model.Studio
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalTime
+import kotlinx.serialization.Serializable
 
 /**
  * Vorlage für wiederkehrende Kurse
  * Ermöglicht schnelles Erstellen von Kursen mit vordefinierten Daten
  */
+@Serializable
 @Entity(
     tableName = "class_templates",
     foreignKeys = [

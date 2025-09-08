@@ -4,7 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = "yoga_classes",
     foreignKeys = [
@@ -28,6 +30,7 @@ data class YogaClass(
     val notes: String = ""
 )
 
+@Serializable
 enum class ClassStatus {
     SCHEDULED,      // Planned/upcoming
     COMPLETED,      // Successfully taught

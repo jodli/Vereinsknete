@@ -33,4 +33,10 @@ interface StudioDao {
     
     @Query("SELECT COUNT(*) FROM studios WHERE isActive = 1")
     suspend fun getActiveStudioCount(): Int
+    
+    @Query("SELECT * FROM studios")
+    suspend fun getAllStudiosOnce(): List<Studio>
+    
+    @Query("DELETE FROM studios")
+    suspend fun deleteAllStudios()
 }

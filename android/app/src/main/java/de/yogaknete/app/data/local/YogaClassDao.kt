@@ -47,4 +47,10 @@ interface YogaClassDao {
         ORDER BY startTime ASC
     """)
     suspend fun getClassesForStudioInMonth(studioId: Long, month: Int, year: Int): List<YogaClass>
+    
+    @Query("SELECT * FROM yoga_classes")
+    suspend fun getAllClassesOnce(): List<YogaClass>
+    
+    @Query("DELETE FROM yoga_classes")
+    suspend fun deleteAllClasses()
 }

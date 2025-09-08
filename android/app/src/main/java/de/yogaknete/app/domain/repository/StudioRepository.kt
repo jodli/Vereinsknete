@@ -22,4 +22,10 @@ interface StudioRepository {
     suspend fun deactivateStudio(id: Long)
     
     suspend fun getActiveStudioCount(): Int
+    
+    suspend fun getAllStudiosOnce(): List<Studio>
+    
+    suspend fun insertStudio(studio: Studio): Long
+    
+    suspend fun deleteAllStudios()
 }

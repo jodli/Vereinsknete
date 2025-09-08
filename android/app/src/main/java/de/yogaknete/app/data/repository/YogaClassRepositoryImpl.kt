@@ -41,4 +41,16 @@ class YogaClassRepositoryImpl @Inject constructor(
     override suspend fun getClassesForInvoice(studioId: Long, month: Int, year: Int): List<YogaClass> {
         return yogaClassDao.getClassesForStudioInMonth(studioId, month, year)
     }
+    
+    override suspend fun getAllClassesOnce(): List<YogaClass> {
+        return yogaClassDao.getAllClassesOnce()
+    }
+    
+    override suspend fun insertClass(yogaClass: YogaClass): Long {
+        return yogaClassDao.insertClass(yogaClass)
+    }
+    
+    override suspend fun deleteAllClasses() {
+        yogaClassDao.deleteAllClasses()
+    }
 }

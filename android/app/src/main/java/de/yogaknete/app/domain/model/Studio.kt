@@ -2,7 +2,9 @@ package de.yogaknete.app.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "studios")
 data class Studio(
     @PrimaryKey(autoGenerate = true)
