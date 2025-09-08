@@ -91,4 +91,93 @@ class DateUtilsTest {
         
         assertEquals(1.25, duration, 0.01)
     }
+    
+    @Test
+    fun `calculateDurationHours handles full hours`() {
+        val start = LocalDateTime(2024, 11, 4, 10, 0)
+        val end = LocalDateTime(2024, 11, 4, 12, 0)
+        
+        val duration = DateUtils.calculateDurationHours(start, end)
+        
+        assertEquals(2.0, duration, 0.01)
+    }
+    
+    @Test
+    fun `calculateDurationHours handles 90 minutes`() {
+        val start = LocalDateTime(2024, 11, 4, 10, 0)
+        val end = LocalDateTime(2024, 11, 4, 11, 30)
+        
+        val duration = DateUtils.calculateDurationHours(start, end)
+        
+        assertEquals(1.5, duration, 0.01)
+    }
+    
+    @Test
+    fun `getWeekStart handles Sunday correctly`() {
+        // Sunday should return the Monday of the same week
+        val sunday = LocalDate(2024, 11, 10) // Sunday
+        
+        val weekStart = DateUtils.getWeekStart(sunday)
+        
+        assertEquals(LocalDate(2024, 11, 4), weekStart) // Monday
+        assertEquals(DayOfWeek.MONDAY, weekStart.dayOfWeek)
+    }
+    
+    @Test
+    fun `getWeekStart handles Monday correctly`() {
+        // Monday should return itself
+        val monday = LocalDate(2024, 11, 4) // Monday
+        
+        val weekStart = DateUtils.getWeekStart(monday)
+        
+        assertEquals(monday, weekStart)
+        assertEquals(DayOfWeek.MONDAY, weekStart.dayOfWeek)
+    }
+    
+    @Test
+    fun `formatTime handles single digit hours and minutes`() {
+        val time = LocalDateTime(2024, 11, 4, 9, 5)
+        
+        val formatted = DateUtils.formatTime(time)
+        
+        assertEquals("09:05", formatted)
+    }
+    
+    @Test
+    fun `isToday returns true for current date`() {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        
+        val result = DateUtils.isToday(today)
+        
+        assertTrue(result)
+    }
+    
+    @Test
+    fun `isToday returns false for past date`() {
+        val pastDate = LocalDate(2020, 1, 1)
+        
+        val result = DateUtils.isToday(pastDate)
+        
+        assertFalse(result)
+    }
+    
+    @Test
+    fun `isPast returns true for yesterday`() {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val yesterday = today.minus(DatePeriod(days = 1))
+        
+        val result = DateUtils.isPast(yesterday)
+        
+        assertTrue(result)
+    }
+    
+    @Test
+    fun `isPast returns false for future date`() {
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val tomorrow = today.plus(DatePeriod(days = 1))
+        
+        val result = DateUtils.isPast(tomorrow)
+        
+        assertFalse(result)
+    }
 }
