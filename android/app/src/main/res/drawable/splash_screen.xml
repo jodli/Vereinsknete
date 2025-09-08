@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Background color -->
+    <item android:drawable="@color/yoga_purple_surface" />
+    
+    <!-- Logo centered -->
+    <item
+        android:drawable="@drawable/yoga_knete_logo"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp" />
+    
+</layer-list>

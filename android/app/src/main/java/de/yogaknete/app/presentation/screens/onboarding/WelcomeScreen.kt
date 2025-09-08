@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.yogaknete.app.presentation.theme.YogaKneteTheme
+import de.yogaknete.app.ui.theme.YogaKneteTheme
 
 @Composable
 fun WelcomeScreen(

@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import de.yogaknete.app.presentation.theme.YogaKneteTheme
+import de.yogaknete.app.ui.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import de.yogaknete.app.presentation.screens.week.WeekViewScreen
 import de.yogaknete.app.presentation.screens.templates.TemplateManagementScreen

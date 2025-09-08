@@ -28,18 +28,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import de.yogaknete.app.R
 import de.yogaknete.app.core.utils.DateUtils
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.CreationSource
 import de.yogaknete.app.domain.model.Studio
-import de.yogaknete.app.presentation.theme.YogaKneteTheme
+import de.yogaknete.app.ui.theme.YogaKneteTheme
+import de.yogaknete.app.ui.theme.YogaIcons
 import de.yogaknete.app.presentation.screens.templates.QuickAddDialog
 import kotlinx.datetime.*
 import java.util.Locale
@@ -80,8 +84,9 @@ fun WeekViewScreen(
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Kurs hinzufügen"
+                    painter = painterResource(id = YogaIcons.AddClass),
+                    contentDescription = "Kurs hinzufügen",
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -361,7 +366,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Filled.Receipt,
+                                painter = painterResource(id = YogaIcons.Invoice),
                                 contentDescription = null
                             )
                         }
@@ -374,7 +379,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Business,
+                                painter = painterResource(id = YogaIcons.Studio),
                                 contentDescription = null
                             )
                         }
@@ -414,7 +419,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.CalendarMonth,
+                                painter = painterResource(id = YogaIcons.Calendar),
                                 contentDescription = null
                             )
                         }
@@ -713,10 +718,10 @@ private fun EmptyDayCard(
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                painter = painterResource(id = YogaIcons.YogaPose),
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -734,27 +739,29 @@ private fun YogaClassCard(
     studio: Studio?,
     onClick: () -> Unit
 ) {
-    val statusIcon = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> Icons.Default.Schedule
-        ClassStatus.COMPLETED -> Icons.Default.CheckCircle
-        ClassStatus.CANCELLED -> Icons.Default.Cancel
+    // Use custom yoga-themed icons for status
+    val statusIconRes = when (yogaClass.status) {
+        ClassStatus.SCHEDULED -> YogaIcons.ClassPending
+        ClassStatus.COMPLETED -> YogaIcons.ClassCompleted
+        ClassStatus.CANCELLED -> YogaIcons.ClassCancelled
     }
     
+    // Use better contrasting colors for status
     val statusColor = when (yogaClass.status) {
         ClassStatus.SCHEDULED -> MaterialTheme.colorScheme.primary
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error
+        ClassStatus.COMPLETED -> Color(0xFF4CAF50)  // Direct green for better visibility
+        ClassStatus.CANCELLED -> Color(0xFFEF5350)   // Direct red for better visibility
     }
 
     val borderColor = when (yogaClass.status) {
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
+        ClassStatus.COMPLETED -> Color(0xFF4CAF50).copy(alpha = 0.5f)  // Stronger green border
+        ClassStatus.CANCELLED -> Color(0xFFEF5350).copy(alpha = 0.5f)  // Stronger red border
         else -> MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
     }
     
     val backgroundColor = when (yogaClass.status) {
-        ClassStatus.COMPLETED -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f)
-        ClassStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.15f)
+        ClassStatus.COMPLETED -> Color(0xFF4CAF50).copy(alpha = 0.08f)  // Light green background
+        ClassStatus.CANCELLED -> Color(0xFFEF5350).copy(alpha = 0.08f)  // Light red background
         else -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
     }
 
@@ -775,7 +782,7 @@ private fun YogaClassCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = statusIcon,
+                painter = painterResource(id = statusIconRes),
                 contentDescription = null,
                 tint = statusColor,
                 modifier = Modifier.size(24.dp)
@@ -825,7 +832,7 @@ private fun YogaClassCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Business,
+                        painter = painterResource(id = YogaIcons.Studio),
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -846,11 +853,13 @@ private fun YogaClassCard(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = when (yogaClass.status) {
-                                ClassStatus.COMPLETED -> Icons.Default.CheckCircle
-                                ClassStatus.CANCELLED -> Icons.Default.Cancel
-                                else -> Icons.Default.Schedule
-                            },
+                            painter = painterResource(
+                                id = when (yogaClass.status) {
+                                    ClassStatus.COMPLETED -> YogaIcons.ClassCompleted
+                                    ClassStatus.CANCELLED -> YogaIcons.ClassCancelled
+                                    else -> YogaIcons.ClassPending
+                                }
+                            ),
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                             tint = statusColor

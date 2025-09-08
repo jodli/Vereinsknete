@@ -30,7 +30,7 @@ import androidx.navigation.NavController
 import de.yogaknete.app.domain.model.ImportStrategy
 import de.yogaknete.app.domain.model.BackupMetadata
 import de.yogaknete.app.domain.model.BackupResult
-import de.yogaknete.app.presentation.theme.YogaPurple
+import de.yogaknete.app.ui.theme.YogaPurple
 import androidx.compose.foundation.clickable
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
