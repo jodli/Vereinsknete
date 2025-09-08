@@ -4,6 +4,7 @@ import androidx.room.*
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
 
 @Dao
 interface ClassTemplateDao {
@@ -19,6 +20,15 @@ interface ClassTemplateDao {
     
     @Query("SELECT * FROM class_templates WHERE dayOfWeek = :dayOfWeek AND isActive = 1")
     suspend fun getTemplatesByDayOfWeek(dayOfWeek: DayOfWeek): List<ClassTemplate>
+    
+    @Query("SELECT * FROM class_templates WHERE autoSchedule = 1 AND isActive = 1")
+    suspend fun getAutoScheduleTemplates(): List<ClassTemplate>
+    
+    @Query("UPDATE class_templates SET lastScheduledDate = :date WHERE id = :templateId")
+    suspend fun updateLastScheduledDate(templateId: Long, date: LocalDate)
+    
+    @Query("UPDATE class_templates SET autoSchedule = :enabled WHERE id = :templateId")
+    suspend fun updateAutoSchedule(templateId: Long, enabled: Boolean)
     
     @Query("SELECT * FROM class_templates WHERE id = :id")
     suspend fun getTemplateById(id: Long): ClassTemplate?

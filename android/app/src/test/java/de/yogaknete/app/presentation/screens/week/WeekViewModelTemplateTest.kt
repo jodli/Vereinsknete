@@ -3,9 +3,11 @@ package de.yogaknete.app.presentation.screens.week
 import de.yogaknete.app.data.local.YogaClassDao
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.domain.model.ClassStatus
+import de.yogaknete.app.domain.model.CreationSource
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -33,6 +35,7 @@ class WeekViewModelTemplateTest {
     private lateinit var yogaClassDao: YogaClassDao
     private lateinit var studioRepository: StudioRepository
     private lateinit var classTemplateRepository: ClassTemplateRepository
+    private lateinit var autoScheduleManager: AutoScheduleManager
     private lateinit var viewModel: WeekViewModel
     private val dispatcher = StandardTestDispatcher()
 
@@ -42,13 +45,14 @@ class WeekViewModelTemplateTest {
         yogaClassDao = mockk()
         studioRepository = mockk()
         classTemplateRepository = mockk()
+        autoScheduleManager = mockk(relaxed = true)
 
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(emptyList())
         every { studioRepository.getAllActiveStudios() } returns flowOf(emptyList())
         every { classTemplateRepository.getAllActiveTemplates() } returns flowOf(emptyList())
         coEvery { yogaClassDao.insertClass(any()) } returns 1L
 
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
     }
 
     @After
@@ -80,6 +84,8 @@ class WeekViewModelTemplateTest {
                 it.title == "Vinyasa Flow" &&
                 it.durationHours == 1.25 &&
                 it.status == ClassStatus.SCHEDULED &&
+                it.creationSource == CreationSource.TEMPLATE &&
+                it.sourceTemplateId == 10L &&
                 it.startTime.hour == 9 && it.startTime.minute == 0 &&
                 it.endTime.hour == 10 && it.endTime.minute == 15
             })

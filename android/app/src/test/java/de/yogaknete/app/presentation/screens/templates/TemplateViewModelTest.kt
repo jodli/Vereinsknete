@@ -4,6 +4,7 @@ import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
 import de.yogaknete.app.domain.repository.YogaClassRepository
+import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -28,6 +29,7 @@ class TemplateViewModelTest {
     private lateinit var classTemplateRepository: ClassTemplateRepository
     private lateinit var studioRepository: StudioRepository
     private lateinit var yogaClassRepository: YogaClassRepository
+    private lateinit var autoScheduleManager: AutoScheduleManager
     private lateinit var viewModel: TemplateViewModel
     private val dispatcher = StandardTestDispatcher()
 
@@ -37,6 +39,7 @@ class TemplateViewModelTest {
         classTemplateRepository = mockk()
         studioRepository = mockk()
         yogaClassRepository = mockk()
+        autoScheduleManager = mockk(relaxed = true)
 
         every { classTemplateRepository.getAllTemplates() } returns flowOf(emptyList())
         every { studioRepository.getAllActiveStudios() } returns flowOf(emptyList())
@@ -50,7 +53,7 @@ class TemplateViewModelTest {
 
     @Test
     fun `createTemplate computes endTime based on duration`() = runTest {
-        viewModel = TemplateViewModel(classTemplateRepository, studioRepository, yogaClassRepository)
+        viewModel = TemplateViewModel(classTemplateRepository, studioRepository, yogaClassRepository, autoScheduleManager)
 
         viewModel.createTemplate(
             name = "Dienstag Abend",

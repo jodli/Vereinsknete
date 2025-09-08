@@ -7,10 +7,12 @@ import de.yogaknete.app.core.utils.DateUtils
 import de.yogaknete.app.data.local.YogaClassDao
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.domain.model.ClassStatus
+import de.yogaknete.app.domain.model.CreationSource
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
@@ -54,68 +56,75 @@ data class WeekViewState(
 class WeekViewModel @Inject constructor(
     private val yogaClassDao: YogaClassDao,
     private val studioRepository: StudioRepository,
-    private val classTemplateRepository: ClassTemplateRepository
+    private val classTemplateRepository: ClassTemplateRepository,
+    private val autoScheduleManager: AutoScheduleManager
 ) : ViewModel() {
     
     private val _state = MutableStateFlow(WeekViewState())
     val state: StateFlow<WeekViewState> = _state.asStateFlow()
     
     init {
-        loadCurrentWeek()
+        observeClasses()
         observeStudios()
         observeTemplates()
+        // Check for auto-scheduling on startup
+        viewModelScope.launch {
+            autoScheduleManager.catchUpAutoSchedule()
+        }
     }
     
-    private fun loadCurrentWeek() {
+    private fun observeClasses() {
         viewModelScope.launch {
-            val weekStart = _state.value.currentWeekStart
-            val weekEnd = _state.value.currentWeekEnd
-            
-            // Convert to LocalDateTime for the query
-            val startDateTime = weekStart.atTime(0, 0)
-            val endDateTime = weekEnd.atTime(23, 59)
-            
-            yogaClassDao.getClassesInRange(startDateTime, endDateTime)
-                .collect { classList ->
-                    // Group classes by date
-                    val classesByDate = classList.groupBy { yogaClass ->
-                        yogaClass.startTime.date
-                    }
-                    
-                    // Calculate totals - only count COMPLETED classes for statistics
-                    val completedClasses = classList.filter { it.status == ClassStatus.COMPLETED }
-                    val totalClasses = completedClasses.size
-                    val totalHours = completedClasses.sumOf { it.durationHours }
-                    
-                    // Calculate earnings per studio
-                    // Fetch studio data for each unique studio ID to include inactive studios
-                    val studioIds = completedClasses.map { it.studioId }.distinct()
-                    val studiosMap = mutableMapOf<Long, Studio>()
-                    studioIds.forEach { studioId ->
-                        studioRepository.getStudioById(studioId)?.let { studio ->
-                            studiosMap[studioId] = studio
-                        }
-                    }
-                    
-                    val earningsPerStudio = completedClasses
-                        .groupBy { it.studioId }
-                        .mapValues { (studioId, classes) ->
-                            val hourlyRate = studiosMap[studioId]?.hourlyRate ?: 0.0
-                            classes.sumOf { it.durationHours * hourlyRate }
-                        }
-                    
-                    val totalEarnings = earningsPerStudio.values.sum()
-                    
-                    _state.update { currentState ->
-                        currentState.copy(
-                            classes = classesByDate,
-                            totalClassesThisWeek = totalClasses,
-                            totalHoursThisWeek = totalHours,
-                            earningsPerStudio = earningsPerStudio,
-                            totalEarningsThisWeek = totalEarnings
-                        )
+            // Create a flow that updates whenever the week changes
+            combine(
+                _state.map { it.currentWeekStart to it.currentWeekEnd }.distinctUntilChanged(),
+                flow { emit(Unit) } // Trigger initial emission
+            ) { (weekStart, weekEnd), _ ->
+                weekStart to weekEnd
+            }.flatMapLatest { (weekStart, weekEnd) ->
+                val startDateTime = weekStart.atTime(0, 0)
+                val endDateTime = weekEnd.atTime(23, 59)
+                yogaClassDao.getClassesInRange(startDateTime, endDateTime)
+            }.collect { classList ->
+                // Group classes by date
+                val classesByDate = classList.groupBy { yogaClass ->
+                    yogaClass.startTime.date
+                }
+                
+                // Calculate totals - only count COMPLETED classes for statistics
+                val completedClasses = classList.filter { it.status == ClassStatus.COMPLETED }
+                val totalClasses = completedClasses.size
+                val totalHours = completedClasses.sumOf { it.durationHours }
+                
+                // Calculate earnings per studio
+                // Fetch studio data for each unique studio ID to include inactive studios
+                val studioIds = completedClasses.map { it.studioId }.distinct()
+                val studiosMap = mutableMapOf<Long, Studio>()
+                studioIds.forEach { studioId ->
+                    studioRepository.getStudioById(studioId)?.let { studio ->
+                        studiosMap[studioId] = studio
                     }
                 }
+                
+                val earningsPerStudio = completedClasses
+                    .groupBy { it.studioId }
+                    .mapValues { (studioId, classes) ->
+                        val hourlyRate = studiosMap[studioId]?.hourlyRate ?: 0.0
+                        classes.sumOf { it.durationHours * hourlyRate }
+                    }
+                
+                val totalEarnings = earningsPerStudio.values.sum()
+                
+                _state.update { currentState ->
+                    currentState.copy(
+                        classes = classesByDate,
+                        totalClassesThisWeek = totalClasses,
+                        totalHoursThisWeek = totalHours,
+                        earningsPerStudio = earningsPerStudio,
+                        totalEarningsThisWeek = totalEarnings
+                    )
+                }
+            }
         }
     }
     
@@ -124,8 +133,6 @@ class WeekViewModel @Inject constructor(
             studioRepository.getAllActiveStudios()
                 .collect { studioList ->
                     _state.update { it.copy(studios = studioList) }
-                    // Reload week to recalculate earnings with updated studios
-                    loadCurrentWeek()
                 }
         }
     }
@@ -152,7 +159,10 @@ class WeekViewModel @Inject constructor(
             )
         }
         
-        loadCurrentWeek()
+        // Trigger auto-schedule for the new week
+        viewModelScope.launch {
+            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+        }
     }
     
     fun navigateToNextWeek() {
@@ -168,7 +178,10 @@ class WeekViewModel @Inject constructor(
             )
         }
         
-        loadCurrentWeek()
+        // Trigger auto-schedule for the new week
+        viewModelScope.launch {
+            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+        }
     }
     
     fun navigateToToday() {
@@ -185,7 +198,10 @@ class WeekViewModel @Inject constructor(
             )
         }
         
-        loadCurrentWeek()
+        // Trigger auto-schedule for current week
+        viewModelScope.launch {
+            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+        }
     }
     
     fun showAddClassDialog() {
@@ -334,7 +350,9 @@ class WeekViewModel @Inject constructor(
                 startTime = startDateTime,
                 endTime = endDateTime,
                 durationHours = duration,
-                status = ClassStatus.SCHEDULED
+                status = ClassStatus.SCHEDULED,
+                creationSource = CreationSource.TEMPLATE,
+                sourceTemplateId = template.id
             )
             
             yogaClassDao.insertClass(newClass)

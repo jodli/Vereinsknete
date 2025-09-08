@@ -24,6 +24,8 @@ interface ClassTemplateRepository {
     
     suspend fun setTemplateActive(id: Long, isActive: Boolean)
     
+    suspend fun updateAutoSchedule(templateId: Long, enabled: Boolean)
+    
     suspend fun getAllTemplatesOnce(): List<ClassTemplate>
     
     suspend fun insertTemplate(template: ClassTemplate): Long

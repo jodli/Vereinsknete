@@ -72,6 +72,9 @@ fun TemplateManagementScreen(
                     onToggleActive = { template ->
                         viewModel.toggleTemplateActive(template)
                     },
+                    onToggleAutoSchedule = { templateId, enabled ->
+                        viewModel.toggleAutoSchedule(templateId, enabled)
+                    },
                     onDeleteTemplate = { template ->
                         viewModel.deleteTemplate(template)
                     }
@@ -154,6 +157,7 @@ private fun TemplateList(
     templates: List<ClassTemplate>,
     onTemplateClick: (ClassTemplate) -> Unit,
     onToggleActive: (ClassTemplate) -> Unit,
+    onToggleAutoSchedule: (Long, Boolean) -> Unit,
     onDeleteTemplate: (ClassTemplate) -> Unit
 ) {
     LazyColumn(
@@ -180,6 +184,7 @@ private fun TemplateList(
                     template = template,
                     onClick = { onTemplateClick(template) },
                     onToggleActive = { onToggleActive(template) },
+                    onToggleAutoSchedule = { enabled -> onToggleAutoSchedule(template.id, enabled) },
                     onDelete = { onDeleteTemplate(template) }
                 )
             }
@@ -193,9 +198,11 @@ private fun TemplateCard(
     template: ClassTemplate,
     onClick: () -> Unit,
     onToggleActive: () -> Unit,
+    onToggleAutoSchedule: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
     
     Card(
         modifier = Modifier
@@ -209,52 +216,152 @@ private fun TemplateCard(
             }
         )
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = template.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (template.isActive) FontWeight.Bold else FontWeight.Normal
-                )
-                Text(
-                    text = template.className,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Text(
-                    text = "${formatTime(template.startTime)} - ${formatTime(template.endTime)} (${template.duration} Std.)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Row {
-                IconButton(onClick = onToggleActive) {
-                    Icon(
-                        imageVector = if (template.isActive) {
-                            Icons.Outlined.ToggleOn
-                        } else {
-                            Icons.Outlined.ToggleOff
-                        },
-                        contentDescription = if (template.isActive) "Deaktivieren" else "Aktivieren",
-                        tint = if (template.isActive) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
+            // Header row with title and menu
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = template.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = if (template.isActive) FontWeight.Bold else FontWeight.Normal
+                        )
+                        if (!template.isActive) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ) {
+                                Text(
+                                    text = "INAKTIV",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
                         }
+                    }
+                    Text(
+                        text = template.className,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${formatTime(template.startTime)} - ${formatTime(template.endTime)} (${template.duration} Std.)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 
-                IconButton(onClick = { showDeleteDialog = true }) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Löschen",
-                        tint = MaterialTheme.colorScheme.error
+                // Three-dot menu
+                Box {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Mehr Optionen"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { 
+                                Text(if (template.isActive) "Deaktivieren" else "Aktivieren")
+                            },
+                            onClick = {
+                                onToggleActive()
+                                showMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = if (template.isActive) 
+                                        Icons.Default.PauseCircle else Icons.Default.PlayCircle,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Löschen") },
+                            onClick = {
+                                showDeleteDialog = true
+                                showMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+            
+            // Auto-schedule section (only if template is active)
+            if (template.isActive) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(
+                    modifier = Modifier.fillMaxWidth(),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (template.autoSchedule) 
+                                    Icons.Default.Schedule else Icons.Default.EditCalendar,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (template.autoSchedule) 
+                                    YogaPurple else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Automatisch erstellen",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        Text(
+                            text = if (template.autoSchedule) {
+                                if (template.lastScheduledDate != null) {
+                                    "Wöchentlich geplant • Zuletzt: ${formatDate(template.lastScheduledDate)}"
+                                } else {
+                                    "Wöchentlich geplant"
+                                }
+                            } else {
+                                "Kurse müssen manuell erstellt werden"
+                            },
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    
+                    Switch(
+                        checked = template.autoSchedule,
+                        onCheckedChange = onToggleAutoSchedule,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = YogaPurple,
+                            checkedTrackColor = YogaPurple.copy(alpha = 0.3f)
+                        )
                     )
                 }
             }
@@ -468,4 +575,11 @@ private fun getDayName(dayOfWeek: DayOfWeek): String {
         DayOfWeek.SATURDAY -> "Samstag"
         DayOfWeek.SUNDAY -> "Sonntag"
     }
+}
+
+private fun formatDate(date: LocalDate): String {
+    val day = date.dayOfMonth.toString().padStart(2, '0')
+    val month = date.monthNumber.toString().padStart(2, '0')
+    val year = date.year
+    return "$day.$month.$year"
 }

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
 import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalTime
 
 /**
@@ -31,5 +32,7 @@ data class ClassTemplate(
     val startTime: LocalTime,
     val endTime: LocalTime,
     val durationHours: Double = 1.25, // Default 1.25 hours (75 minutes)
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val autoSchedule: Boolean = false, // Auto-create weekly
+    val lastScheduledDate: LocalDate? = null // Track last auto-scheduled date
 )

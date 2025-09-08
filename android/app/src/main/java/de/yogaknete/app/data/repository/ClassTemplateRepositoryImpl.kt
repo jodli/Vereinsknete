@@ -47,6 +47,10 @@ class ClassTemplateRepositoryImpl @Inject constructor(
         classTemplateDao.setTemplateActive(id, isActive)
     }
     
+    override suspend fun updateAutoSchedule(templateId: Long, enabled: Boolean) {
+        classTemplateDao.updateAutoSchedule(templateId, enabled)
+    }
+    
     override suspend fun getAllTemplatesOnce(): List<ClassTemplate> {
         return classTemplateDao.getAllTemplatesOnce()
     }
