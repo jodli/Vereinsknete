@@ -188,9 +188,20 @@ class WeekViewModelTest {
             )
         )
         
+        // Set up the mock BEFORE creating the ViewModel
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(classes)
         
+        // Mock the studio repository to avoid triggering additional loadCurrentWeek calls
+        val testStudios = listOf(
+            Studio(id = 1, name = "Test Studio", hourlyRate = 50.0, isActive = true)
+        )
+        every { studioRepository.getAllActiveStudios() } returns flowOf(testStudios)
+        coEvery { studioRepository.getStudioById(1) } returns testStudios.first()
+        
+        // Now create the ViewModel which will call loadCurrentWeek() in init
         viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository)
+        
+        // Allow coroutines to complete
         advanceUntilIdle()
         
         val state = viewModel.state.value

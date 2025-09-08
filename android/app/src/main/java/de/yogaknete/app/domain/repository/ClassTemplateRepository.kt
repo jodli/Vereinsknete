@@ -23,4 +23,10 @@ interface ClassTemplateRepository {
     suspend fun deleteTemplate(template: ClassTemplate)
     
     suspend fun setTemplateActive(id: Long, isActive: Boolean)
+    
+    suspend fun getAllTemplatesOnce(): List<ClassTemplate>
+    
+    suspend fun insertTemplate(template: ClassTemplate): Long
+    
+    suspend fun deleteAllTemplates()
 }

@@ -170,18 +170,11 @@ app/
 - [x] Add bank transfer details (from user profile) at bottom
 - [x] PDF generation with iText7 or Android Print
 
-#### Sprint 3.3 Sharing Integration (2 days)
-
-- [ ] WhatsApp sharing intent
-- [ ] Email attachment support
-- [ ] Save to device storage
-- [ ] Share history tracking
-
 ### Phase 4: Polish & Refinements (Week 4)
 
 **Goal**: Production-ready app with good UX
 
-#### 3.1 Onboarding Flow (2 days)
+#### Sprint 4.1 Onboarding Flow (2 days)
 
 - [ ] Welcome screen with setup wizard
 - [ ] User profile input (name, tax ID, bank)
@@ -189,14 +182,14 @@ app/
 - [ ] Weekly template setup
 - [ ] Import existing data option
 
-#### 3.2 Templates & Patterns (2 days)
+#### Sprint 4.2 Templates & Patterns (2 days)
 
 - [ ] Create/edit class templates
 - [ ] Auto-fill from history
 - [ ] Recurring class patterns
 - [ ] Batch operations support
 
-#### 3.3 Advanced Features (3 days)
+#### Sprint 4.3 Advanced Features (3 days)
 
 - [ ] Holiday/sick day management
 - [ ] Monthly statistics dashboard
@@ -204,7 +197,7 @@ app/
 - [ ] Settings & preferences screen
 - [ ] German localization throughout
 
-#### 3.4 Fix Bugs
+#### Sprint 4.4 Fix Bugs
 
 - [x] User profile is missing tax ID, bank details, etc.
 - [x] Add a way to change the user profile

@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +37,7 @@ fun WeekViewScreen(
     onNavigateToTemplates: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onNavigateToStudios: () -> Unit = {},
+    onNavigateToBackup: () -> Unit = {},
     viewModel: WeekViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -53,6 +55,7 @@ fun WeekViewScreen(
                 onNavigateToProfile = onNavigateToProfile,
                 onNavigateToInvoice = onNavigateToInvoice,
                 onNavigateToStudios = onNavigateToStudios,
+                onNavigateToBackup = onNavigateToBackup,
                 isNotFutureWeek = state.currentWeekStart <= Clock.System.todayIn(TimeZone.currentSystemDefault()),
                 onBulkCancel = { viewModel.showBulkCancelDialog() },
                 onShowMonthlyStats = { viewModel.showMonthlyStats() }
@@ -248,6 +251,7 @@ private fun WeekViewTopBar(
     onNavigateToProfile: () -> Unit,
     onNavigateToInvoice: () -> Unit,
     onNavigateToStudios: () -> Unit,
+    onNavigateToBackup: () -> Unit,
     isNotFutureWeek: Boolean,
     onBulkCancel: () -> Unit,
     onShowMonthlyStats: () -> Unit
@@ -337,6 +341,19 @@ private fun WeekViewTopBar(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Person,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Datensicherung") },
+                        onClick = {
+                            showMenu = false
+                            onNavigateToBackup()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Backup,
                                 contentDescription = null
                             )
                         }

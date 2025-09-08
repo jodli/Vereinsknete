@@ -46,4 +46,16 @@ class ClassTemplateRepositoryImpl @Inject constructor(
     override suspend fun setTemplateActive(id: Long, isActive: Boolean) {
         classTemplateDao.setTemplateActive(id, isActive)
     }
+    
+    override suspend fun getAllTemplatesOnce(): List<ClassTemplate> {
+        return classTemplateDao.getAllTemplatesOnce()
+    }
+    
+    override suspend fun insertTemplate(template: ClassTemplate): Long {
+        return classTemplateDao.insertTemplate(template)
+    }
+    
+    override suspend fun deleteAllTemplates() {
+        classTemplateDao.deleteAllTemplates()
+    }
 }

@@ -47,4 +47,16 @@ class StudioRepositoryImpl @Inject constructor(
     override suspend fun getActiveStudioCount(): Int {
         return studioDao.getActiveStudioCount()
     }
+    
+    override suspend fun getAllStudiosOnce(): List<Studio> {
+        return studioDao.getAllStudiosOnce()
+    }
+    
+    override suspend fun insertStudio(studio: Studio): Long {
+        return studioDao.insertStudio(studio)
+    }
+    
+    override suspend fun deleteAllStudios() {
+        studioDao.deleteAllStudios()
+    }
 }

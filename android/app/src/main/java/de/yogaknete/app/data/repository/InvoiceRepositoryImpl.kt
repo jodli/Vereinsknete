@@ -87,4 +87,16 @@ class InvoiceRepositoryImpl @Inject constructor(
     override suspend fun invoiceExists(studioId: Long, month: Int, year: Int): Boolean {
         return invoiceDao.getInvoiceByStudioAndMonth(studioId, month, year) != null
     }
+    
+    override suspend fun getAllInvoicesOnce(): List<Invoice> {
+        return invoiceDao.getAllInvoicesOnce()
+    }
+    
+    override suspend fun insertInvoice(invoice: Invoice): Long {
+        return invoiceDao.insertInvoice(invoice)
+    }
+    
+    override suspend fun deleteAllInvoices() {
+        invoiceDao.deleteAllInvoices()
+    }
 }

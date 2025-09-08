@@ -5,10 +5,12 @@ import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 
 /**
  * Represents an invoice for a specific studio and month
  */
+@Serializable
 @Entity(
     tableName = "invoices",
     foreignKeys = [
@@ -37,6 +39,7 @@ data class Invoice(
     val pdfPath: String? = null // Path to generated PDF file
 )
 
+@Serializable
 enum class PaymentStatus {
     PENDING,    // Invoice created but not paid
     PAID,       // Payment received

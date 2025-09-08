@@ -36,4 +36,13 @@ class UserProfileRepositoryImpl @Inject constructor(
         val profile = userProfileDao.getUserProfileOnce()
         return profile?.isOnboardingComplete == true
     }
+    
+    override suspend fun insertOrUpdate(userProfile: UserProfile) {
+        val existing = userProfileDao.getUserProfileOnce()
+        if (existing != null) {
+            userProfileDao.updateUserProfile(userProfile)
+        } else {
+            userProfileDao.insertUserProfile(userProfile)
+        }
+    }
 }

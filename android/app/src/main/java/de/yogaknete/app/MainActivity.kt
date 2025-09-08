@@ -13,6 +13,7 @@ import de.yogaknete.app.presentation.screens.invoice.InvoiceListScreen
 import de.yogaknete.app.presentation.screens.invoice.InvoiceDetailScreen
 import de.yogaknete.app.presentation.screens.settings.UserProfileEditScreen
 import de.yogaknete.app.presentation.screens.studios.StudiosManagementScreen
+import de.yogaknete.app.presentation.screens.backup.BackupManagementScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -52,6 +53,9 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onNavigateToStudios = {
                                     navController.navigate("studios")
+                                },
+                                onNavigateToBackup = {
+                                    navController.navigate("backup")
                                 }
                             )
                         }
@@ -81,6 +85,11 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("studios") {
                             StudiosManagementScreen(
+                                navController = navController
+                            )
+                        }
+                        composable("backup") {
+                            BackupManagementScreen(
                                 navController = navController
                             )
                         }

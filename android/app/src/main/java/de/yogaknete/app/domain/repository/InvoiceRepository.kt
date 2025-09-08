@@ -73,4 +73,10 @@ interface InvoiceRepository {
      * Check if an invoice already exists for a studio and month
      */
     suspend fun invoiceExists(studioId: Long, month: Int, year: Int): Boolean
+    
+    suspend fun getAllInvoicesOnce(): List<Invoice>
+    
+    suspend fun insertInvoice(invoice: Invoice): Long
+    
+    suspend fun deleteAllInvoices()
 }

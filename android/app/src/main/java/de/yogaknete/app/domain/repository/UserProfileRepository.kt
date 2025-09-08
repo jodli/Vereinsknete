@@ -16,4 +16,6 @@ interface UserProfileRepository {
     suspend fun completeOnboarding()
     
     suspend fun isOnboardingComplete(): Boolean
+    
+    suspend fun insertOrUpdate(userProfile: UserProfile)
 }
