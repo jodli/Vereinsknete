@@ -96,4 +96,26 @@ object DateUtils {
         val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         return date < today
     }
+    
+    /**
+     * Get day of week name in German (e.g., "Montag")
+     */
+    fun getDayOfWeekName(dayOfWeek: DayOfWeek): String {
+        return when (dayOfWeek) {
+            DayOfWeek.MONDAY -> "Montag"
+            DayOfWeek.TUESDAY -> "Dienstag"
+            DayOfWeek.WEDNESDAY -> "Mittwoch"
+            DayOfWeek.THURSDAY -> "Donnerstag"
+            DayOfWeek.FRIDAY -> "Freitag"
+            DayOfWeek.SATURDAY -> "Samstag"
+            DayOfWeek.SUNDAY -> "Sonntag"
+        }
+    }
+    
+    /**
+     * Format short date (e.g., "04.11.")
+     */
+    fun formatShortDate(date: LocalDate): String {
+        return "${date.dayOfMonth.toString().padStart(2, '0')}.${date.monthNumber.toString().padStart(2, '0')}."
+    }
 }
