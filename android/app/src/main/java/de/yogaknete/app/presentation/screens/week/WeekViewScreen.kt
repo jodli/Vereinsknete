@@ -29,6 +29,7 @@ import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.presentation.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.templates.QuickAddDialog
 import kotlinx.datetime.*
+import java.util.Locale
 
 @Composable
 fun WeekViewScreen(
@@ -357,7 +358,7 @@ private fun WeekViewTopBar(
                             )
                         }
                     )
-                    Divider()
+                    HorizontalDivider()
                     DropdownMenuItem(
                         text = { Text("Monatsübersicht") },
                         onClick = {
@@ -443,12 +444,12 @@ private fun WeekSummaryCard(
                     )
                     if (totalClasses > 0) {
                         Text(
-                            text = "${String.format("%.2f", totalHours).replace(".", ",")} Stunden",
+                            text = "${String.format(Locale.GERMAN, "%.2f", totalHours).replace(".", ",")} Stunden",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = "€ ${String.format("%.2f", totalEarnings).replace(".", ",")} Verdienst",
+                            text = "€ ${String.format(Locale.GERMAN, "%.2f", totalEarnings).replace(".", ",")} Verdienst",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary

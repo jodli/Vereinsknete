@@ -5,7 +5,8 @@
     <!-- For saving backups to Downloads folder (Android 9 and below) -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="32" />
 
     <application
         android:name=".YogaKneteApplication"
@@ -20,7 +21,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.YogaKnete">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

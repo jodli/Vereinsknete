@@ -5,12 +5,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
@@ -48,7 +48,7 @@ fun InvoiceListScreen(
                 title = { Text("Rechnungen") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
                     }
                 }
             )
@@ -181,7 +181,7 @@ private fun MonthNavigationHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onPreviousMonth) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = "Vorheriger Monat")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Vorheriger Monat")
             }
             
             TextButton(onClick = onMonthClick) {
@@ -193,7 +193,7 @@ private fun MonthNavigationHeader(
             }
             
             IconButton(onClick = onNextMonth) {
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Nächster Monat")
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Nächster Monat")
             }
         }
     }
@@ -225,13 +225,13 @@ private fun MonthlySummaryCard(
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
-                    text = String.format("%.2f h", totalHours),
+                    text = String.format(Locale.GERMAN, "%.2f h", totalHours),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
             }
             
-            Divider(
+            HorizontalDivider(
                 modifier = Modifier
                     .height(48.dp)
                     .width(1.dp)
@@ -304,7 +304,7 @@ private fun InvoiceSummaryCard(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = String.format("%.2f Stunden", summary.totalHours),
+                        text = String.format(Locale.GERMAN, "%.2f Stunden", summary.totalHours),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

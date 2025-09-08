@@ -69,7 +69,7 @@ object DateUtils {
      * Format time (e.g., "17:30")
      */
     fun formatTime(dateTime: LocalDateTime): String {
-        return String.format("%02d:%02d", dateTime.hour, dateTime.minute)
+        return String.format(Locale.GERMAN, "%02d:%02d", dateTime.hour, dateTime.minute)
     }
     
     /**

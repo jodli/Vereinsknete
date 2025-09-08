@@ -66,11 +66,8 @@ class BackupExportService @Inject constructor(
             val fileName = "yogaknete_backup_$timestamp.json"
             
             // Save to Downloads folder
-            val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                saveToDownloadsMediaStore(jsonString, fileName)
-            } else {
-                saveToDownloadsLegacy(jsonString, fileName)
-            }
+            // Since minSdk is 29 (Android Q), we always use MediaStore
+            val result = saveToDownloadsMediaStore(jsonString, fileName)
             
             result
         } catch (e: Exception) {
