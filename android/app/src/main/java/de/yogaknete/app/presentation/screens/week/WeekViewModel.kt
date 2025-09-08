@@ -13,11 +13,13 @@ import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
 import de.yogaknete.app.domain.usecase.AutoScheduleManager
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 private fun Month.days(year: Int): Int = when (this) {
     Month.FEBRUARY -> if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) 29 else 28
     Month.APRIL, Month.JUNE, Month.SEPTEMBER, Month.NOVEMBER -> 30
@@ -52,6 +54,7 @@ data class WeekViewState(
     val monthlyEarningsPerStudio: Map<Long, Double> = emptyMap()
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WeekViewModel @Inject constructor(
     private val yogaClassDao: YogaClassDao,
