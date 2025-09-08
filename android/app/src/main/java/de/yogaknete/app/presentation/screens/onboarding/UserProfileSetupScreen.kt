@@ -58,39 +58,75 @@ fun UserProfileSetupScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Progress indicator
+        LinearProgressIndicator(
+            progress = { 0.33f },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
         
         // Header
-        Icon(
-            imageVector = Icons.Outlined.AccountCircle,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
+        Card(
+            modifier = Modifier.size(80.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            ),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.AccountCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
         
         Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Dein Profil einrichten",
+            text = "Erzähle uns von dir",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Erzähle uns etwas über dich, damit wir dir helfen können, deine Yoga-Kurse zu verwalten",
+            text = "Schritt 1 von 3",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Text(
+            text = "Damit wir professionelle Rechnungen für dich erstellen können, benötigen wir einige Informationen",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 8.dp)
         )
         
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        // Name input
+        // Personal Information Section
+        SectionHeader(text = "Persönliche Angaben")
+        
         OutlinedTextField(
             value = name,
             onValueChange = { 
@@ -117,16 +153,10 @@ fun UserProfileSetupScreen(
             )
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
-        // Address fields
-        Text(
-            text = "Adresse",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
+        // Address Section
+        SectionHeader(text = "Adresse")
         
         OutlinedTextField(
             value = street,
@@ -196,9 +226,10 @@ fun UserProfileSetupScreen(
             singleLine = true
         )
         
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         
-        // Contact fields
+        // Contact Information Section  
+        SectionHeader(text = "Kontaktdaten (optional)")
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -233,16 +264,10 @@ fun UserProfileSetupScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        // Bank details
-        Text(
-            text = "Bankverbindung",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
+        // Bank Details Section
+        SectionHeader(text = "Bankverbindung")
         
         OutlinedTextField(
             value = bankName,
@@ -290,9 +315,10 @@ fun UserProfileSetupScreen(
             singleLine = true
         )
         
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         
-        // Hourly rate input
+        // Pricing Section
+        SectionHeader(text = "Honorar")
         OutlinedTextField(
             value = hourlyRateText,
             onValueChange = { 
@@ -324,16 +350,22 @@ fun UserProfileSetupScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
         
-        // Buttons
+        // Navigation buttons with improved layout
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             OutlinedButton(
                 onClick = onBack,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
             ) {
-                Text("Zurück")
+                Text(
+                    text = "Zurück",
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
             
             Button(
@@ -367,17 +399,46 @@ fun UserProfileSetupScreen(
                         onContinue(profile)
                     }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
-                )
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
             ) {
-                Text("Weiter")
+                Text(
+                    text = "Weiter",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
     }
+}
+
+@Composable
+private fun SectionHeader(
+    text: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f)
+        ),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+        )
+    }
+    Spacer(modifier = Modifier.height(16.dp))
 }
 
 @Preview(showBackground = true)
