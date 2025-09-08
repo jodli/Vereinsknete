@@ -6,6 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.AddBusiness
+import androidx.compose.material.icons.outlined.ToggleOn
+import androidx.compose.material.icons.outlined.ToggleOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -78,7 +82,7 @@ fun StudiosManagementScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Home,
+                        imageVector = Icons.Outlined.Store,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -96,7 +100,7 @@ fun StudiosManagementScreen(
                     Button(
                         onClick = { viewModel.showAddDialog() }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(Icons.Outlined.AddBusiness, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Studio hinzufügen")
                     }
@@ -335,7 +339,7 @@ private fun StudioCard(
                             },
                             leadingIcon = {
                                 Icon(
-                                    if (studio.isActive) Icons.Default.Check else Icons.Default.Close,
+                                    if (studio.isActive) Icons.Outlined.ToggleOn else Icons.Outlined.ToggleOff,
                                     contentDescription = null
                                 )
                             }

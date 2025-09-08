@@ -12,7 +12,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -291,7 +290,7 @@ private fun WeekViewTopBar(
             }
             IconButton(onClick = onToday) {
                 Icon(
-                    imageVector = Icons.Default.Home,
+                    imageVector = Icons.Default.Today,
                     contentDescription = "Heute"
                 )
             }
@@ -314,7 +313,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
+                                imageVector = Icons.Filled.Receipt,
                                 contentDescription = null
                             )
                         }
@@ -327,7 +326,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Home,
+                                imageVector = Icons.Default.Business,
                                 contentDescription = null
                             )
                         }
@@ -367,7 +366,7 @@ private fun WeekViewTopBar(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.DateRange,
+                                imageVector = Icons.Default.CalendarMonth,
                                 contentDescription = null
                             )
                         }
@@ -394,7 +393,7 @@ private fun WeekViewTopBar(
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Clear,
+                                    imageVector = Icons.Default.Cancel,
                                     contentDescription = null
                                 )
                             }
@@ -558,9 +557,9 @@ private fun YogaClassCard(
     onClick: () -> Unit
 ) {
     val statusIcon = when (yogaClass.status) {
-        ClassStatus.SCHEDULED -> Icons.Default.PlayArrow
+        ClassStatus.SCHEDULED -> Icons.Default.Schedule
         ClassStatus.COMPLETED -> Icons.Default.CheckCircle
-        ClassStatus.CANCELLED -> Icons.Default.Clear
+        ClassStatus.CANCELLED -> Icons.Default.Cancel
     }
     
     val statusColor = when (yogaClass.status) {

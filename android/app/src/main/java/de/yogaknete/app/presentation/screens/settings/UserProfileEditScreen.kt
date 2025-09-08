@@ -5,13 +5,17 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,7 +75,7 @@ fun UserProfileEditScreen(
                 title = { Text("Profil bearbeiten") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Zurück")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück")
                     }
                 },
                 actions = {
@@ -109,7 +113,7 @@ fun UserProfileEditScreen(
                         },
                         enabled = !uiState.isLoading
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Speichern")
+                        Icon(Icons.Outlined.Save, contentDescription = "Speichern")
                     }
                 }
             )
@@ -174,7 +178,7 @@ fun UserProfileEditScreen(
                     onValueChange = { street = it },
                     label = { Text("Straße und Hausnummer") },
                     leadingIcon = {
-                        Icon(Icons.Default.Home, contentDescription = null)
+                        Icon(Icons.Outlined.LocationOn, contentDescription = null)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -221,6 +225,9 @@ fun UserProfileEditScreen(
                         taxIdError = false
                     },
                     label = { Text("Steuernummer / USt-IdNr") },
+                    leadingIcon = {
+                        Icon(Icons.Outlined.Badge, contentDescription = null)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     isError = taxIdError,
                     supportingText = if (taxIdError) {
@@ -239,7 +246,7 @@ fun UserProfileEditScreen(
                     },
                     label = { Text("Standard-Stundensatz (€)") },
                     leadingIcon = {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(Icons.Outlined.AttachMoney, contentDescription = null)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     isError = rateError,
@@ -301,7 +308,7 @@ fun UserProfileEditScreen(
                     onValueChange = { bankName = it },
                     label = { Text("Bank") },
                     leadingIcon = {
-                        Icon(Icons.Default.Add, contentDescription = null)
+                        Icon(Icons.Outlined.AccountBalance, contentDescription = null)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true

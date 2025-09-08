@@ -7,6 +7,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Event
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.CheckCircleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -137,7 +140,7 @@ fun AddClassDialog(
                                 onClick = { showDatePicker = true }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DateRange,
+                                    imageVector = Icons.Outlined.Event,
                                     contentDescription = "Datum auswählen"
                                 )
                             }
@@ -337,7 +340,7 @@ fun ClassActionDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.CheckCircle,
+                                    imageVector = Icons.Outlined.CheckCircleOutline,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -364,7 +367,7 @@ fun ClassActionDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Clear,
+                                    imageVector = Icons.Default.Cancel,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.error
                                 )
@@ -776,7 +779,7 @@ fun EditClassDialog(
                                 onClick = { showDatePicker = true }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.DateRange,
+                                    imageVector = Icons.Outlined.Event,
                                     contentDescription = "Datum auswählen"
                                 )
                             }

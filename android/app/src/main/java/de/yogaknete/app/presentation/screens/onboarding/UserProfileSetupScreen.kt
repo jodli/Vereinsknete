@@ -6,11 +6,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.Badge
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,7 +62,7 @@ fun UserProfileSetupScreen(
         
         // Header
         Icon(
-            imageVector = Icons.Default.Person,
+            imageVector = Icons.Outlined.AccountCircle,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -132,7 +135,7 @@ fun UserProfileSetupScreen(
             placeholder = { Text("z.B. Yogastraße 42") },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Home,
+                    imageVector = Icons.Outlined.LocationOn,
                     contentDescription = null
                 )
             },
@@ -177,6 +180,12 @@ fun UserProfileSetupScreen(
             },
             label = { Text("Steuernummer / USt-IdNr") },
             placeholder = { Text("z.B. DE123456789") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.Badge,
+                    contentDescription = null
+                )
+            },
             modifier = Modifier.fillMaxWidth(),
             isError = taxIdError,
             supportingText = if (taxIdError) {
@@ -242,7 +251,7 @@ fun UserProfileSetupScreen(
             placeholder = { Text("z.B. Sparkasse Berlin") },
             leadingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Add,
+                            imageVector = Icons.Outlined.AccountBalance,
                             contentDescription = null
                         )
             },
@@ -294,7 +303,7 @@ fun UserProfileSetupScreen(
             placeholder = { Text("z.B. 31,50") },
             leadingIcon = {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = Icons.Outlined.AttachMoney,
                     contentDescription = null
                 )
             },

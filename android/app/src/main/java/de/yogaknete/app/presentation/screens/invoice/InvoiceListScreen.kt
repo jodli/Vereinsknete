@@ -7,13 +7,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.PendingActions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -331,14 +335,14 @@ private fun InvoiceSummaryCard(
                     Button(
                         onClick = onCreateInvoice,
                         modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Rechnung erstellen")
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.ReceiptLong,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Rechnung erstellen")
                     }
                 } else {
                     // Payment status toggle
@@ -346,12 +350,12 @@ private fun InvoiceSummaryCard(
                         OutlinedButton(
                             onClick = { onUpdatePaymentStatus(PaymentStatus.PAID) },
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            ) {
+                                Icon(
+                                    Icons.Outlined.AttachMoney,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Als bezahlt markieren")
                         }
@@ -359,12 +363,12 @@ private fun InvoiceSummaryCard(
                         OutlinedButton(
                             onClick = { onUpdatePaymentStatus(PaymentStatus.PENDING) },
                             modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                Icons.Default.DateRange,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            ) {
+                                Icon(
+                                    Icons.Outlined.PendingActions,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Als ausstehend markieren")
                         }
@@ -376,7 +380,7 @@ private fun InvoiceSummaryCard(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            Icons.Default.Share,
+                            Icons.Default.PictureAsPdf,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -419,7 +423,7 @@ private fun PaymentStatusChip(status: PaymentStatus) {
         )
         PaymentStatus.PENDING -> Triple(
             Color(0xFFFFA726),
-            Icons.Default.DateRange,
+            Icons.Outlined.PendingActions,
             "Ausstehend"
         )
         PaymentStatus.OVERDUE -> Triple(
@@ -429,7 +433,7 @@ private fun PaymentStatusChip(status: PaymentStatus) {
         )
         PaymentStatus.CANCELLED -> Triple(
             Color(0xFF9E9E9E),
-            Icons.Default.Close,
+            Icons.Default.Cancel,
             "Storniert"
         )
     }

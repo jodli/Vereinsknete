@@ -3,7 +3,7 @@ package de.yogaknete.app.presentation.screens.onboarding
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +28,7 @@ fun WelcomeScreen(
     ) {
         // App icon/logo placeholder
         Icon(
-            imageVector = Icons.Default.Home,
+            imageVector = Icons.Outlined.SelfImprovement,
             contentDescription = "YogaKnete",
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.primary

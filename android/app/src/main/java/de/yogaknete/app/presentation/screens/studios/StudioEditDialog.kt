@@ -6,6 +6,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Store
+import androidx.compose.material.icons.outlined.AttachMoney
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.ContactMail
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -134,7 +139,7 @@ fun StudioEditDialog(
                         label = { Text("Studio-Name *") },
                         placeholder = { Text("z.B. TSV München") },
                         leadingIcon = {
-                            Icon(Icons.Default.Home, contentDescription = null)
+                            Icon(Icons.Outlined.Store, contentDescription = null)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         isError = nameError,
@@ -153,7 +158,7 @@ fun StudioEditDialog(
                         label = { Text("Stundensatz (€) *") },
                         placeholder = { Text("z.B. 31,50") },
                         leadingIcon = {
-                            Icon(Icons.Default.Add, contentDescription = null)
+                            Icon(Icons.Outlined.AttachMoney, contentDescription = null)
                         },
                         modifier = Modifier.fillMaxWidth(),
                         isError = rateError,
@@ -172,9 +177,9 @@ fun StudioEditDialog(
                         ) {
                             Icon(
                                 imageVector = if (showExpandedForm) 
-                                    Icons.Default.KeyboardArrowUp 
+                                    Icons.Outlined.ExpandLess 
                                 else 
-                                    Icons.Default.KeyboardArrowDown,
+                                    Icons.Outlined.ExpandMore,
                                 contentDescription = null
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -188,7 +193,7 @@ fun StudioEditDialog(
                     }
                     
                     if (showExpandedForm || isEditMode) {
-                        Divider()
+                        HorizontalDivider()
                         
                         // Contact Information
                         Text(
@@ -203,7 +208,7 @@ fun StudioEditDialog(
                             label = { Text("Ansprechpartner") },
                             placeholder = { Text("z.B. Max Mustermann") },
                             leadingIcon = {
-                                Icon(Icons.Default.Person, contentDescription = null)
+                                Icon(Icons.Outlined.ContactMail, contentDescription = null)
                             },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
@@ -235,7 +240,7 @@ fun StudioEditDialog(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                         )
                         
-                        Divider()
+                        HorizontalDivider()
                         
                         // Address
                         Text(
