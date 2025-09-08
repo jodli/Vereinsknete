@@ -5,12 +5,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import de.yogaknete.app.data.local.entities.ClassTemplate
+import de.yogaknete.app.presentation.components.TimePickerField
+import de.yogaknete.app.presentation.components.DurationPickerField
 import de.yogaknete.app.presentation.theme.YogaPurple
 import kotlinx.datetime.*
 
@@ -159,6 +168,7 @@ fun QuickAddDialog(
                         TimePickerField(
                             time = customStartTime ?: selectedTemplate!!.startTime,
                             onTimeSelected = { customStartTime = it },
+                            label = "Startzeit",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 40.dp, bottom = 8.dp)
@@ -181,14 +191,13 @@ fun QuickAddDialog(
                     }
                     
                     if (overrideDuration) {
-                        OutlinedTextField(
-                            value = customDuration,
-                            onValueChange = { customDuration = it },
-                            label = { Text("Dauer (Stunden)") },
+                        DurationPickerField(
+                            durationHours = customDuration.toDoubleOrNull() ?: selectedTemplate!!.duration,
+                            onDurationSelected = { customDuration = it.toString() },
+                            label = "Dauer",
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(start = 40.dp),
-                            singleLine = true
+                                .padding(start = 40.dp)
                         )
                     }
                 }
@@ -274,57 +283,6 @@ private fun TemplateListItem(
     }
 }
 
-@Composable
-private fun TimePickerField(
-    time: LocalTime,
-    onTimeSelected: (LocalTime) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var hour by remember { mutableStateOf(time.hour.toString()) }
-    var minute by remember { mutableStateOf(time.minute.toString().padStart(2, '0')) }
-    
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedTextField(
-            value = hour,
-            onValueChange = { 
-                if (it.length <= 2 && it.all { char -> char.isDigit() }) {
-                    hour = it
-                    val h = it.toIntOrNull() ?: 0
-                    val m = minute.toIntOrNull() ?: 0
-                    if (h in 0..23) {
-                        onTimeSelected(LocalTime(h, m))
-                    }
-                }
-            },
-            label = { Text("Stunde") },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-        
-        Text(":")
-        
-        OutlinedTextField(
-            value = minute,
-            onValueChange = { 
-                if (it.length <= 2 && it.all { char -> char.isDigit() }) {
-                    minute = it
-                    val h = hour.toIntOrNull() ?: 0
-                    val m = it.toIntOrNull() ?: 0
-                    if (m in 0..59) {
-                        onTimeSelected(LocalTime(h, m))
-                    }
-                }
-            },
-            label = { Text("Minute") },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-    }
-}
 
 private fun formatDate(date: LocalDate): String {
     val dayNames = listOf("So", "Mo", "Di", "Mi", "Do", "Fr", "Sa")

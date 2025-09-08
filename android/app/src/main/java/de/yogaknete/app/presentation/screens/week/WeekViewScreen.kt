@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -543,11 +544,24 @@ private fun EmptyDayCard(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "Keine Kurse",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.EventBusy,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Keine Kurse geplant",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                )
+            }
         }
     }
 }
@@ -646,15 +660,30 @@ private fun YogaClassCard(
                 }
                 
                 if (yogaClass.status != ClassStatus.SCHEDULED) {
-                    Text(
-                        text = when (yogaClass.status) {
-                            ClassStatus.COMPLETED -> "Erledigt ✓"
-                            ClassStatus.CANCELLED -> "Ausgefallen"
-                            else -> ""
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = statusColor
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = when (yogaClass.status) {
+                                ClassStatus.COMPLETED -> Icons.Default.CheckCircle
+                                ClassStatus.CANCELLED -> Icons.Default.Cancel
+                                else -> Icons.Default.Schedule
+                            },
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = statusColor
+                        )
+                        Text(
+                            text = when (yogaClass.status) {
+                                ClassStatus.COMPLETED -> "Erledigt"
+                                ClassStatus.CANCELLED -> "Ausgefallen"
+                                else -> ""
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = statusColor
+                        )
+                    }
                 }
             }
             

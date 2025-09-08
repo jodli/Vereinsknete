@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.presentation.theme.YogaPurple
+import de.yogaknete.app.presentation.components.TimePickerField
+import de.yogaknete.app.presentation.components.DurationPickerField
 import kotlinx.datetime.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -502,44 +504,25 @@ private fun TemplateEditDialog(
                     }
                 }
                 
-                // Time picker
+                // Time and duration inputs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutlinedTextField(
-                        value = startTime.hour.toString(),
-                        onValueChange = { 
-                            it.toIntOrNull()?.let { hour ->
-                                if (hour in 0..23) {
-                                    startTime = LocalTime(hour, startTime.minute)
-                                }
-                            }
-                        },
-                        label = { Text("Stunde") },
+                    TimePickerField(
+                        time = startTime,
+                        onTimeSelected = { startTime = it },
+                        label = "Startzeit",
                         modifier = Modifier.weight(1f)
                     )
-                    OutlinedTextField(
-                        value = startTime.minute.toString().padStart(2, '0'),
-                        onValueChange = {
-                            it.toIntOrNull()?.let { minute ->
-                                if (minute in 0..59) {
-                                    startTime = LocalTime(startTime.hour, minute)
-                                }
-                            }
-                        },
-                        label = { Text("Minute") },
+                    
+                    DurationPickerField(
+                        durationHours = duration.toDoubleOrNull() ?: 1.25,
+                        onDurationSelected = { duration = it.toString() },
+                        label = "Dauer",
                         modifier = Modifier.weight(1f)
                     )
                 }
-                
-                OutlinedTextField(
-                    value = duration,
-                    onValueChange = { duration = it },
-                    label = { Text("Dauer (Stunden)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("z.B. 1.25") }
-                )
             }
         },
         confirmButton = {
