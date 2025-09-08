@@ -1101,7 +1101,7 @@ fun MonthlyStatsDialog(
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Summary card
+                // Monthly Summary
                 Card(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
@@ -1109,43 +1109,79 @@ fun MonthlyStatsDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(16.dp)
                     ) {
+                        // Header with icon
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Erledigte Kurse:", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                text = "$totalClasses",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.primary
                             )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Gesamt Stunden:", style = MaterialTheme.typography.bodyMedium)
+                            Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                text = String.format(Locale.GERMAN, "%.2f", totalHours).replace(".", ","),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        HorizontalDivider()
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Monats-Verdienst:", style = MaterialTheme.typography.bodyMedium)
-                            Text(
-                                text = "€ ${String.format(Locale.GERMAN, "%.2f", totalEarnings).replace(".", ",")}",
+                                text = "Monatsübersicht",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
+                                fontWeight = FontWeight.Bold
                             )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        if (totalClasses > 0) {
+                            // Stats grid layout
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                // Classes stat
+                                MonthlyStatItem(
+                                    value = totalClasses.toString(),
+                                    label = if (totalClasses == 1) "Kurs" else "Kurse",
+                                    icon = Icons.Default.School,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                // Hours stat
+                                MonthlyStatItem(
+                                    value = String.format(Locale.GERMAN, "%.1f", totalHours).replace(".", ","),
+                                    label = "Stunden",
+                                    icon = Icons.Default.AccessTime,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                // Earnings stat
+                                MonthlyStatItem(
+                                    value = "€${String.format(Locale.GERMAN, "%.0f", totalEarnings).replace(".", ",")}",
+                                    label = "Verdienst",
+                                    icon = Icons.Default.Euro,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        } else {
+                            // Empty state
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.EventBusy,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "Noch keine erledigten Kurse in diesem Monat",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                )
+                            }
                         }
                     }
                 }
@@ -1206,25 +1242,6 @@ fun MonthlyStatsDialog(
                                 }
                             }
                     }
-                } else {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.EventBusy,
-                            contentDescription = null,
-                            modifier = Modifier.size(32.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Noch keine erledigten Kurse in diesem Monat",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            textAlign = TextAlign.Center
-                        )
-                    }
                 }
                 
                 // Comparison with previous month (optional future feature)
@@ -1236,4 +1253,37 @@ fun MonthlyStatsDialog(
             }
         }
     )
+}
+
+@Composable
+private fun MonthlyStatItem(
+    value: String,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+            tint = color.copy(alpha = 0.7f)
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.7f)
+        )
+    }
 }
