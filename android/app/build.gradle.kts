@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.util.Base64
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +8,13 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.20"
+}
+
+// Load keystore properties
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(keystorePropertiesFile.inputStream())
 }
 
 android {
@@ -21,13 +31,65 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            // Check for CI/CD environment variables first
+            val signingKeyBase64 = System.getenv("SIGNING_KEY_BASE64")
+            val keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties["keyAlias"]?.toString()
+            val keyStorePassword = System.getenv("KEY_STORE_PASSWORD") ?: keystoreProperties["storePassword"]?.toString()
+            val keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties["keyPassword"]?.toString()
+            
+            if (signingKeyBase64 != null && keyAlias != null && keyStorePassword != null && keyPassword != null) {
+                // CI/CD signing using base64 encoded keystore
+                val keystoreFile = File.createTempFile("keystore", ".jks")
+                keystoreFile.writeBytes(Base64.getDecoder().decode(signingKeyBase64))
+                storeFile = keystoreFile
+                storePassword = keyStorePassword
+                this.keyAlias = keyAlias
+                this.keyPassword = keyPassword
+            } else if (keystoreProperties.containsKey("storeFile")) {
+                // Local development signing using keystore.properties
+                storeFile = file(keystoreProperties["storeFile"].toString())
+                storePassword = keystoreProperties["storePassword"].toString()
+                this.keyAlias = keystoreProperties["keyAlias"].toString()
+                this.keyPassword = keystoreProperties["keyPassword"].toString()
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            // Use release signing configuration
+            signingConfig = signingConfigs.getByName("release")
+
+            // Performance optimizations
+            isDebuggable = false
+            isJniDebuggable = false
+            renderscriptOptimLevel = 3
+
+            // Packaging options for smaller APK
+            packaging {
+                resources {
+                    excludes += "/META-INF/{AL2.0,LGPL2.1}"
+                    excludes += "META-INF/DEPENDENCIES"
+                    excludes += "META-INF/LICENSE"
+                    excludes += "META-INF/LICENSE.txt"
+                    excludes += "META-INF/license.txt"
+                    excludes += "META-INF/NOTICE"
+                    excludes += "META-INF/NOTICE.txt"
+                    excludes += "META-INF/notice.txt"
+                    excludes += "META-INF/ASL2.0"
+                    excludes += "META-INF/*.kotlin_module"
+                }
+            }
         }
     }
     compileOptions {
@@ -42,6 +104,48 @@ android {
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
+    }
+    
+    // Configure APK naming
+    applicationVariants.all {
+        val buildType = this.buildType.name
+        val versionName = this.versionName
+        
+        this.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            
+            when (buildType) {
+                "debug" -> {
+                    output.outputFileName = "yogaknete-debug-${versionName}.apk"
+                }
+                "release" -> {
+                    output.outputFileName = "yogaknete-${versionName}.apk"
+                }
+            }
+        }
+    }
+    
+    // Configure AAB naming for bundle tasks
+    tasks.whenTaskAdded {
+        if (name.startsWith("bundle") && name.contains("Release")) {
+            doLast {
+                val bundleDir = layout.buildDirectory.dir("outputs/bundle/release").get().getAsFile()
+                if (bundleDir.exists()) {
+                    bundleDir.listFiles()?.forEach { file ->
+                        if (file.name.endsWith(".aab")) {
+                            // Get version from defaultConfig
+                            val versionName = android.defaultConfig.versionName ?: "1.0"
+                            
+                            val newName = "yogaknete-${versionName}.aab"
+                            val newFile = File(bundleDir, newName)
+                            if (file.renameTo(newFile)) {
+                                println("Renamed AAB: ${file.name} -> $newName")
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
