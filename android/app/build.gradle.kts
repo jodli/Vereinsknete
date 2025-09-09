@@ -43,6 +43,48 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.4"
     }
+    
+    // Configure APK naming
+    applicationVariants.all {
+        val buildType = this.buildType.name
+        val versionName = this.versionName
+        
+        this.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            
+            when (buildType) {
+                "debug" -> {
+                    output.outputFileName = "yogaknete-debug-${versionName}.apk"
+                }
+                "release" -> {
+                    output.outputFileName = "yogaknete-${versionName}.apk"
+                }
+            }
+        }
+    }
+    
+    // Configure AAB naming for bundle tasks
+    tasks.whenTaskAdded {
+        if (name.startsWith("bundle") && name.contains("Release")) {
+            doLast {
+                val bundleDir = layout.buildDirectory.dir("outputs/bundle/release").get().getAsFile()
+                if (bundleDir.exists()) {
+                    bundleDir.listFiles()?.forEach { file ->
+                        if (file.name.endsWith(".aab")) {
+                            // Get version from defaultConfig
+                            val versionName = android.defaultConfig.versionName ?: "1.0"
+                            
+                            val newName = "yogaknete-${versionName}.aab"
+                            val newFile = File(bundleDir, newName)
+                            if (file.renameTo(newFile)) {
+                                println("Renamed AAB: ${file.name} -> $newName")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {
