@@ -18,6 +18,7 @@ android/app/debug/
 .gradle/
 gradle-app.setting
 !gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.jar
 .gradletasknamecache
 build/
 captures/
