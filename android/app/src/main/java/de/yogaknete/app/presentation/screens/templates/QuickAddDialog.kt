@@ -45,16 +45,10 @@ fun QuickAddDialog(
     var customDuration by remember { mutableStateOf("1.25") }
     var markAsCompleted by remember { mutableStateOf(false) }
 
-    // Update markAsCompleted default when template is selected or time/duration changes
-    val effectiveStartTime = selectedTemplate?.let {
-        if (overrideTime) customStartTime ?: it.startTime else it.startTime
-    }
-    val effectiveDuration = selectedTemplate?.let {
-        if (overrideDuration) customDuration.toDoubleOrNull() ?: it.duration else it.duration
-    }
-    LaunchedEffect(selectedTemplate, effectiveStartTime, effectiveDuration) {
-        if (selectedTemplate != null && effectiveStartTime != null && effectiveDuration != null) {
-            markAsCompleted = isEndTimeInPast(date, effectiveStartTime, effectiveDuration)
+    // Set default once when template is selected
+    LaunchedEffect(selectedTemplate) {
+        if (selectedTemplate != null) {
+            markAsCompleted = isEndTimeInPast(date, selectedTemplate!!.startTime, selectedTemplate!!.duration)
         }
     }
 
