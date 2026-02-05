@@ -91,5 +91,35 @@ class WeekViewModelTemplateTest {
             })
         }
     }
+
+    @Test
+    fun `createClassFromTemplate with markAsCompleted inserts class as COMPLETED`() = runTest {
+        val template = ClassTemplate(
+            id = 10L,
+            name = "Montag Morgen",
+            studioId = 5L,
+            className = "Vinyasa Flow",
+            dayOfWeek = DayOfWeek.MONDAY,
+            startTime = LocalTime(9, 0),
+            endTime = LocalTime(10, 15),
+            duration = 1.25,
+            isActive = true
+        )
+        val date = LocalDate(2024, 11, 4) // Monday
+
+        viewModel.createClassFromTemplate(template, date, markAsCompleted = true)
+        advanceUntilIdle()
+
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.studioId == 5L &&
+                it.title == "Vinyasa Flow" &&
+                it.durationHours == 1.25 &&
+                it.status == ClassStatus.COMPLETED &&
+                it.creationSource == CreationSource.TEMPLATE &&
+                it.sourceTemplateId == 10L
+            })
+        }
+    }
 }
 

@@ -152,28 +152,29 @@ class TemplateViewModel @Inject constructor(
         template: ClassTemplate,
         date: LocalDate,
         startTimeOverride: LocalTime? = null,
-        durationOverride: Double? = null
+        durationOverride: Double? = null,
+        markAsCompleted: Boolean = false
     ) {
         viewModelScope.launch {
             val startTime = startTimeOverride ?: template.startTime
             val duration = durationOverride ?: template.duration
-            
+
             val startDateTime = LocalDateTime(date, startTime)
             val endDateTime = startDateTime.toInstant(TimeZone.currentSystemDefault())
                 .plus((duration * 60 * 60).toInt(), DateTimeUnit.SECOND)
                 .toLocalDateTime(TimeZone.currentSystemDefault())
-            
+
             val yogaClass = YogaClass(
                 studioId = template.studioId,
                 title = template.className,
                 startTime = startDateTime,
                 endTime = endDateTime,
                 durationHours = duration,
-                status = de.yogaknete.app.domain.model.ClassStatus.SCHEDULED,
+                status = if (markAsCompleted) de.yogaknete.app.domain.model.ClassStatus.COMPLETED else de.yogaknete.app.domain.model.ClassStatus.SCHEDULED,
                 creationSource = de.yogaknete.app.domain.model.CreationSource.TEMPLATE,
                 sourceTemplateId = template.id
             )
-            
+
             yogaClassRepository.addClass(yogaClass)
             hideQuickAddDialog()
         }
