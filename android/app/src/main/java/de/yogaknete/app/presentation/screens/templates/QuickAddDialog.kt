@@ -23,11 +23,19 @@ import de.yogaknete.app.presentation.components.DurationPickerField
 import de.yogaknete.app.ui.theme.YogaPurple
 import kotlinx.datetime.*
 
+private fun isEndTimeInPast(date: LocalDate, startTime: LocalTime, durationHours: Double): Boolean {
+    val now = Clock.System.now()
+    val tz = TimeZone.currentSystemDefault()
+    val startDateTime = LocalDateTime(date, startTime).toInstant(tz)
+    val endInstant = startDateTime.plus((durationHours * 60 * 60).toInt(), DateTimeUnit.SECOND)
+    return endInstant < now
+}
+
 @Composable
 fun QuickAddDialog(
     date: LocalDate,
     templates: List<ClassTemplate>,
-    onTemplateSelected: (ClassTemplate, LocalTime?, Double?) -> Unit,
+    onTemplateSelected: (ClassTemplate, LocalTime?, Double?, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var selectedTemplate by remember { mutableStateOf<ClassTemplate?>(null) }
@@ -35,7 +43,21 @@ fun QuickAddDialog(
     var customStartTime by remember { mutableStateOf<LocalTime?>(null) }
     var overrideDuration by remember { mutableStateOf(false) }
     var customDuration by remember { mutableStateOf("1.25") }
-    
+    var markAsCompleted by remember { mutableStateOf(false) }
+
+    // Update markAsCompleted default when template is selected or time/duration changes
+    val effectiveStartTime = selectedTemplate?.let {
+        if (overrideTime) customStartTime ?: it.startTime else it.startTime
+    }
+    val effectiveDuration = selectedTemplate?.let {
+        if (overrideDuration) customDuration.toDoubleOrNull() ?: it.duration else it.duration
+    }
+    LaunchedEffect(selectedTemplate, effectiveStartTime, effectiveDuration) {
+        if (selectedTemplate != null && effectiveStartTime != null && effectiveDuration != null) {
+            markAsCompleted = isEndTimeInPast(date, effectiveStartTime, effectiveDuration)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -62,18 +84,18 @@ fun QuickAddDialog(
                         style = MaterialTheme.typography.labelLarge,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        val dayTemplates = templates.filter { 
-                            it.dayOfWeek == date.dayOfWeek && it.isActive 
+                        val dayTemplates = templates.filter {
+                            it.dayOfWeek == date.dayOfWeek && it.isActive
                         }
-                        val otherTemplates = templates.filter { 
-                            it.dayOfWeek != date.dayOfWeek && it.isActive 
+                        val otherTemplates = templates.filter {
+                            it.dayOfWeek != date.dayOfWeek && it.isActive
                         }
-                        
+
                         if (dayTemplates.isNotEmpty()) {
                             item {
                                 Text(
@@ -91,7 +113,7 @@ fun QuickAddDialog(
                                 )
                             }
                         }
-                        
+
                         if (otherTemplates.isNotEmpty()) {
                             item {
                                 Text(
@@ -108,7 +130,7 @@ fun QuickAddDialog(
                                 )
                             }
                         }
-                        
+
                         if (templates.isEmpty()) {
                             item {
                                 Text(
@@ -148,7 +170,7 @@ fun QuickAddDialog(
                             )
                         }
                     }
-                    
+
                     // Zeit-Override
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -163,7 +185,7 @@ fun QuickAddDialog(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    
+
                     if (overrideTime) {
                         TimePickerField(
                             time = customStartTime ?: selectedTemplate!!.startTime,
@@ -174,7 +196,7 @@ fun QuickAddDialog(
                                 .padding(start = 40.dp, bottom = 8.dp)
                         )
                     }
-                    
+
                     // Dauer-Override
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -189,7 +211,7 @@ fun QuickAddDialog(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    
+
                     if (overrideDuration) {
                         DurationPickerField(
                             durationHours = customDuration.toDoubleOrNull() ?: selectedTemplate!!.duration,
@@ -198,6 +220,21 @@ fun QuickAddDialog(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(start = 40.dp)
+                        )
+                    }
+
+                    // Als durchgeführt markieren
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = markAsCompleted,
+                            onCheckedChange = { markAsCompleted = it }
+                        )
+                        Text(
+                            text = "Als durchgeführt markieren",
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -211,8 +248,8 @@ fun QuickAddDialog(
                         val duration = if (overrideDuration) {
                             customDuration.toDoubleOrNull() ?: selectedTemplate!!.duration
                         } else null
-                        
-                        onTemplateSelected(selectedTemplate!!, startTime, duration)
+
+                        onTemplateSelected(selectedTemplate!!, startTime, duration, markAsCompleted)
                     }
                 ) {
                     Text("Kurs erstellen")
@@ -290,7 +327,7 @@ private fun formatDate(date: LocalDate): String {
         "Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
         "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"
     )
-    
+
     return "${dayNames[date.dayOfWeek.value % 7]}, ${date.dayOfMonth}. ${monthNames[date.monthNumber - 1]} ${date.year}"
 }
 

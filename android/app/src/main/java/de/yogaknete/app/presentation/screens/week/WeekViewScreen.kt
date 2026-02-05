@@ -163,12 +163,13 @@ fun WeekViewScreen(
         QuickAddDialog(
             date = quickAddDate,
             templates = state.templates,
-            onTemplateSelected = { template, startOverride, durationOverride ->
+            onTemplateSelected = { template, startOverride, durationOverride, markAsCompleted ->
                 viewModel.createClassFromTemplate(
                     template = template,
                     date = quickAddDate,
                     startTimeOverride = startOverride,
-                    durationOverride = durationOverride
+                    durationOverride = durationOverride,
+                    markAsCompleted = markAsCompleted
                 )
             },
             onDismiss = { viewModel.hideQuickAddDialog() }
