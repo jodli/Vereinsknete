@@ -468,7 +468,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
                 Zahlbar bis ${dateFormat.format(dueDate)}
             </div>
             <div class="payment-footer-center">
-                IBAN: ${userProfile.iban.formatAsIban()}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""} &middot; Ref: ${invoice.invoiceNumber}
+                IBAN: ${formatIban(userProfile.iban)}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""} &middot; Ref: ${invoice.invoiceNumber}
             </div>
             <div class="payment-footer-right">
                 ${if (qrCodeBase64 != null) """<img src="data:image/png;base64,$qrCodeBase64" width="80" height="80" alt="GiroCode">""" else ""}
