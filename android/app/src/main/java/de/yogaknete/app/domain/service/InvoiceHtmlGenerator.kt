@@ -1,5 +1,6 @@
 package de.yogaknete.app.domain.service
 
+import de.yogaknete.app.core.utils.formatAsIban
 import de.yogaknete.app.domain.model.Invoice
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.UserProfile
@@ -469,7 +470,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
             <div class="payment-details">
                 <p>Bitte überweisen Sie den Gesamtbetrag bis zum <strong>${dateFormat.format(dueDate)}</strong> auf folgendes Konto:</p>
                 ${if (userProfile.bankName.isNotEmpty()) "<p><strong>Bank:</strong> ${userProfile.bankName}</p>" else ""}
-                <p><strong>IBAN:</strong> ${formatIban(userProfile.iban)}</p>
+                <p><strong>IBAN:</strong> ${userProfile.iban.formatAsIban()}</p>
                 ${if (userProfile.bic.isNotEmpty()) "<p><strong>BIC:</strong> ${userProfile.bic}</p>" else ""}
                 <p><strong>Verwendungszweck:</strong> ${invoice.invoiceNumber}</p>
             </div>
@@ -480,7 +481,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
     <div class="payment-footer">
         <div class="payment-footer-content">
             <div class="payment-footer-left">
-                IBAN: ${formatIban(userProfile.iban)}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""}<br>
+                IBAN: ${userProfile.iban.formatAsIban()}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""}<br>
                 Ref: ${invoice.invoiceNumber}
             </div>
             <div class="payment-footer-right">
@@ -502,10 +503,6 @@ class InvoiceHtmlGenerator @Inject constructor() {
         } else {
             "${h}h"
         }
-    }
-    
-    private fun formatIban(iban: String): String {
-        return iban.chunked(4).joinToString(" ")
     }
     
     private fun getMonthName(month: Int): String {
