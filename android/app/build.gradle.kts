@@ -184,6 +184,9 @@ dependencies {
     
     // Serialization for backup/restore
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+
+    // QR code generation (EPC/GiroCode for invoices)
+    implementation("com.google.zxing:core:3.5.3")
     
     // Testing
     testImplementation(libs.junit)

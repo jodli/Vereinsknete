@@ -8,6 +8,7 @@ import android.print.PrintManager
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import dagger.hilt.android.qualifiers.ApplicationContext
+import de.yogaknete.app.core.utils.EpcQrCodeGenerator
 import de.yogaknete.app.domain.model.Invoice
 import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.UserProfile
@@ -24,7 +25,8 @@ import kotlin.coroutines.resumeWithException
 @Singleton
 class InvoicePdfService @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
-    private val htmlGenerator: InvoiceHtmlGenerator
+    private val htmlGenerator: InvoiceHtmlGenerator,
+    private val qrCodeGenerator: EpcQrCodeGenerator
 ) {
     
     /**
@@ -38,11 +40,13 @@ class InvoicePdfService @Inject constructor(
         studio: Studio,
         yogaClasses: List<YogaClass>
     ) = withContext(Dispatchers.Main) {
+        val qrCode = generateQrCode(userProfile, invoice)
         val html = htmlGenerator.generateInvoiceHtml(
             invoice = invoice,
             userProfile = userProfile,
             studio = studio,
-            yogaClasses = yogaClasses
+            yogaClasses = yogaClasses,
+            qrCodeBase64 = qrCode
         )
         
         // Create WebView to render HTML
@@ -84,11 +88,13 @@ class InvoicePdfService @Inject constructor(
         yogaClasses: List<YogaClass>,
         outputFile: File
     ): File = withContext(Dispatchers.IO) {
+        val qrCode = generateQrCode(userProfile, invoice)
         val html = htmlGenerator.generateInvoiceHtml(
             invoice = invoice,
             userProfile = userProfile,
             studio = studio,
-            yogaClasses = yogaClasses
+            yogaClasses = yogaClasses,
+            qrCodeBase64 = qrCode
         )
         
         // Save the HTML file (can be opened in a browser or converted to PDF later)
@@ -113,6 +119,17 @@ class InvoicePdfService @Inject constructor(
         )
     }
     
+    private fun generateQrCode(userProfile: UserProfile, invoice: Invoice): String? {
+        if (userProfile.iban.isBlank()) return null
+        return qrCodeGenerator.generateBase64Png(
+            bic = userProfile.bic,
+            recipientName = userProfile.name,
+            iban = userProfile.iban,
+            amount = invoice.totalAmount,
+            reference = invoice.invoiceNumber
+        )
+    }
+
     private fun createPrintJob(activity: Activity, webView: WebView, documentName: String) {
         val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
         
