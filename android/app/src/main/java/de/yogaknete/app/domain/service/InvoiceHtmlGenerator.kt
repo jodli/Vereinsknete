@@ -22,7 +22,8 @@ class InvoiceHtmlGenerator @Inject constructor() {
         invoice: Invoice,
         userProfile: UserProfile,
         studio: Studio,
-        yogaClasses: List<YogaClass>
+        yogaClasses: List<YogaClass>,
+        qrCodeBase64: String? = null
     ): String {
         val currentDate = Date()
         val dueDate = Calendar.getInstance().apply {
@@ -232,23 +233,27 @@ class InvoiceHtmlGenerator @Inject constructor() {
             page-break-inside: avoid;
             break-inside: avoid;
         }
-        
+
         .payment-title {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 15px;
             color: #333;
         }
-        
+
         .payment-details {
             font-size: 14px;
             line-height: 1.8;
         }
-        
+
         .payment-details p {
             margin-bottom: 8px;
         }
-        
+
+        .payment-footer {
+            display: none;
+        }
+
         .footer {
             margin-top: 60px;
             padding-top: 20px;
@@ -257,28 +262,76 @@ class InvoiceHtmlGenerator @Inject constructor() {
             font-size: 12px;
             color: #666;
         }
-        
+
         .footer p {
             margin-bottom: 5px;
         }
-        
+
         @media print {
             body {
                 padding: 0;
                 margin: 0;
+                padding-bottom: 30mm;
             }
-            
+
             .invoice-container {
                 max-width: 100%;
             }
-            
+
             .services-table tbody tr:hover {
                 background: transparent;
             }
-            
+
+            .payment-section {
+                display: none;
+            }
+
+            .payment-footer {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                border-top: 1px solid #ccc;
+                padding: 8px 0 0 0;
+                font-size: 10px;
+                color: #333;
+                background: white;
+            }
+
+            .payment-footer-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .payment-footer-left {
+                font-size: 9px;
+                color: #666;
+            }
+
+            .payment-footer-center {
+                text-align: center;
+                line-height: 1.4;
+            }
+
+            .payment-footer-right {
+                text-align: right;
+            }
+
+            .payment-footer-right img {
+                display: block;
+                margin-left: auto;
+            }
+
             @page {
                 margin: 20mm;
                 size: A4;
+                @bottom-center {
+                    content: "Seite " counter(page) " von " counter(pages);
+                    font-size: 9px;
+                    color: #999;
+                }
             }
         }
     </style>
@@ -334,6 +387,10 @@ class InvoiceHtmlGenerator @Inject constructor() {
                     <td>Rechnungsdatum:</td>
                     <td>${dateFormat.format(currentDate)}</td>
                 </tr>
+                <tr>
+                    <td>Zahlbar bis:</td>
+                    <td>${dateFormat.format(dueDate)}</td>
+                </tr>
             </table>
         </div>
         
@@ -348,7 +405,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
                 <thead>
                     <tr>
                         <th>Datum</th>
-                        <th>Uhrzeit</th>
+                        <th class="text-center">Uhrzeit</th>
                         <th class="text-center">Dauer</th>
                         <th class="text-right">Stundensatz</th>
                         <th class="text-right">Betrag</th>
@@ -362,7 +419,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
                         """
                     <tr>
                         <td>${dateFormat.format(classDate)}</td>
-                        <td>${timeFormat.format(classDate)}</td>
+                        <td class="text-center">${timeFormat.format(classDate)}</td>
                         <td class="text-center">${formatDuration(yogaClass.durationHours)}</td>
                         <td class="text-right">${currencyFormat.format(invoice.hourlyRate)} €</td>
                         <td class="text-right">${currencyFormat.format(amount)} €</td>
@@ -391,15 +448,30 @@ class InvoiceHtmlGenerator @Inject constructor() {
             </div>
         </div>
         
-        <!-- Payment information -->
+        <!-- Payment information (screen only) -->
         <div class="payment-section">
             <h3 class="payment-title">Zahlungsinformationen</h3>
             <div class="payment-details">
-                <p>Bitte überweisen Sie den Gesamtbetrag auf folgendes Konto:</p>
+                <p>Bitte überweisen Sie den Gesamtbetrag bis zum <strong>${dateFormat.format(dueDate)}</strong> auf folgendes Konto:</p>
                 ${if (userProfile.bankName.isNotEmpty()) "<p><strong>Bank:</strong> ${userProfile.bankName}</p>" else ""}
                 <p><strong>IBAN:</strong> ${formatIban(userProfile.iban)}</p>
                 ${if (userProfile.bic.isNotEmpty()) "<p><strong>BIC:</strong> ${userProfile.bic}</p>" else ""}
                 <p><strong>Verwendungszweck:</strong> ${invoice.invoiceNumber}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment footer (print only, repeats on every page) -->
+    <div class="payment-footer">
+        <div class="payment-footer-content">
+            <div class="payment-footer-left">
+                Zahlbar bis ${dateFormat.format(dueDate)}
+            </div>
+            <div class="payment-footer-center">
+                IBAN: ${userProfile.iban.formatAsIban()}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""} &middot; Ref: ${invoice.invoiceNumber}
+            </div>
+            <div class="payment-footer-right">
+                ${if (qrCodeBase64 != null) """<img src="data:image/png;base64,$qrCodeBase64" width="80" height="80" alt="GiroCode">""" else ""}
             </div>
         </div>
     </div>
