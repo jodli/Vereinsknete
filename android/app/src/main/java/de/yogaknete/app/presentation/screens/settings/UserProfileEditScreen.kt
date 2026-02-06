@@ -25,6 +25,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import de.yogaknete.app.core.utils.IbanVisualTransformation
 import de.yogaknete.app.domain.model.UserProfile
 import kotlinx.coroutines.launch
 
@@ -318,8 +319,8 @@ fun UserProfileEditScreen(
                 
                 OutlinedTextField(
                     value = iban,
-                    onValueChange = { 
-                        iban = it.uppercase()
+                    onValueChange = {
+                        iban = it.replace(" ", "").uppercase()
                         ibanError = false
                     },
                     label = { Text("IBAN") },
@@ -328,7 +329,8 @@ fun UserProfileEditScreen(
                     supportingText = if (ibanError) {
                         { Text("Bitte gib eine gültige IBAN ein") }
                     } else null,
-                    singleLine = true
+                    singleLine = true,
+                    visualTransformation = IbanVisualTransformation()
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))

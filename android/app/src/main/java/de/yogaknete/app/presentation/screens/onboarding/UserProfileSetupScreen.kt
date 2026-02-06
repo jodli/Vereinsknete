@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import de.yogaknete.app.core.utils.IbanVisualTransformation
 import de.yogaknete.app.domain.model.UserProfile
 import de.yogaknete.app.ui.theme.YogaKneteTheme
 
@@ -288,8 +289,8 @@ fun UserProfileSetupScreen(
         
         OutlinedTextField(
             value = iban,
-            onValueChange = { 
-                iban = it.uppercase()
+            onValueChange = {
+                iban = it.replace(" ", "").uppercase()
                 ibanError = false
             },
             label = { Text("IBAN") },
@@ -301,7 +302,8 @@ fun UserProfileSetupScreen(
             } else {
                 { Text("Erforderlich für Überweisungen") }
             },
-            singleLine = true
+            singleLine = true,
+            visualTransformation = IbanVisualTransformation()
         )
         
         Spacer(modifier = Modifier.height(16.dp))

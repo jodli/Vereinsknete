@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import de.yogaknete.app.core.utils.formatAsIban
 import de.yogaknete.app.domain.model.PaymentStatus
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -459,7 +460,7 @@ fun InvoiceDetailScreen(
                                     )
                                 }
                                 Text(
-                                    text = "IBAN: ${profile.iban}",
+                                    text = "IBAN: ${profile.iban.formatAsIban()}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSecondaryContainer
