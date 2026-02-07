@@ -581,19 +581,17 @@ class InvoiceHtmlGeneratorTest {
     }
 
     @Test
-    fun `payment footer due date matches meta table due date`() {
+    fun `payment footer contains IBAN and invoice reference`() {
         val html = generator.generateInvoiceHtml(testInvoice, testProfile, testStudio, testClasses)
 
-        // Extract the due date from the meta table
-        val metaDueDate = Regex("""Zahlbar bis:</td>\s*<td>(\d{2}\.\d{2}\.\d{4})</td>""")
-            .find(html)?.groupValues?.get(1)
-        assertNotNull("Due date should be in meta table", metaDueDate)
-
-        // The same date should appear in the payment footer
         val footerBlock = html.substringAfter("payment-footer-left")
         assertTrue(
-            "Footer due date should match meta table due date",
-            footerBlock.contains("Zahlbar bis $metaDueDate")
+            "Footer should contain IBAN",
+            footerBlock.contains("IBAN:")
+        )
+        assertTrue(
+            "Footer should contain invoice reference",
+            footerBlock.contains("Ref: ${testInvoice.invoiceNumber}")
         )
     }
 }

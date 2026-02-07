@@ -129,14 +129,18 @@ class InvoiceHtmlGenerator @Inject constructor() {
         .meta-table td {
             padding: 5px 0;
         }
-        
-        .meta-table td:first-child {
+
+        .meta-table td:nth-child(odd) {
             width: 150px;
             color: #666;
         }
-        
-        .meta-table td:last-child {
+
+        .meta-table td:nth-child(even) {
             font-weight: 500;
+        }
+
+        .meta-table td:nth-child(3) {
+            padding-left: 30px;
         }
         
         .services-section {
@@ -198,6 +202,8 @@ class InvoiceHtmlGenerator @Inject constructor() {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 2px solid #333;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
         
         .totals-table {
@@ -278,6 +284,23 @@ class InvoiceHtmlGenerator @Inject constructor() {
                 max-width: 100%;
             }
 
+            .header {
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+            }
+
+            .addresses {
+                margin-bottom: 25px;
+            }
+
+            .invoice-meta {
+                margin-bottom: 25px;
+            }
+
+            .services-section {
+                margin-bottom: 20px;
+            }
+
             .services-table tbody tr:hover {
                 background: transparent;
             }
@@ -294,7 +317,7 @@ class InvoiceHtmlGenerator @Inject constructor() {
                 width: 100%;
                 border-top: 1px solid #ccc;
                 padding: 8px 0 0 0;
-                font-size: 10px;
+                font-size: 12px;
                 color: #333;
                 background: white;
             }
@@ -306,12 +329,6 @@ class InvoiceHtmlGenerator @Inject constructor() {
             }
 
             .payment-footer-left {
-                font-size: 9px;
-                color: #666;
-            }
-
-            .payment-footer-center {
-                text-align: center;
                 line-height: 1.4;
             }
 
@@ -386,8 +403,6 @@ class InvoiceHtmlGenerator @Inject constructor() {
                 <tr>
                     <td>Rechnungsdatum:</td>
                     <td>${dateFormat.format(currentDate)}</td>
-                </tr>
-                <tr>
                     <td>Zahlbar bis:</td>
                     <td>${dateFormat.format(dueDate)}</td>
                 </tr>
@@ -465,10 +480,8 @@ class InvoiceHtmlGenerator @Inject constructor() {
     <div class="payment-footer">
         <div class="payment-footer-content">
             <div class="payment-footer-left">
-                Zahlbar bis ${dateFormat.format(dueDate)}
-            </div>
-            <div class="payment-footer-center">
-                IBAN: ${formatIban(userProfile.iban)}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""} &middot; Ref: ${invoice.invoiceNumber}
+                IBAN: ${formatIban(userProfile.iban)}${if (userProfile.bic.isNotEmpty()) " &middot; BIC: ${userProfile.bic}" else ""}<br>
+                Ref: ${invoice.invoiceNumber}
             </div>
             <div class="payment-footer-right">
                 ${if (qrCodeBase64 != null) """<img src="data:image/png;base64,$qrCodeBase64" width="80" height="80" alt="GiroCode">""" else ""}
