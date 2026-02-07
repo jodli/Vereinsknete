@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yogaknete.de/backup-data.schema.json",
+  "title": "BackupData",
+  "description": "Schema for Yogaknete app backup/seed data. Matches the kotlinx.serialization output of de.yogaknete.app.domain.model.BackupData.",
+  "type": "object",
+  "required": ["version", "exportDate", "appVersion", "userProfile", "studios", "classes", "templates", "invoices"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Backup format version. Currently always 1."
+    },
+    "exportDate": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$",
+      "description": "ISO-8601 Instant (UTC) when the backup was created."
+    },
+    "appVersion": {
+      "type": "string",
+      "description": "App version string, e.g. '1.0.0'."
+    },
+    "userProfile": {
+      "oneOf": [
+        { "$ref": "#/$defs/UserProfile" },
+        { "type": "null" }
+      ],
+      "description": "Single user profile, or null if not set."
+    },
+    "studios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Studio" },
+      "description": "All studios. Must be imported before classes, templates, and invoices (FK parent)."
+    },
+    "classes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/YogaClass" },
+      "description": "All yoga classes. FK: studioId -> studios.id, sourceTemplateId -> templates.id (nullable)."
+    },
+    "templates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ClassTemplate" },
+      "description": "All class templates. FK: studioId -> studios.id."
+    },
+    "invoices": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Invoice" },
+      "description": "All invoices. FK: studioId -> studios.id."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "UserProfile": {
+      "type": "object",
+      "required": ["id", "name", "street", "postalCode", "city", "taxId", "phone", "email", "bankName", "iban", "bic", "defaultHourlyRate", "isOnboardingComplete"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "const": 1,
+          "description": "Always 1 (single user profile)."
+        },
+        "name": { "type": "string" },
+        "street": { "type": "string" },
+        "postalCode": { "type": "string" },
+        "city": { "type": "string" },
+        "taxId": { "type": "string", "description": "Steuernummer or USt-IdNr." },
+        "phone": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "bankName": { "type": "string" },
+        "iban": { "type": "string" },
+        "bic": { "type": "string", "description": "Optional BIC/SWIFT code." },
+        "defaultHourlyRate": { "type": "number", "minimum": 0 },
+        "isOnboardingComplete": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "Studio": {
+      "type": "object",
+      "required": ["id", "name", "contactPerson", "email", "phone", "street", "postalCode", "city", "hourlyRate", "isActive"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1, "description": "Explicit ID. Used as FK target by classes, templates, and invoices." },
+        "name": { "type": "string" },
+        "contactPerson": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "street": { "type": "string" },
+        "postalCode": { "type": "string" },
+        "city": { "type": "string" },
+        "hourlyRate": { "type": "number", "minimum": 0, "description": "EUR per hour." },
+        "isActive": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "YogaClass": {
+      "type": "object",
+      "required": ["id", "studioId", "title", "startTime", "endTime", "durationHours", "status", "notes", "creationSource", "sourceTemplateId"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "studioId": { "type": "integer", "minimum": 1, "description": "FK -> studios.id." },
+        "title": { "type": "string", "description": "Class name, e.g. 'Hatha Yoga'." },
+        "startTime": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$",
+          "description": "LocalDateTime without timezone, e.g. '2026-01-15T10:00'."
+        },
+        "endTime": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$",
+          "description": "LocalDateTime without timezone."
+        },
+        "durationHours": { "type": "number", "exclusiveMinimum": 0, "description": "Duration in hours, e.g. 1.25 for 75 minutes." },
+        "status": { "$ref": "#/$defs/ClassStatus" },
+        "notes": { "type": "string" },
+        "creationSource": { "$ref": "#/$defs/CreationSource" },
+        "sourceTemplateId": {
+          "oneOf": [
+            { "type": "integer", "minimum": 1 },
+            { "type": "null" }
+          ],
+          "description": "FK -> templates.id. Null for MANUAL classes without a template."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ClassTemplate": {
+      "type": "object",
+      "required": ["id", "name", "studioId", "className", "dayOfWeek", "startTime", "endTime", "duration", "isActive", "autoSchedule", "lastScheduledDate"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "description": "Template display name." },
+        "studioId": { "type": "integer", "minimum": 1, "description": "FK -> studios.id." },
+        "className": { "type": "string", "description": "Class title used when creating classes from this template." },
+        "dayOfWeek": { "$ref": "#/$defs/DayOfWeek" },
+        "startTime": {
+          "type": "string",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "description": "LocalTime, e.g. '10:00'."
+        },
+        "endTime": {
+          "type": "string",
+          "pattern": "^\\d{2}:\\d{2}$",
+          "description": "LocalTime, e.g. '11:15'."
+        },
+        "duration": { "type": "number", "exclusiveMinimum": 0, "description": "Duration in hours." },
+        "isActive": { "type": "boolean" },
+        "autoSchedule": { "type": "boolean", "description": "If true, classes are auto-created weekly." },
+        "lastScheduledDate": {
+          "oneOf": [
+            { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+            { "type": "null" }
+          ],
+          "description": "LocalDate of last auto-scheduled class, or null."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Invoice": {
+      "type": "object",
+      "required": ["id", "studioId", "invoiceNumber", "month", "year", "totalHours", "hourlyRate", "totalAmount", "paymentStatus", "createdAt", "paidAt", "notes", "pdfPath"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "studioId": { "type": "integer", "minimum": 1, "description": "FK -> studios.id." },
+        "invoiceNumber": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{3}$",
+          "description": "Format: YYYY-MM-XXX, e.g. '2026-01-001'."
+        },
+        "month": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "year": { "type": "integer", "minimum": 2000 },
+        "totalHours": { "type": "number", "minimum": 0 },
+        "hourlyRate": { "type": "number", "minimum": 0, "description": "Rate at time of invoice creation." },
+        "totalAmount": { "type": "number", "minimum": 0, "description": "totalHours * hourlyRate." },
+        "paymentStatus": { "$ref": "#/$defs/PaymentStatus" },
+        "createdAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$",
+          "description": "LocalDateTime without timezone."
+        },
+        "paidAt": {
+          "oneOf": [
+            { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}$" },
+            { "type": "null" }
+          ],
+          "description": "LocalDateTime when paid, or null."
+        },
+        "notes": { "type": "string" },
+        "pdfPath": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "null" }
+          ],
+          "description": "Path to generated PDF, or null."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ClassStatus": {
+      "type": "string",
+      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
+    },
+    "CreationSource": {
+      "type": "string",
+      "enum": ["MANUAL", "TEMPLATE", "AUTO"]
+    },
+    "PaymentStatus": {
+      "type": "string",
+      "enum": ["PENDING", "PAID", "OVERDUE", "CANCELLED"]
+    },
+    "DayOfWeek": {
+      "type": "string",
+      "enum": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]
+    }
+  }
+}
