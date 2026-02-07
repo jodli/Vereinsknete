@@ -4,6 +4,7 @@ import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.UserProfile
 import de.yogaknete.app.domain.repository.StudioRepository
 import de.yogaknete.app.domain.repository.UserProfileRepository
+import de.yogaknete.app.domain.service.BackupImportService
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,6 +22,7 @@ class OnboardingViewModelTest {
     
     private lateinit var userProfileRepository: UserProfileRepository
     private lateinit var studioRepository: StudioRepository
+    private lateinit var backupImportService: BackupImportService
     private lateinit var viewModel: OnboardingViewModel
     private val testDispatcher = StandardTestDispatcher()
     
@@ -29,6 +31,7 @@ class OnboardingViewModelTest {
         Dispatchers.setMain(testDispatcher)
         userProfileRepository = mockk()
         studioRepository = mockk()
+        backupImportService = mockk()
         
         // Default mock behavior
         coEvery { userProfileRepository.isOnboardingComplete() } returns false
@@ -43,7 +46,7 @@ class OnboardingViewModelTest {
     fun `ViewModel checks onboarding status on init`() = runTest {
         coEvery { userProfileRepository.isOnboardingComplete() } returns true
         
-        viewModel = OnboardingViewModel(userProfileRepository, studioRepository)
+        viewModel = OnboardingViewModel(userProfileRepository, studioRepository, backupImportService)
         advanceUntilIdle()
         
         assertTrue(viewModel.onboardingComplete.value)
@@ -55,7 +58,7 @@ class OnboardingViewModelTest {
         coEvery { userProfileRepository.saveUserProfile(any()) } just Runs
         coEvery { studioRepository.saveStudios(any()) } just Runs
         
-        viewModel = OnboardingViewModel(userProfileRepository, studioRepository)
+        viewModel = OnboardingViewModel(userProfileRepository, studioRepository, backupImportService)
         
         val studios = listOf(
             StudioInput(
@@ -111,7 +114,7 @@ class OnboardingViewModelTest {
     fun `completeOnboarding works without studios`() = runTest {
         coEvery { userProfileRepository.saveUserProfile(any()) } just Runs
         
-        viewModel = OnboardingViewModel(userProfileRepository, studioRepository)
+        viewModel = OnboardingViewModel(userProfileRepository, studioRepository, backupImportService)
         
         val userProfile = UserProfile(
             name = "Maria Schmidt",

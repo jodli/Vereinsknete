@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +29,8 @@ import de.yogaknete.app.ui.theme.YogaKneteTheme
 
 @Composable
 fun WelcomeScreen(
-    onContinue: () -> Unit
+    onContinue: () -> Unit,
+    onRestoreBackup: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     
@@ -199,7 +201,20 @@ fun WelcomeScreen(
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             textAlign = TextAlign.Center
         )
-        
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Restore from backup — secondary action
+        TextButton(onClick = onRestoreBackup) {
+            Icon(
+                imageVector = Icons.Outlined.Restore,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text("Daten wiederherstellen")
+        }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

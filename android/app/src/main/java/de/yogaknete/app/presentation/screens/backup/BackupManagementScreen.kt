@@ -27,14 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import de.yogaknete.app.domain.model.ImportStrategy
-import de.yogaknete.app.domain.model.BackupMetadata
 import de.yogaknete.app.domain.model.BackupResult
+import de.yogaknete.app.presentation.components.ImportPreviewDialog
 import de.yogaknete.app.ui.theme.YogaPurple
-import androidx.compose.foundation.clickable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -395,118 +390,3 @@ private fun InfoItem(
     }
 }
 
-@Composable
-private fun ImportPreviewDialog(
-    metadata: BackupMetadata,
-    onConfirm: (ImportStrategy) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var selectedStrategy by remember { mutableStateOf(ImportStrategy.MERGE) }
-    
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                "Backup-Vorschau",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        },
-        text = {
-            Column {
-                Text(
-                    "Backup-Details:",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                val exportDate = metadata.exportDate.toLocalDateTime(TimeZone.currentSystemDefault())
-                Text("Erstellt am: ${exportDate.date} um ${exportDate.time}")
-                Text("Version: ${metadata.version}")
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Text(
-                    "Enthaltene Daten:",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                Text("• ${metadata.entryCount.studios} Studios")
-                Text("• ${metadata.entryCount.classes} Kurse")
-                Text("• ${metadata.entryCount.templates} Vorlagen")
-                Text("• ${metadata.entryCount.invoices} Rechnungen")
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(
-                    "Import-Strategie:",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedStrategy == ImportStrategy.MERGE,
-                            onClick = { selectedStrategy = ImportStrategy.MERGE }
-                        )
-                        Text(
-                            "Zusammenführen",
-                            modifier = Modifier.clickable { selectedStrategy = ImportStrategy.MERGE }
-                        )
-                    }
-                    Text(
-                        "Bestehende Daten behalten und neue hinzufügen",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 40.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = selectedStrategy == ImportStrategy.REPLACE,
-                            onClick = { selectedStrategy = ImportStrategy.REPLACE }
-                        )
-                        Text(
-                            "Ersetzen",
-                            modifier = Modifier.clickable { selectedStrategy = ImportStrategy.REPLACE }
-                        )
-                    }
-                    Text(
-                        "Alle Daten löschen und durch Backup ersetzen",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 40.dp)
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(selectedStrategy) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = YogaPurple
-                )
-            ) {
-                Text("Importieren")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Abbrechen")
-            }
-        }
-    )
-}
