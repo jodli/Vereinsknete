@@ -42,7 +42,9 @@ class AutoScheduleManagerTest {
         studioId: Long = 1L,
         autoSchedule: Boolean = true,
         isActive: Boolean = true,
-        lastScheduledDate: LocalDate? = null
+        lastScheduledDate: LocalDate? = null,
+        recurrenceIntervalWeeks: Int = 1,
+        referenceDate: LocalDate? = null
     ) = ClassTemplate(
         id = id,
         name = "Test Template",
@@ -54,7 +56,9 @@ class AutoScheduleManagerTest {
         duration = 1.25,
         isActive = isActive,
         autoSchedule = autoSchedule,
-        lastScheduledDate = lastScheduledDate
+        lastScheduledDate = lastScheduledDate,
+        recurrenceIntervalWeeks = recurrenceIntervalWeeks,
+        referenceDate = referenceDate
     )
 
     @Test
@@ -202,5 +206,177 @@ class AutoScheduleManagerTest {
 
         // Then: lastScheduledDate updated for Thursday 2025-01-09
         coVerify { classTemplateDao.updateLastScheduledDate(5L, LocalDate(2025, 1, 9)) }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule bi-weekly schedules on matching weeks`() = runTest {
+        // Given: today is Wednesday 2025-01-08, template for Wednesday bi-weekly
+        // referenceDate = 2025-01-08 (today, a Wednesday) -> should schedule today
+        val today = LocalDate(2025, 1, 8)
+        mockToday(today)
+
+        val template = createTemplate(
+            dayOfWeek = DayOfWeek.WEDNESDAY,
+            recurrenceIntervalWeeks = 2,
+            referenceDate = LocalDate(2025, 1, 8)
+        )
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        // When
+        autoScheduleManager.catchUpAutoSchedule()
+
+        // Then: class created for 2025-01-08 (on-week)
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 8)
+            })
+        }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule bi-weekly skips off-weeks`() = runTest {
+        // Given: today is Wednesday 2025-01-15, template for Wednesday bi-weekly
+        // referenceDate = 2025-01-08 -> next on-week would be 2025-01-22
+        // 2025-01-15 is 1 week from ref, so off-week
+        val today = LocalDate(2025, 1, 15)
+        mockToday(today)
+
+        val template = createTemplate(
+            dayOfWeek = DayOfWeek.WEDNESDAY,
+            recurrenceIntervalWeeks = 2,
+            referenceDate = LocalDate(2025, 1, 8)
+        )
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        // When
+        autoScheduleManager.catchUpAutoSchedule()
+
+        // Then: no class on 2025-01-15 (off-week), class on 2025-01-22 (on-week, within 14-day window)
+        coVerify(exactly = 0) {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 15)
+            })
+        }
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 22)
+            })
+        }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule 4-weekly scheduling works correctly`() = runTest {
+        // Given: today is Wednesday 2025-01-08, template for Wednesday every 4 weeks
+        // referenceDate = 2025-01-08 -> next on-week = 2025-02-05 (4 weeks later)
+        val today = LocalDate(2025, 1, 8)
+        mockToday(today)
+
+        val template = createTemplate(
+            dayOfWeek = DayOfWeek.WEDNESDAY,
+            recurrenceIntervalWeeks = 4,
+            referenceDate = LocalDate(2025, 1, 8)
+        )
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        // When
+        autoScheduleManager.catchUpAutoSchedule()
+
+        // Then: class created for 2025-01-08 (on-week), not for 2025-01-15/22/29 (off-weeks)
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 8)
+            })
+        }
+        coVerify(exactly = 0) {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 15)
+            })
+        }
+        coVerify(exactly = 0) {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 22)
+            })
+        }
+        coVerify(exactly = 0) {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 29)
+            })
+        }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule null referenceDate treats as weekly`() = runTest {
+        // Given: bi-weekly template with null referenceDate -> should behave as weekly
+        val today = LocalDate(2025, 1, 8)
+        mockToday(today)
+
+        val template = createTemplate(
+            dayOfWeek = DayOfWeek.WEDNESDAY,
+            recurrenceIntervalWeeks = 2,
+            referenceDate = null
+        )
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        // When
+        autoScheduleManager.catchUpAutoSchedule()
+
+        // Then: class created for today (null referenceDate -> isOnRecurrenceWeek returns true)
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 8)
+            })
+        }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule 4-weekly uses 28-day advance window`() = runTest {
+        // Given: today is Monday 2025-01-06, template for Monday every 4 weeks
+        // advanceDays = max(7, 4*7) = 28
+        // referenceDate = 2025-01-06 -> next on-week = 2025-02-03
+        // 2025-02-03 is 28 days from 2025-01-06, should be within window
+        val today = LocalDate(2025, 1, 6)
+        mockToday(today)
+
+        val template = createTemplate(
+            dayOfWeek = DayOfWeek.MONDAY,
+            recurrenceIntervalWeeks = 4,
+            referenceDate = LocalDate(2025, 1, 6)
+        )
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        // When
+        autoScheduleManager.catchUpAutoSchedule()
+
+        // Then: class created for 2025-01-06 and 2025-02-03 (28 days = within window)
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 1, 6)
+            })
+        }
+        coVerify {
+            yogaClassDao.insertClass(match<YogaClass> {
+                it.startTime.date == LocalDate(2025, 2, 3)
+            })
+        }
     }
 }

@@ -88,7 +88,7 @@ fun TemplateManagementScreen(
             TemplateEditDialog(
                 template = uiState.selectedTemplate,
                 studios = uiState.studios,
-                onSave = { name, studioId, className, dayOfWeek, startTime, duration ->
+                onSave = { name, studioId, className, dayOfWeek, startTime, duration, recurrenceIntervalWeeks ->
                     if (uiState.selectedTemplate != null) {
                         val updatedTemplate = uiState.selectedTemplate!!.copy(
                             name = name,
@@ -99,11 +99,12 @@ fun TemplateManagementScreen(
                             endTime = startTime.toSecondOfDay()
                                 .plus((duration * 60 * 60).toInt())
                                 .let { LocalTime.fromSecondOfDay(it) },
-                            duration = duration
+                            duration = duration,
+                            recurrenceIntervalWeeks = recurrenceIntervalWeeks
                         )
                         viewModel.updateTemplate(updatedTemplate)
                     } else {
-                        viewModel.createTemplate(name, studioId, className, dayOfWeek, startTime, duration)
+                        viewModel.createTemplate(name, studioId, className, dayOfWeek, startTime, duration, recurrenceIntervalWeeks)
                     }
                 },
                 onDismiss = { viewModel.hideTemplateDialog() }
@@ -342,12 +343,18 @@ private fun TemplateCard(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
+                        val intervalText = when (template.recurrenceIntervalWeeks) {
+                            1 -> "Wöchentlich"
+                            2 -> "Alle 2 Wochen"
+                            4 -> "Alle 4 Wochen"
+                            else -> "Alle ${template.recurrenceIntervalWeeks} Wochen"
+                        }
                         Text(
                             text = if (template.autoSchedule) {
                                 if (template.lastScheduledDate != null) {
-                                    "Wöchentlich geplant • Zuletzt: ${formatDate(template.lastScheduledDate)}"
+                                    "$intervalText geplant • Zuletzt: ${formatDate(template.lastScheduledDate)}"
                                 } else {
-                                    "Wöchentlich geplant"
+                                    "$intervalText geplant"
                                 }
                             } else {
                                 "Kurse müssen manuell erstellt werden"
@@ -401,7 +408,7 @@ private fun TemplateCard(
 private fun TemplateEditDialog(
     template: ClassTemplate?,
     studios: List<de.yogaknete.app.domain.model.Studio>,
-    onSave: (String, Long, String, DayOfWeek, LocalTime, Double) -> Unit,
+    onSave: (String, Long, String, DayOfWeek, LocalTime, Double, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember(template) { mutableStateOf(template?.name ?: "") }
@@ -410,6 +417,7 @@ private fun TemplateEditDialog(
     var selectedDayOfWeek by remember(template) { mutableStateOf(template?.dayOfWeek ?: DayOfWeek.MONDAY) }
     var startTime by remember(template) { mutableStateOf(template?.startTime ?: LocalTime(9, 0)) }
     var duration by remember(template) { mutableStateOf((template?.duration ?: 1.25).toString()) }
+    var recurrenceIntervalWeeks by remember(template) { mutableIntStateOf(template?.recurrenceIntervalWeeks ?: 1) }
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -504,6 +512,32 @@ private fun TemplateEditDialog(
                     }
                 }
                 
+                // Recurrence interval
+                Column {
+                    Text(
+                        text = "Wiederholung",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                    val intervalOptions = listOf(1, 2, 4)
+                    val intervalLabels = listOf("1 Woche", "2 Wochen", "4 Wochen")
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                        intervalOptions.forEachIndexed { index, interval ->
+                            SegmentedButton(
+                                selected = recurrenceIntervalWeeks == interval,
+                                onClick = { recurrenceIntervalWeeks = interval },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = intervalOptions.size
+                                )
+                            ) {
+                                Text(intervalLabels[index])
+                            }
+                        }
+                    }
+                }
+
                 // Time and duration inputs
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -529,7 +563,7 @@ private fun TemplateEditDialog(
             TextButton(
                 onClick = {
                     val durationValue = duration.toDoubleOrNull() ?: 1.25
-                    onSave(name, selectedStudioId, className, selectedDayOfWeek, startTime, durationValue)
+                    onSave(name, selectedStudioId, className, selectedDayOfWeek, startTime, durationValue, recurrenceIntervalWeeks)
                 },
                 enabled = name.isNotBlank() && className.isNotBlank() && selectedStudioId != 0L
             ) {

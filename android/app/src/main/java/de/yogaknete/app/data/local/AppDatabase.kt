@@ -4,6 +4,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import android.content.Context
 import de.yogaknete.app.domain.model.UserProfile
 import de.yogaknete.app.domain.model.Studio
@@ -20,7 +22,7 @@ import de.yogaknete.app.data.local.dao.ClassTemplateDao
         ClassTemplate::class,
         Invoice::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(DateTimeConverters::class)
@@ -34,5 +36,12 @@ abstract class AppDatabase : RoomDatabase() {
     
     companion object {
         const val DATABASE_NAME = "yoga_knete_database"
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE class_templates ADD COLUMN recurrenceIntervalWeeks INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE class_templates ADD COLUMN referenceDate TEXT DEFAULT NULL")
+            }
+        }
     }
 }

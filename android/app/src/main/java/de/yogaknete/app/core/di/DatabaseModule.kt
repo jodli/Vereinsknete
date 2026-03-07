@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import de.yogaknete.app.data.local.*
+import de.yogaknete.app.data.local.AppDatabase
 import de.yogaknete.app.data.local.dao.ClassTemplateDao
 import javax.inject.Singleton
 
@@ -25,6 +26,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
         )
+        .addMigrations(AppDatabase.MIGRATION_5_6)
         .fallbackToDestructiveMigration() // For development - consider proper migration for production
         .build()
     }
