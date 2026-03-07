@@ -258,11 +258,13 @@ fun ClassActionDialog(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Kurs abschließen?",
+                text = "Kurs-Aktionen",
                 style = MaterialTheme.typography.headlineSmall
             )
         },
@@ -413,24 +415,22 @@ fun ClassActionDialog(
                         }
                     }
                     
-                    // Delete option for completed or cancelled classes
-                    if (yogaClass.status != ClassStatus.SCHEDULED) {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        TextButton(
-                            onClick = onDelete,
-                            colors = ButtonDefaults.textButtonColors(
-                                contentColor = MaterialTheme.colorScheme.error
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Kurs löschen")
-                        }
+                    // Delete option
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    TextButton(
+                        onClick = { showDeleteConfirmDialog = true },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Kurs löschen")
                     }
                 }
             }
@@ -442,6 +442,38 @@ fun ClassActionDialog(
             }
         }
     )
+
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text("Kurs löschen?") },
+            text = {
+                Text(
+                    "Möchtest du \"${yogaClass.title}\" " +
+                    "(${DateUtils.formatDayDate(yogaClass.startTime.date)}) " +
+                    "wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        onDelete()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Löschen")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text("Abbrechen")
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

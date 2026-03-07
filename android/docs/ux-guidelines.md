@@ -1,160 +1,101 @@
-# UX-Richtlinien — YogaKnete
+# UX Guidelines — YogaKnete
 
-Praktische UX-Regeln für Dialoge, Aktionen und Interaktionsmuster in der App.
-Basiert auf [Material Design 3](https://m3.material.io/) und den bestehenden Patterns im Projekt.
-
----
-
-## 1. Dialog-Typen: Wann was verwenden
-
-### Entscheidungshilfe
-
-```
-Brauche ich eine Bestätigung (Ja/Nein)?           → AlertDialog
-Hat der Nutzer 3+ Aktionen zur Auswahl?            → ModalBottomSheet
-Ist es ein Formular mit 2–4 Feldern?               → AlertDialog
-Ist es ein Formular mit 5+ Feldern oder Scrolling? → Full-Screen Dialog
-```
-
-### AlertDialog
-
-Für **kurze Entscheidungen** (max. 2 Buttons) und **einfache Formulare** (3–4 Felder).
-
-**Regeln:**
-- Max. 2 Action-Buttons: `dismissButton` (links) + `confirmButton` (rechts)
-- Wenn mehr als 2 Aktionen nötig → ModalBottomSheet verwenden
-- Beispiele: `AddClassDialog`, `EditClassDialog`, Löschbestätigungen
-
-### ModalBottomSheet
-
-Für **Aktionsmenüs** mit 3+ Optionen, die sich auf ein angetipptes Element beziehen.
-
-**Regeln:**
-- `skipPartiallyExpanded = true` bei Aktionsmenüs
-- `ListItem`-Composables für konsistente Touch-Targets
-- Destruktive Aktionen am Ende, durch `HorizontalDivider` getrennt
-- Unten genug Padding für die Navigationsleiste
-
-### Full-Screen Dialog (`Dialog` + `Scaffold`)
-
-Für **komplexe Formulare** mit vielen Feldern und ggf. Scrolling (z.B. `StudioEditDialog`).
-
-**Regeln:**
-- `DialogProperties(usePlatformDefaultWidth = false)`
-- `TopAppBar` mit Schließen-Icon (X) und Speichern-Button
-- Scrollable Content via `verticalScroll`
+Practical UX rules for dialogs, actions, and interaction patterns.
+Based on Material Design 3 and established patterns in the project.
 
 ---
 
-## 2. Dialog-Titel
+## 1. Dialog Types
 
-- **Bestätigungen:** Frage-Form — `"Studio löschen?"`, `"Kurs absagen?"`
-- **Formulare (Neu):** Substantiv — `"Neuer Yoga-Kurs"`, `"Neue Vorlage"`
-- **Formulare (Bearbeiten):** Verb + Objekt — `"Kurs bearbeiten"`, `"Vorlage bearbeiten"`
-- **Aktionsmenüs:** Kein Titel nötig, oder Objekt-Name als Headline
-- **Info/Statistik:** Beschreibend — `"Wochenübersicht"`, `"Monatsübersicht"`
+| Type | When to use |
+|------|-------------|
+| **AlertDialog** | Confirmations (yes/no), simple forms (2–4 fields), info dialogs |
+| **Full-screen Dialog** | Complex forms with 5+ fields and scrolling |
 
-**Wichtig:** Der Nutzer muss aus Titel + Buttons allein verstehen, was passiert. Keine generischen Titel wie `"Warnung"` oder `"Achtung"`.
+**Decision guide:**
+- Confirmation or short form? → AlertDialog
+- Form with 5+ fields? → Full-screen Dialog with TopAppBar (X + Save)
 
----
-
-## 3. Destruktive Aktionen
-
-- **Immer sichtbar**, unabhängig vom Status des Elements
-- **Position:** Am Ende der Aktionsliste, durch `HorizontalDivider` visuell getrennt
-- **Farbe:** Icon + Text in `MaterialTheme.colorScheme.error`
-- **Bestätigungsdialog** für jede irreversible Aktion:
-
-```
-Titel:  "[Element] löschen?"
-Text:   "Möchtest du [Name] wirklich löschen?
-         Diese Aktion kann nicht rückgängig gemacht werden."
-Confirm: "Löschen" (error-Farbe)
-Dismiss: "Abbrechen"
-```
-
-**Referenz:** `StudiosManagementScreen` — sauberes DropdownMenu → Bestätigung → Aktion.
+**Rules:**
+- AlertDialog: Max 2 buttons — Cancel (left) + Confirm (right)
+- Full-screen Dialog: Close icon (X) left, Save button right in TopAppBar
 
 ---
 
-## 4. Aktions-Gruppierung
+## 2. Dialog Titles
 
-### In Aktionsmenüs (BottomSheet / DropdownMenu)
+| Context | Title form | Example |
+|---------|-----------|---------|
+| Confirmation/decision | Question | "Studio löschen?" |
+| Create new element | Noun | "Neuer Yoga-Kurs" |
+| Edit element | Verb + object | "Kurs bearbeiten" |
+| Action menu | Neutral label | "Kurs-Aktionen" |
+| Info/statistics | Descriptive | "Wochenübersicht" |
 
-Aktionen nach Kategorie gruppieren, mit `HorizontalDivider` zwischen Gruppen:
-
-```
-1. Primäre Aktionen (häufigste zuerst)
-   ─────────────────────────────────
-2. Sekundäre Aktionen
-   ─────────────────────────────────
-3. Destruktive Aktionen (immer zuletzt)
-```
-
-### In AlertDialog-Buttons
-
-- Max. 2 Buttons: Dismiss (links) + Confirm (rechts)
-- Wenn Confirm destruktiv → error-Farbe
-- Button-Text = konkretes Verb (`"Löschen"`, `"Speichern"`) — nicht `"OK"` oder `"Ja"`
+- Title must match **all** available actions in the dialog
+- User should understand what happens from title + buttons alone
+- No generic titles like "Warnung" or "Achtung"
 
 ---
 
-## 5. Auswahloptionen im Formular
+## 3. Destructive Actions (Delete)
 
-### Entscheidungshilfe
+- Delete is **always visible** — never hidden behind state conditions
+- Position: End of action list, visually separated by divider
+- Color: Icon and text in error color
+- Every irreversible action **must** have a confirmation dialog:
+  - Title: "[Element] löschen?"
+  - Text: "Möchtest du [name] wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+  - Confirm button in error color with concrete verb ("Löschen")
 
-```
-2–3 Optionen, immer sichtbar, kurze Labels?  → SingleChoiceSegmentedButtonRow
-4+ Optionen oder lange Labels?                → ExposedDropdownMenuBox (Dropdown)
-Boolean (An/Aus)?                             → Switch
-```
+---
 
-### Dropdown (`ExposedDropdownMenuBox`)
+## 4. Action Grouping
 
-Standard für Auswahllisten. Bestehende Beispiele: Studio-Auswahl, Wochentag-Auswahl.
+Group actions by category with dividers between groups:
 
-**Regeln:**
-- `OutlinedTextField` mit `readOnly = true` und `label`
-- `.menuAnchor(MenuAnchorType.PrimaryNotEditable)` setzen
-- `ExposedDropdownMenuDefaults.TrailingIcon` als Icon
-- Immer einen sinnvollen Default vorbelegen
+1. **Primary actions** — most frequent first (e.g., status changes)
+2. **Secondary actions** — edit, reschedule
+3. **Destructive actions** — always last, visually separated
 
-### Segmented Button (`SingleChoiceSegmentedButtonRow`)
+**Dialog buttons:** Max 2 — Cancel (left) + Confirm (right). Concrete verbs only ("Löschen", "Speichern"), never "OK" or "Ja". Destructive confirms in error color.
 
-Für **wenige gleichwertige Optionen** (2–3), die auf einen Blick sichtbar sein sollen.
+---
 
-**Regeln:**
-- Max. 3 Segmente (bei 4+ wird's zu eng)
-- Kurze Labels (1–2 Wörter)
-- Gleiche Breite pro Segment
-- Unter einem `label`-Text wie bei anderen Formularfeldern platzieren
-- Häufigster Wert als Default vorauswählen
+## 5. Selection Options in Forms
 
-### Switch
+| Scenario | Component |
+|----------|-----------|
+| 2–3 options, short labels, always visible | `SingleChoiceSegmentedButtonRow` |
+| 4+ options or long labels | `ExposedDropdownMenuBox` (Dropdown) |
+| Boolean on/off | `Switch` |
 
-Für **Boolean-Optionen** (An/Aus). Bestehend: Auto-Schedule Toggle.
+**SegmentedButton rules:**
+- Max 3 segments, 1–2 word labels
+- "Wiederholung" label in `bodySmall` above the row
+- Pre-select the most common option as default
+
+**Dropdown rules:**
+- `OutlinedTextField` with `readOnly = true` + label
+- `.menuAnchor(MenuAnchorType.PrimaryNotEditable)`
+- Always pre-fill a sensible default
 
 ---
 
 ## 6. Defaults & Progressive Disclosure
 
-- **Sinnvolle Defaults:** Jedes Formularfeld hat einen Default-Wert, der den häufigsten Anwendungsfall abdeckt
-- **Weniger ist mehr:** Nur Felder anzeigen, die der Nutzer regelmäßig braucht. Seltene Optionen hinter "Erweitert" oder als Sekundär-Option verstecken
-- **Opt-in statt Opt-out:** Erweiterte Features (wie Auto-Schedule) standardmäßig aus, der Nutzer aktiviert sie bewusst
+- Every form field has a default covering the most common case
+- Only show fields the user needs regularly — hide rare options
+- Advanced features (auto-schedule) off by default, user opts in
 
 ---
 
-## 7. Checkliste für neue Dialoge
+## 7. Checklist for New Dialogs
 
-- [ ] Richtiger Dialog-Typ? (AlertDialog / BottomSheet / Full-Screen)
-- [ ] Titel passt zu den verfügbaren Aktionen?
-- [ ] Max. 2 Buttons bei AlertDialog?
-- [ ] Button-Text = konkretes Verb?
-- [ ] Destruktive Aktionen am Ende, mit Divider getrennt, in error-Farbe?
-- [ ] Bestätigungsdialog für irreversible Aktionen?
-- [ ] Sinnvolle Defaults für alle Felder?
-- [ ] Dismiss links, Confirm rechts?
-
----
-
-*Quellen: [M3 Dialogs](https://m3.material.io/components/dialogs/guidelines), [M3 Bottom Sheets](https://m3.material.io/components/bottom-sheets/guidelines), [M3 Segmented Buttons](https://m3.material.io/components/segmented-buttons/guidelines)*
+- [ ] Correct dialog type? (AlertDialog / Full-screen)
+- [ ] Title matches all available actions?
+- [ ] Max 2 buttons for AlertDialog?
+- [ ] Button text = concrete verb?
+- [ ] Destructive actions at end, separated, in error color?
+- [ ] Confirmation dialog for irreversible actions?
+- [ ] Sensible defaults for all fields?
