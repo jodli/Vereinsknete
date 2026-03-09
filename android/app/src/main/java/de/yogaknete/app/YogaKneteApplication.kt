@@ -7,6 +7,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
+import de.yogaknete.app.core.notification.NotificationChannelManager
 import de.yogaknete.app.domain.worker.AutoScheduleWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -24,6 +25,7 @@ class YogaKneteApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        NotificationChannelManager.createChannels(this)
         scheduleAutoScheduleWork()
     }
 
