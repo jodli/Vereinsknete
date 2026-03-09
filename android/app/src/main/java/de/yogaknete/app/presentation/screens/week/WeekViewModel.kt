@@ -251,6 +251,15 @@ class WeekViewModel @Inject constructor(
         }
     }
     
+    fun openClassById(classId: Long) {
+        viewModelScope.launch {
+            val yogaClass = yogaClassDao.getClassById(classId)
+            if (yogaClass != null) {
+                _state.update { it.copy(selectedClass = yogaClass) }
+            }
+        }
+    }
+
     fun selectClass(yogaClass: YogaClass) {
         _state.update { it.copy(selectedClass = yogaClass) }
     }
