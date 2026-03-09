@@ -128,3 +128,29 @@ ViewModels (state changes, actions), repositories (DAO delegation), models (calc
 6. Date/time → kotlinx-datetime, never java.util
 7. Tests → JUnit 4, MockK, construct ViewModels manually
 8. Language → German UI labels, English code comments
+
+---
+
+## 11. Background Work & Notifications
+
+### WorkManager
+- All background tasks use **WorkManager** (scheduling, notifications)
+- No AlarmManager, no BroadcastReceiver for boot — WorkManager handles reboots automatically
+
+### Workers
+- Workers live in `domain/worker/` as `@HiltWorker` + `CoroutineWorker`
+- Input data via `workDataOf()`, read with `inputData.getLong()` etc.
+
+### Scheduling
+- Scheduling logic behind an interface in `domain/service/` (e.g., `ClassNotificationScheduler`)
+- Implementation in `data/` (e.g., `ClassNotificationSchedulerImpl`) injects `WorkManager`
+- Use `ExistingWorkPolicy.REPLACE` with unique work names to avoid duplicates
+
+### Notification Channels
+- Channel setup in `core/notification/`, called from `Application.onCreate()`
+- One channel per notification category, created eagerly at app start
+
+### Deep-Links from Notifications
+- Notification taps use `PendingIntent` with `Intent` extras on `MainActivity`
+- `MainActivity` extracts extras in `onCreate()` and `onNewIntent()`, forwards to ViewModel
+- ViewModel loads the relevant entity and updates UI state

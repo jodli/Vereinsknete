@@ -117,3 +117,22 @@ Three tiers in dialogs:
 - German labels in UI, English comments in code
 - HorizontalDivider only between action groups, never between equivalent actions
 - Selection state always communicated via 3 signals: border + bold + checkmark
+
+---
+
+## 8. Notifications
+
+| Property | Value |
+|----------|-------|
+| Small Icon | `ic_yoga_pose`, tinted by system |
+| Accent color | YogaPrimary (#6B4EE6) via `setColor()` |
+| Large Icon | None |
+| Importance | DEFAULT (silent) |
+| AutoCancel | Always true |
+| Tap action | Deep-link to relevant screen/dialog |
+| Channel naming | German, descriptive (e.g., "Kurs-Erinnerungen") |
+
+**Rules:**
+- No custom layouts — use standard `NotificationCompat.Builder` templates
+- Accent color via `setColor()`, never hardcoded in notification layout
+- Always set `setAutoCancel(true)` so the notification dismisses on tap

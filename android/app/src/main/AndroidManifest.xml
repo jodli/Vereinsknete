@@ -3,10 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!-- For saving backups to Downloads folder (Android 9 and below) -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <!-- For class status reminder notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".YogaKneteApplication"
@@ -21,6 +23,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.YogaKnete">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
