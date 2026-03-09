@@ -44,5 +44,7 @@ data class ClassTemplate(
     val duration: Double = 1.25, // Standard: 1.25 Stunden
     val isActive: Boolean = true,
     val autoSchedule: Boolean = false, // Automatisch wöchentlich erstellen
-    val lastScheduledDate: LocalDate? = null // Letzte automatisch erstellte Klasse
+    val lastScheduledDate: LocalDate? = null, // Letzte automatisch erstellte Klasse
+    val recurrenceIntervalWeeks: Int = 1, // 1=weekly, 2=bi-weekly, 4=every-4-weeks
+    val referenceDate: LocalDate? = null // Anchors which weeks are "on" for non-weekly
 )

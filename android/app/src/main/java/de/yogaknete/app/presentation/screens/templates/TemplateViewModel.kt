@@ -57,19 +57,30 @@ class TemplateViewModel @Inject constructor(
         }
     }
     
+    private fun computeReferenceDate(dayOfWeek: DayOfWeek, recurrenceIntervalWeeks: Int): LocalDate? {
+        if (recurrenceIntervalWeeks <= 1) return null
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        var d = today
+        while (d.dayOfWeek != dayOfWeek) {
+            d = d.plus(DatePeriod(days = 1))
+        }
+        return d
+    }
+
     fun createTemplate(
         name: String,
         studioId: Long,
         className: String,
         dayOfWeek: DayOfWeek,
         startTime: LocalTime,
-        duration: Double = 1.25
+        duration: Double = 1.25,
+        recurrenceIntervalWeeks: Int = 1
     ) {
         viewModelScope.launch {
             val endTime = startTime.toSecondOfDay()
                 .plus((duration * 60 * 60).toInt())
                 .let { LocalTime.fromSecondOfDay(it) }
-            
+
             val template = ClassTemplate(
                 name = name,
                 studioId = studioId,
@@ -77,17 +88,33 @@ class TemplateViewModel @Inject constructor(
                 dayOfWeek = dayOfWeek,
                 startTime = startTime,
                 endTime = endTime,
-                duration = duration
+                duration = duration,
+                recurrenceIntervalWeeks = recurrenceIntervalWeeks,
+                referenceDate = computeReferenceDate(dayOfWeek, recurrenceIntervalWeeks)
             )
-            
+
             templateRepository.createTemplate(template)
             _uiState.update { it.copy(showTemplateDialog = false) }
         }
     }
-    
+
     fun updateTemplate(template: ClassTemplate) {
         viewModelScope.launch {
-            templateRepository.updateTemplate(template)
+            val original = _uiState.value.selectedTemplate
+            val needsRecompute = original == null ||
+                template.recurrenceIntervalWeeks != original.recurrenceIntervalWeeks ||
+                template.dayOfWeek != original.dayOfWeek ||
+                (template.recurrenceIntervalWeeks > 1 && template.referenceDate == null)
+
+            val finalTemplate = if (needsRecompute) {
+                template.copy(
+                    referenceDate = computeReferenceDate(template.dayOfWeek, template.recurrenceIntervalWeeks)
+                )
+            } else {
+                template
+            }
+
+            templateRepository.updateTemplate(finalTemplate)
             _uiState.update { it.copy(showTemplateDialog = false, selectedTemplate = null) }
         }
     }

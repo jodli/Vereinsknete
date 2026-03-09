@@ -164,7 +164,7 @@ class WeekViewModel @Inject constructor(
         
         // Trigger auto-schedule for the new week
         viewModelScope.launch {
-            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+            autoScheduleManager.catchUpAutoSchedule()
         }
     }
     
@@ -183,7 +183,7 @@ class WeekViewModel @Inject constructor(
         
         // Trigger auto-schedule for the new week
         viewModelScope.launch {
-            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+            autoScheduleManager.catchUpAutoSchedule()
         }
     }
     
@@ -203,7 +203,7 @@ class WeekViewModel @Inject constructor(
         
         // Trigger auto-schedule for current week
         viewModelScope.launch {
-            autoScheduleManager.autoScheduleForWeek(newWeekStart)
+            autoScheduleManager.catchUpAutoSchedule()
         }
     }
     
