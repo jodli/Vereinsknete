@@ -6,6 +6,7 @@ import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.StudioRepository
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
+import de.yogaknete.app.domain.service.ClassNotificationScheduler
 import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -23,14 +24,15 @@ import org.junit.Assert.*
  */
 @ExperimentalCoroutinesApi
 class WeekViewModelTest {
-    
+
     private lateinit var yogaClassDao: YogaClassDao
     private lateinit var studioRepository: StudioRepository
     private lateinit var classTemplateRepository: ClassTemplateRepository
     private lateinit var autoScheduleManager: AutoScheduleManager
+    private lateinit var notificationScheduler: ClassNotificationScheduler
     private lateinit var viewModel: WeekViewModel
     private val testDispatcher = StandardTestDispatcher()
-    
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -38,70 +40,76 @@ class WeekViewModelTest {
         studioRepository = mockk()
         classTemplateRepository = mockk()
         autoScheduleManager = mockk(relaxed = true)
-        
+        notificationScheduler = mockk(relaxed = true)
+
         // Default mocks
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(emptyList())
         every { studioRepository.getAllActiveStudios() } returns flowOf(emptyList())
         every { classTemplateRepository.getAllActiveTemplates() } returns flowOf(emptyList())
     }
-    
+
     @After
     fun tearDown() {
         Dispatchers.resetMain()
     }
-    
+
+    private fun createViewModel() = WeekViewModel(
+        yogaClassDao, studioRepository, classTemplateRepository,
+        autoScheduleManager, notificationScheduler
+    )
+
     @Test
     fun `initial state has current week dates`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
-        
+        viewModel = createViewModel()
+
         val state = viewModel.state.value
-        
+
         // Should have 7 days in the week
         assertEquals(7, state.weekDays.size)
-        
+
         // First day should be Monday
         assertEquals(DayOfWeek.MONDAY, state.weekDays.first().dayOfWeek)
-        
+
         // Last day should be Sunday
         assertEquals(DayOfWeek.SUNDAY, state.weekDays.last().dayOfWeek)
     }
-    
+
     @Test
     fun `navigateToPreviousWeek moves back 7 days`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+        viewModel = createViewModel()
         val initialStart = viewModel.state.value.currentWeekStart
-        
+
         viewModel.navigateToPreviousWeek()
         advanceUntilIdle()
-        
+
         val newStart = viewModel.state.value.currentWeekStart
-        
+
         // Should be 7 days earlier
         val daysDifference = initialStart.toEpochDays() - newStart.toEpochDays()
         assertEquals(7, daysDifference)
     }
-    
+
     @Test
     fun `navigateToNextWeek moves forward 7 days`() = runTest {
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+        viewModel = createViewModel()
         val initialStart = viewModel.state.value.currentWeekStart
-        
+
         viewModel.navigateToNextWeek()
         advanceUntilIdle()
-        
+
         val newStart = viewModel.state.value.currentWeekStart
-        
+
         // Should be 7 days later
         val daysDifference = newStart.toEpochDays() - initialStart.toEpochDays()
         assertEquals(7, daysDifference)
     }
-    
+
     @Test
     fun `addClass creates yoga class with correct data`() = runTest {
         coEvery { yogaClassDao.insertClass(any()) } returns 1L
-        
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
-        
+
+        viewModel = createViewModel()
+
         viewModel.addClass(
             studioId = 1L,
             title = "Hatha Yoga",
@@ -111,9 +119,9 @@ class WeekViewModelTest {
             endHour = 18,
             endMinute = 45
         )
-        
+
         advanceUntilIdle()
-        
+
         // Verify class was inserted with correct properties
         coVerify {
             yogaClassDao.insertClass(
@@ -126,13 +134,13 @@ class WeekViewModelTest {
             )
         }
     }
-    
+
     @Test
     fun `markClassAsCompleted updates status`() = runTest {
         coEvery { yogaClassDao.updateClassStatus(any(), any()) } just Runs
-        
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
-        
+
+        viewModel = createViewModel()
+
         val testClass = YogaClass(
             id = 42L,
             studioId = 1L,
@@ -141,15 +149,15 @@ class WeekViewModelTest {
             endTime = LocalDateTime(2024, 11, 4, 18, 45),
             durationHours = 1.25
         )
-        
+
         viewModel.markClassAsCompleted(testClass)
         advanceUntilIdle()
-        
+
         coVerify {
             yogaClassDao.updateClassStatus(42L, ClassStatus.COMPLETED)
         }
     }
-    
+
     @Test
     fun `state calculates totals correctly`() = runTest {
         val classes = listOf(
@@ -190,28 +198,28 @@ class WeekViewModelTest {
                 status = ClassStatus.COMPLETED
             )
         )
-        
+
         // Set up the mock BEFORE creating the ViewModel
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(classes)
-        
+
         // Mock the studio repository to avoid triggering additional loadCurrentWeek calls
         val testStudios = listOf(
             Studio(id = 1, name = "Test Studio", hourlyRate = 50.0, isActive = true)
         )
         every { studioRepository.getAllActiveStudios() } returns flowOf(testStudios)
         coEvery { studioRepository.getStudioById(1) } returns testStudios.first()
-        
+
         // Now create the ViewModel which will call loadCurrentWeek() in init
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
-        
+        viewModel = createViewModel()
+
         // Allow coroutines to complete
         advanceUntilIdle()
-        
+
         val state = viewModel.state.value
-        
+
         // Only COMPLETED classes count for statistics (Class 1 and Class 4)
         assertEquals(2, state.totalClassesThisWeek)
-        
+
         // Total hours for completed classes (1.25 + 1.5 = 2.75)
         assertEquals(2.75, state.totalHoursThisWeek, 0.01)
     }
@@ -228,7 +236,7 @@ class WeekViewModelTest {
         )
         coEvery { yogaClassDao.getClassById(42L) } returns testClass
 
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+        viewModel = createViewModel()
 
         viewModel.openClassById(42L)
         advanceUntilIdle()
@@ -240,11 +248,141 @@ class WeekViewModelTest {
     fun `openClassById does not set selectedClass for invalid ID`() = runTest {
         coEvery { yogaClassDao.getClassById(999L) } returns null
 
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+        viewModel = createViewModel()
 
         viewModel.openClassById(999L)
         advanceUntilIdle()
 
         assertNull(viewModel.state.value.selectedClass)
+    }
+
+    // Step 8: Schedule notification on class creation
+
+    @Test
+    fun `addClass schedules notification for new class`() = runTest {
+        coEvery { yogaClassDao.insertClass(any()) } returns 1L
+
+        viewModel = createViewModel()
+
+        viewModel.addClass(
+            studioId = 1L,
+            title = "Hatha Yoga",
+            date = LocalDate(2024, 11, 4),
+            startHour = 17,
+            startMinute = 30,
+            endHour = 18,
+            endMinute = 45
+        )
+
+        advanceUntilIdle()
+
+        verify { notificationScheduler.schedule(match { it.id == 1L }) }
+    }
+
+    @Test
+    fun `createClassFromTemplate schedules notification for SCHEDULED class`() = runTest {
+        coEvery { yogaClassDao.insertClass(any()) } returns 5L
+
+        viewModel = createViewModel()
+
+        val template = mockk<de.yogaknete.app.data.local.entities.ClassTemplate> {
+            every { studioId } returns 1L
+            every { className } returns "Vinyasa Yoga"
+            every { startTime } returns LocalTime(10, 0)
+            every { duration } returns 1.25
+            every { id } returns 1L
+        }
+
+        viewModel.createClassFromTemplate(template, LocalDate(2024, 11, 4))
+
+        advanceUntilIdle()
+
+        verify { notificationScheduler.schedule(match { it.id == 5L && it.status == ClassStatus.SCHEDULED }) }
+    }
+
+    @Test
+    fun `createClassFromTemplate does not schedule notification for COMPLETED class`() = runTest {
+        coEvery { yogaClassDao.insertClass(any()) } returns 5L
+
+        viewModel = createViewModel()
+
+        val template = mockk<de.yogaknete.app.data.local.entities.ClassTemplate> {
+            every { studioId } returns 1L
+            every { className } returns "Vinyasa Yoga"
+            every { startTime } returns LocalTime(10, 0)
+            every { duration } returns 1.25
+            every { id } returns 1L
+        }
+
+        viewModel.createClassFromTemplate(template, LocalDate(2024, 11, 4), markAsCompleted = true)
+
+        advanceUntilIdle()
+
+        verify(exactly = 0) { notificationScheduler.schedule(any()) }
+    }
+
+    // Step 9: Cancel notification on status change/delete
+
+    @Test
+    fun `markClassAsCompleted cancels notification`() = runTest {
+        coEvery { yogaClassDao.updateClassStatus(any(), any()) } just Runs
+
+        viewModel = createViewModel()
+
+        val testClass = YogaClass(
+            id = 42L,
+            studioId = 1L,
+            title = "Test Yoga",
+            startTime = LocalDateTime(2024, 11, 4, 17, 30),
+            endTime = LocalDateTime(2024, 11, 4, 18, 45),
+            durationHours = 1.25
+        )
+
+        viewModel.markClassAsCompleted(testClass)
+        advanceUntilIdle()
+
+        verify { notificationScheduler.cancel(42L) }
+    }
+
+    @Test
+    fun `markClassAsCancelled cancels notification`() = runTest {
+        coEvery { yogaClassDao.updateClassStatus(any(), any()) } just Runs
+
+        viewModel = createViewModel()
+
+        val testClass = YogaClass(
+            id = 42L,
+            studioId = 1L,
+            title = "Test Yoga",
+            startTime = LocalDateTime(2024, 11, 4, 17, 30),
+            endTime = LocalDateTime(2024, 11, 4, 18, 45),
+            durationHours = 1.25
+        )
+
+        viewModel.markClassAsCancelled(testClass)
+        advanceUntilIdle()
+
+        verify { notificationScheduler.cancel(42L) }
+    }
+
+    @Test
+    fun `deleteClass cancels notification`() = runTest {
+        coEvery { yogaClassDao.deleteClass(any()) } just Runs
+
+        viewModel = createViewModel()
+
+        val testClass = YogaClass(
+            id = 42L,
+            studioId = 1L,
+            title = "Test Yoga",
+            startTime = LocalDateTime(2024, 11, 4, 17, 30),
+            endTime = LocalDateTime(2024, 11, 4, 18, 45),
+            durationHours = 1.25
+        )
+
+        viewModel.deleteClass(testClass)
+        advanceUntilIdle()
+
+        verify { notificationScheduler.cancel(42L) }
     }
 }

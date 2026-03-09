@@ -6,6 +6,7 @@ import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.domain.model.ClassStatus
 import de.yogaknete.app.domain.model.CreationSource
 import de.yogaknete.app.domain.model.YogaClass
+import de.yogaknete.app.domain.service.ClassNotificationScheduler
 import kotlinx.datetime.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,7 +17,8 @@ import javax.inject.Singleton
 @Singleton
 class AutoScheduleManager @Inject constructor(
     private val classTemplateDao: ClassTemplateDao,
-    private val yogaClassDao: YogaClassDao
+    private val yogaClassDao: YogaClassDao,
+    private val notificationScheduler: ClassNotificationScheduler
 ) {
     
     /**
@@ -134,6 +136,7 @@ class AutoScheduleManager @Inject constructor(
             sourceTemplateId = template.id
         )
         
-        yogaClassDao.insertClass(newClass)
+        val insertedId = yogaClassDao.insertClass(newClass)
+        notificationScheduler.schedule(newClass.copy(id = insertedId))
     }
 }

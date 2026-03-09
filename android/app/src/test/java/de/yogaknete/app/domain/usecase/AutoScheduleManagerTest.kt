@@ -4,6 +4,7 @@ import de.yogaknete.app.data.local.YogaClassDao
 import de.yogaknete.app.data.local.dao.ClassTemplateDao
 import de.yogaknete.app.data.local.entities.ClassTemplate
 import de.yogaknete.app.domain.model.YogaClass
+import de.yogaknete.app.domain.service.ClassNotificationScheduler
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.*
@@ -15,13 +16,15 @@ class AutoScheduleManagerTest {
 
     private lateinit var classTemplateDao: ClassTemplateDao
     private lateinit var yogaClassDao: YogaClassDao
+    private lateinit var notificationScheduler: ClassNotificationScheduler
     private lateinit var autoScheduleManager: AutoScheduleManager
 
     @Before
     fun setup() {
         classTemplateDao = mockk()
         yogaClassDao = mockk()
-        autoScheduleManager = AutoScheduleManager(classTemplateDao, yogaClassDao)
+        notificationScheduler = mockk(relaxed = true)
+        autoScheduleManager = AutoScheduleManager(classTemplateDao, yogaClassDao, notificationScheduler)
     }
 
     @After
@@ -378,5 +381,22 @@ class AutoScheduleManagerTest {
                 it.startTime.date == LocalDate(2025, 2, 3)
             })
         }
+    }
+
+    @Test
+    fun `catchUpAutoSchedule schedules notification for created class`() = runTest {
+        val today = LocalDate(2025, 1, 8)
+        mockToday(today)
+
+        val template = createTemplate(dayOfWeek = DayOfWeek.FRIDAY)
+
+        coEvery { classTemplateDao.getAutoScheduleTemplates() } returns listOf(template)
+        coEvery { yogaClassDao.getClassAtTime(any(), any()) } returns null
+        coEvery { yogaClassDao.insertClass(any()) } returns 7L
+        coEvery { classTemplateDao.updateLastScheduledDate(any(), any()) } just Runs
+
+        autoScheduleManager.catchUpAutoSchedule()
+
+        verify { notificationScheduler.schedule(match { it.id == 7L }) }
     }
 }
