@@ -302,6 +302,7 @@ class WeekViewModel @Inject constructor(
         }
         viewModelScope.launch {
             yogaClassDao.updateClassesStatus(ids, ClassStatus.CANCELLED)
+            ids.forEach { notificationScheduler.cancel(it) }
             hideBulkCancelDialog()
         }
     }
@@ -341,6 +342,9 @@ class WeekViewModel @Inject constructor(
                 durationHours = newDuration
             )
             yogaClassDao.updateClass(updated)
+            if (updated.status == ClassStatus.SCHEDULED) {
+                notificationScheduler.schedule(updated)
+            }
             hideEditClassDialog()
             clearSelectedClass()
         }
