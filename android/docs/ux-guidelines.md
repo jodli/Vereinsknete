@@ -79,3 +79,15 @@ Group actions by category, with dividers between groups:
 - [ ] Destructive actions in error color?
 - [ ] Confirmation dialog for irreversible actions?
 - [ ] Confirmation text names concrete element + consequence?
+- [ ] Sensible defaults for all fields?
+
+---
+
+## 8. Notifications
+
+- **Content:** Title provides context (class name + studio), body is a short question with the start time
+- **Tap behavior:** Opens the relevant existing dialog — no new UI patterns for notification actions
+- **Importance:** IMPORTANCE_DEFAULT — the app is a tool, not a messenger. No sound, no vibration
+- **No retry:** Ignored notifications are not resent. The user can still update status manually
+- **Channel naming:** German, descriptive (e.g., "Kurs-Erinnerungen")
+- **Precondition check:** Always verify the current state before showing a notification (e.g., is the class still SCHEDULED?)
