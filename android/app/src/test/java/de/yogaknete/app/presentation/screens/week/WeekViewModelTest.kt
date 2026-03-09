@@ -385,4 +385,47 @@ class WeekViewModelTest {
 
         verify { notificationScheduler.cancel(42L) }
     }
+
+    @Test
+    fun `bulkCancelClasses cancels notifications for all IDs`() = runTest {
+        coEvery { yogaClassDao.updateClassesStatus(any(), any()) } just Runs
+
+        viewModel = createViewModel()
+
+        viewModel.bulkCancelClasses(listOf(1L, 2L, 3L))
+        advanceUntilIdle()
+
+        verify { notificationScheduler.cancel(1L) }
+        verify { notificationScheduler.cancel(2L) }
+        verify { notificationScheduler.cancel(3L) }
+    }
+
+    @Test
+    fun `updateClassSchedule reschedules notification for SCHEDULED class`() = runTest {
+        val existing = YogaClass(
+            id = 42L,
+            studioId = 1L,
+            title = "Test Yoga",
+            startTime = LocalDateTime(2024, 11, 4, 17, 30),
+            endTime = LocalDateTime(2024, 11, 4, 18, 45),
+            durationHours = 1.25,
+            status = ClassStatus.SCHEDULED
+        )
+        coEvery { yogaClassDao.getClassById(42L) } returns existing
+        coEvery { yogaClassDao.updateClass(any()) } just Runs
+
+        viewModel = createViewModel()
+
+        viewModel.updateClassSchedule(
+            yogaClassId = 42L,
+            newDate = LocalDate(2024, 11, 5),
+            startHour = 18,
+            startMinute = 0,
+            endHour = 19,
+            endMinute = 15
+        )
+        advanceUntilIdle()
+
+        verify { notificationScheduler.schedule(match { it.id == 42L }) }
+    }
 }

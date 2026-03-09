@@ -1,11 +1,17 @@
 package de.yogaknete.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
+import androidx.core.content.ContextCompat
 import de.yogaknete.app.ui.theme.YogaKneteTheme
 import de.yogaknete.app.presentation.screens.onboarding.OnboardingFlow
 import de.yogaknete.app.presentation.screens.week.WeekViewScreen
@@ -44,6 +50,23 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
+                    // Request notification permission on Android 13+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        val launcher = rememberLauncherForActivityResult(
+                            ActivityResultContracts.RequestPermission()
+                        ) { /* result unused — feature degrades gracefully */ }
+
+                        LaunchedEffect(Unit) {
+                            if (ContextCompat.checkSelfPermission(
+                                    this@MainActivity,
+                                    Manifest.permission.POST_NOTIFICATIONS
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        }
+                    }
+
                     NavHost(
                         navController = navController,
                         startDestination = "week"

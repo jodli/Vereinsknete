@@ -46,6 +46,15 @@ class ClassNotificationWorker @AssistedInject constructor(
         val studio = studioRepository.getStudioById(yogaClass.studioId)
             ?: return Result.success()
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return Result.success()
+        }
+
         val title = "${yogaClass.title} bei ${studio.name}"
         val startTimeFormatted = "%02d:%02d".format(
             yogaClass.startTime.hour,
@@ -76,15 +85,6 @@ class ClassNotificationWorker @AssistedInject constructor(
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(
-                applicationContext,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return Result.success()
-        }
 
         NotificationManagerCompat.from(applicationContext).notify(classId.toInt(), notification)
 
