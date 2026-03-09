@@ -12,6 +12,7 @@ import de.yogaknete.app.domain.model.Studio
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.service.ClassNotificationScheduler
 import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -60,7 +61,8 @@ class WeekViewModel @Inject constructor(
     private val yogaClassDao: YogaClassDao,
     private val studioRepository: StudioRepository,
     private val classTemplateRepository: ClassTemplateRepository,
-    private val autoScheduleManager: AutoScheduleManager
+    private val autoScheduleManager: AutoScheduleManager,
+    private val notificationScheduler: ClassNotificationScheduler
 ) : ViewModel() {
     
     private val _state = MutableStateFlow(WeekViewState())
@@ -246,11 +248,12 @@ class WeekViewModel @Inject constructor(
                 status = ClassStatus.SCHEDULED
             )
             
-            yogaClassDao.insertClass(newClass)
+            val insertedId = yogaClassDao.insertClass(newClass)
+            notificationScheduler.schedule(newClass.copy(id = insertedId))
             hideAddClassDialog()
         }
     }
-    
+
     fun openClassById(classId: Long) {
         viewModelScope.launch {
             val yogaClass = yogaClassDao.getClassById(classId)
@@ -271,13 +274,15 @@ class WeekViewModel @Inject constructor(
     fun markClassAsCompleted(yogaClass: YogaClass) {
         viewModelScope.launch {
             yogaClassDao.updateClassStatus(yogaClass.id, ClassStatus.COMPLETED)
+            notificationScheduler.cancel(yogaClass.id)
             clearSelectedClass()
         }
     }
-    
+
     fun markClassAsCancelled(yogaClass: YogaClass) {
         viewModelScope.launch {
             yogaClassDao.updateClassStatus(yogaClass.id, ClassStatus.CANCELLED)
+            notificationScheduler.cancel(yogaClass.id)
             clearSelectedClass()
         }
     }
@@ -304,6 +309,7 @@ class WeekViewModel @Inject constructor(
     fun deleteClass(yogaClass: YogaClass) {
         viewModelScope.launch {
             yogaClassDao.deleteClass(yogaClass)
+            notificationScheduler.cancel(yogaClass.id)
             clearSelectedClass()
         }
     }
@@ -368,7 +374,10 @@ class WeekViewModel @Inject constructor(
                 sourceTemplateId = template.id
             )
 
-            yogaClassDao.insertClass(newClass)
+            val insertedId = yogaClassDao.insertClass(newClass)
+            if (newClass.status == ClassStatus.SCHEDULED) {
+                notificationScheduler.schedule(newClass.copy(id = insertedId))
+            }
             hideQuickAddDialog()
         }
     }

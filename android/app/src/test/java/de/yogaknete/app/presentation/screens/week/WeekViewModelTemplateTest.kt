@@ -7,6 +7,7 @@ import de.yogaknete.app.domain.model.CreationSource
 import de.yogaknete.app.domain.model.YogaClass
 import de.yogaknete.app.domain.repository.ClassTemplateRepository
 import de.yogaknete.app.domain.repository.StudioRepository
+import de.yogaknete.app.domain.service.ClassNotificationScheduler
 import de.yogaknete.app.domain.usecase.AutoScheduleManager
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -36,6 +37,7 @@ class WeekViewModelTemplateTest {
     private lateinit var studioRepository: StudioRepository
     private lateinit var classTemplateRepository: ClassTemplateRepository
     private lateinit var autoScheduleManager: AutoScheduleManager
+    private lateinit var notificationScheduler: ClassNotificationScheduler
     private lateinit var viewModel: WeekViewModel
     private val dispatcher = StandardTestDispatcher()
 
@@ -46,13 +48,14 @@ class WeekViewModelTemplateTest {
         studioRepository = mockk()
         classTemplateRepository = mockk()
         autoScheduleManager = mockk(relaxed = true)
+        notificationScheduler = mockk(relaxed = true)
 
         every { yogaClassDao.getClassesInRange(any(), any()) } returns flowOf(emptyList())
         every { studioRepository.getAllActiveStudios() } returns flowOf(emptyList())
         every { classTemplateRepository.getAllActiveTemplates() } returns flowOf(emptyList())
         coEvery { yogaClassDao.insertClass(any()) } returns 1L
 
-        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager, notificationScheduler)
     }
 
     @After
