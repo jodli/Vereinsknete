@@ -22,6 +22,7 @@ Purple-based Material 3 theme with light and dark variants.
 - Semantic colors (YogaSuccess, YogaError) only for HTML generation, not in Compose
 
 ### Selected State
+
 - **Active:** Container alpha 0.6 + border (2dp) + bold + checkmark icon
 - **Inactive:** Container alpha 0.15, no border, normal font weight
 
@@ -37,38 +38,20 @@ Purple-based Material 3 theme with light and dark variants.
 | Dialog + Card | Complex forms with TopAppBar (X left, Save right) |
 
 ### Cards as Action Buttons
-For selectable actions (status buttons), use `Card(onClick)`:
+For selectable actions (status buttons), use Card with onClick:
 - Icon left, action text center, checkmark right (when active)
 - Container color by status with alpha transparency
 - Border only in active state
 
-### Segmented Buttons
-For 2–3 equal options (e.g., recurrence interval):
-
-```kotlin
-Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-    Text("Label", style = bodySmall, color = onSurfaceVariant)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, option ->
-            SegmentedButton(
-                selected = selectedIndex == index,
-                onClick = { onSelect(index) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size)
-            ) { Text(option.label) }
-        }
-    }
-}
-```
-
-Max 3 segments, short labels, same spacing as other form fields.
-
-### Dropdown
-Standard for 4+ options. `ExposedDropdownMenuBox` with `OutlinedTextField(readOnly = true)`.
-
 ### Destructive Actions
-- Visually separated by `HorizontalDivider`
-- `TextButton` with error color, never as Card
+- Always visually separated by HorizontalDivider
+- TextButton with error color, never as Card
 - Icon (18dp) + text combined
+
+### Standard Buttons
+- Confirm: right side of dialog
+- Cancel: left side of dialog
+- Form dialogs: Save in TopAppBar
 
 ---
 
@@ -84,11 +67,11 @@ Standard for 4+ options. `ExposedDropdownMenuBox` with `OutlinedTextField(readOn
 | Add | Add | Filled |
 | Date | Event | Outlined |
 | Time | Schedule | Outlined |
-| Duration | Timer | Filled |
-| Recurrence | Repeat | Filled |
 
-- **Filled** for active states, **Outlined** for inactive/secondary
-- Tint follows semantics: primary (positive), error (negative), onSurfaceVariant (neutral)
+**Rules:**
+- Filled for active states and primary actions
+- Outlined for inactive states and secondary info
+- Icon tint follows semantics: primary (positive), error (negative), onSurfaceVariant (neutral)
 
 ---
 
@@ -98,10 +81,10 @@ Standard for 4+ options. `ExposedDropdownMenuBox` with `OutlinedTextField(readOn
 |---------|-------|
 | Between groups | 16dp |
 | Within groups | 8dp |
-| Form fields | 12dp spacing |
 | Card inner padding | 12–16dp |
 | Icon to text | 16dp (cards), 8dp (buttons) |
 | Divider padding | 8dp vertical |
+| Form fields | 16dp spacing |
 
 ---
 
@@ -113,7 +96,6 @@ Standard for 4+ options. `ExposedDropdownMenuBox` with `OutlinedTextField(readOn
 | Section header | titleMedium + Bold | Form sections |
 | Action text | titleMedium | Card buttons |
 | Details | bodyMedium | Descriptions, info |
-| Field label | bodySmall + onSurfaceVariant | Above SegmentedButtons |
 | Hint/caption | bodySmall + 0.7 alpha | Timestamps, hints |
 
 ---
@@ -121,16 +103,17 @@ Standard for 4+ options. `ExposedDropdownMenuBox` with `OutlinedTextField(readOn
 ## 6. Visual Hierarchy for Actions
 
 Three tiers in dialogs:
-1. **Primary** — Colored cards with status semantics (top)
-2. **Secondary** — Neutral cards in surfaceVariant (middle)
-3. **Destructive** — HorizontalDivider + TextButton in error color (bottom)
+
+1. **Primary actions** — Colored cards with status semantics (top)
+2. **Secondary actions** — Neutral cards in surfaceVariant (middle)
+3. **Destructive actions** — HorizontalDivider + TextButton in error color (bottom)
 
 ---
 
 ## 7. General Rules
 
-- No hardcoded colors — always `MaterialTheme.colorScheme.*`
+- No hardcoded colors — always use MaterialTheme
 - Alpha values: 0.15 (inactive), 0.3 (neutral), 0.6 (active)
 - German labels in UI, English comments in code
-- HorizontalDivider between action groups only, never between equivalent actions
-- Selection state: border + bold + checkmark (3 signals)
+- HorizontalDivider only between action groups, never between equivalent actions
+- Selection state always communicated via 3 signals: border + bold + checkmark

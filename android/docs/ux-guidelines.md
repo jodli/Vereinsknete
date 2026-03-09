@@ -40,62 +40,42 @@ Based on Material Design 3 and established patterns in the project.
 
 ## 3. Destructive Actions (Delete)
 
+### Visibility
 - Delete is **always visible** — never hidden behind state conditions
 - Position: End of action list, visually separated by divider
 - Color: Icon and text in error color
-- Every irreversible action **must** have a confirmation dialog:
-  - Title: "[Element] löschen?"
-  - Text: "Möchtest du [name] wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
-  - Confirm button in error color with concrete verb ("Löschen")
+
+### Confirmation
+Every destructive, irreversible action **must** have a confirmation dialog:
+- Title: "[Element] löschen?"
+- Text: "Möchtest du [concrete name] wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+- Confirm button in error color with concrete verb ("Löschen")
+- Cancel button
 
 ---
 
 ## 4. Action Grouping
 
-Group actions by category with dividers between groups:
+Group actions by category, with dividers between groups:
 
 1. **Primary actions** — most frequent first (e.g., status changes)
 2. **Secondary actions** — edit, reschedule
 3. **Destructive actions** — always last, visually separated
 
-**Dialog buttons:** Max 2 — Cancel (left) + Confirm (right). Concrete verbs only ("Löschen", "Speichern"), never "OK" or "Ja". Destructive confirms in error color.
+### Dialog Buttons
+- Max 2 buttons: Cancel (left) + Confirm (right)
+- Destructive confirmations in error color
+- Button text = concrete verb ("Löschen", "Speichern") — never "OK" or "Ja"
 
 ---
 
-## 5. Selection Options in Forms
-
-| Scenario | Component |
-|----------|-----------|
-| 2–3 options, short labels, always visible | `SingleChoiceSegmentedButtonRow` |
-| 4+ options or long labels | `ExposedDropdownMenuBox` (Dropdown) |
-| Boolean on/off | `Switch` |
-
-**SegmentedButton rules:**
-- Max 3 segments, 1–2 word labels
-- "Wiederholung" label in `bodySmall` above the row
-- Pre-select the most common option as default
-
-**Dropdown rules:**
-- `OutlinedTextField` with `readOnly = true` + label
-- `.menuAnchor(MenuAnchorType.PrimaryNotEditable)`
-- Always pre-fill a sensible default
-
----
-
-## 6. Defaults & Progressive Disclosure
-
-- Every form field has a default covering the most common case
-- Only show fields the user needs regularly — hide rare options
-- Advanced features (auto-schedule) off by default, user opts in
-
----
-
-## 7. Checklist for New Dialogs
+## 5. Checklist for New Dialogs
 
 - [ ] Correct dialog type? (AlertDialog / Full-screen)
 - [ ] Title matches all available actions?
 - [ ] Max 2 buttons for AlertDialog?
 - [ ] Button text = concrete verb?
-- [ ] Destructive actions at end, separated, in error color?
+- [ ] Destructive actions at the end, separated by divider?
+- [ ] Destructive actions in error color?
 - [ ] Confirmation dialog for irreversible actions?
-- [ ] Sensible defaults for all fields?
+- [ ] Confirmation text names concrete element + consequence?
