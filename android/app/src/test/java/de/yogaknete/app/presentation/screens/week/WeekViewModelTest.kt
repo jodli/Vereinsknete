@@ -215,4 +215,36 @@ class WeekViewModelTest {
         // Total hours for completed classes (1.25 + 1.5 = 2.75)
         assertEquals(2.75, state.totalHoursThisWeek, 0.01)
     }
+
+    @Test
+    fun `openClassById sets selectedClass for valid ID`() = runTest {
+        val testClass = YogaClass(
+            id = 42L,
+            studioId = 1L,
+            title = "Hatha Yoga",
+            startTime = LocalDateTime(2024, 11, 4, 18, 0),
+            endTime = LocalDateTime(2024, 11, 4, 19, 30),
+            durationHours = 1.5
+        )
+        coEvery { yogaClassDao.getClassById(42L) } returns testClass
+
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+
+        viewModel.openClassById(42L)
+        advanceUntilIdle()
+
+        assertEquals(testClass, viewModel.state.value.selectedClass)
+    }
+
+    @Test
+    fun `openClassById does not set selectedClass for invalid ID`() = runTest {
+        coEvery { yogaClassDao.getClassById(999L) } returns null
+
+        viewModel = WeekViewModel(yogaClassDao, studioRepository, classTemplateRepository, autoScheduleManager)
+
+        viewModel.openClassById(999L)
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.selectedClass)
+    }
 }
